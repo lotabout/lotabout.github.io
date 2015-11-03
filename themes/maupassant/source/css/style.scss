@@ -697,10 +697,10 @@ pre,
   font-size: 15px;
   color: #ccc;
   line-height: 1.6;
-  border-radius: 7px;
+  border-radius: 2px;
 }
 .highlight .gutter pre,
-.gist .gist-file .gist-data .line-numbers {
+div.gist .gist-file .gist-data .line-numbers {
   color: #666;
 }
 pre,
@@ -764,29 +764,29 @@ pre code {
   background: #2d2d2d;
   padding: 15px 40px 15px 15px;
 }
-.gist .gist-file {
+div.gist .gist-file {
   border: none;
   font-family: "Input Mono", "PT Mono", Consolas, Monaco, Menlo, monospace;
   margin: 0;
 }
-.gist .gist-file .gist-data {
+div.gist .gist-file .gist-data {
   background: none;
   border: none;
 }
-.gist .gist-file .gist-data .line-numbers {
+div.gist .gist-file .gist-data .line-numbers {
   background: none;
   border: none;
   padding: 0 20px 0 0;
 }
-.gist .gist-file .gist-data .line-data {
+div.gist .gist-file .gist-data .line-data {
   padding: 0 !important;
 }
-.gist .gist-file .highlight {
+div.gist .gist-file .highlight {
   margin: 0;
   padding: 0;
   border: none;
 }
-.gist .gist-file .gist-meta {
+div.gist .gist-file .gist-meta {
   background: #2d2d2d;
   color: #999;
   font: 13px Lato, "PingFang SC", "Microsoft YaHei", sans-serif;
@@ -795,11 +795,11 @@ pre code {
   margin-top: 1em;
   margin-left: 40px;
 }
-.gist .gist-file .gist-meta a {
+div.gist .gist-file .gist-meta a {
   color: color-link;
   font-weight: normal;
 }
-.gist .gist-file .gist-meta a:hover {
+div.gist .gist-file .gist-meta a:hover {
   text-decoration: underline;
 }
 pre .comment {
