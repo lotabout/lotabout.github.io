@@ -1,0 +1,148 @@
+include _partial/helpers
+include _partial/totop
+
+if page.title
+  - var current_title = page.title
+else
+  - var current_title = config.title
+
+if (config.root != '/')
+  - var root = config.root
+else
+  - var root = ''
+
+html
+  head
+    meta(http-equiv="content-type", content="text/html; charset=utf-8")
+    meta(content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0", name="viewport")
+    meta(content="yes", name="apple-mobile-web-app-capable")
+    meta(content="black-translucent", name="apple-mobile-web-app-status-bar-style")
+    meta(content="telephone=no", name="format-detection")
+    meta(name="description", content=config.description)
+    block title
+    link(rel='stylesheet', type='text/css', href=root + '/css/normalize.css')
+    link(rel='stylesheet', type='text/css', href=root + '/css/pure-min.css')
+    link(rel='stylesheet', type='text/css', href=root + '/css/grids-responsive-min.css')
+    link(rel='stylesheet', type='text/css', href=root + '/css/style.css')
+    link(rel='Shortcut Icon', type='image/x-icon',href='/favicon.ico')
+    link(rel='apple-touch-icon', href='/apple-touch-icon.png')
+    link(rel='apple-touch-icon-precomposed', href='/apple-touch-icon.png')
+    link(rel='alternate', type='application/atom+xml', href='/atom.xml')
+
+
+  body: .body_container
+    #header
+      .site-name
+        h1.hidden= current_title
+        a#logo(href='/')= config.title
+        p.description= config.subtitle
+      #nav-menu
+        +a_with_current(config.root, __('home'), 'icon-home')
+        +a_with_current(config.archive_dir, __('archive'), 'icon-archive')
+        +a_with_current(config.about_dir, __('about'), 'icon-about')
+        +a_with_current(theme.rss, __('rss'), 'icon-rss')
+
+    #layout.pure-g
+      .pure-u-1.pure-u-md-3-4: .content_container
+        block content
+
+      .pure-u-1-4: #sidebar
+        if theme.tinysou
+          .widget
+            form
+              input#ts-search-input(class='ts-search-input' placeholder='Search' type='text')
+        if theme.swiftype
+          .widget
+            input.st-default-search-input(placeholder='Search' type='text')
+        .widget
+          .widget-title= __('categories')
+          != list_categories({show_count: false})
+        .widget
+          .widget-title= __('tags')
+          .tagcloud
+            != tagcloud({min_font: 15, max_font: 15, amount: 100, orderby: 'count'})
+        .widget
+          .widget-title= __('recent')
+          != list_posts({amount: 10})
+        if theme.duoshuo
+          .widget
+            .comments-title= __('recent_comments')
+            .ds-recent-comments(data-num-items='5' data-show-avatars='0' data-show-time='1' data-show-admin='0' data-excerpt-length='32' data-show-title='1')
+        if theme.disqus
+          .widget
+            .widget-title= __('recent_comments')
+            | <script type="text/javascript" src="http://!{theme.disqus}.disqus.com/recent_comments_widget.js?num_items=5&hide_avatars=1&avatar_size=32&excerpt_length=20&hide_mods=1"></script>
+        .widget
+          .widget-title= __('blogroll')
+          - for (var i in theme.links)
+            ul
+            a(href='#{theme.links[i].url}' title='#{theme.links[i].title}' target='_blank') #{theme.links[i].title}
+
+    #footer= '© '
+      a(href='/', rel='nofollow')= config.title + '.'
+      |  Powered by
+      a(rel='nofollow', target='_blank', href='https://hexo.io')  Hexo.
+      a(rel='nofollow', target='_blank', href='https://github.com/tufu9441/maupassant-hexo')  Theme
+      |  by
+      a(rel='nofollow', target='_blank', href='https://github.com/pagecho')  Cho.
+
+  != js([root + '/js/jquery.min.js', root + '/js/totop.js'])
+
+    if theme.fancybox
+      != js([root + '/js/fancybox.pack.js'])
+      != css(root + '/css/jquery.fancybox.css')
+      script.
+        $(document).ready(function() {
+          $("img").wrap(function() {
+            if ($(this).hasClass('nofancybox')) return;
+            return '<a href="' + $(this).attr("src") + '" rel="group" />'});
+        });
+      script.
+        $(document).ready(function() {
+          $("a[href$='.jpg'],a[href$='.png'],a[href$='.gif']").attr('rel', 'gallery').fancybox({
+           helpers : {
+           title: { type: 'inside'}
+           },
+           afterLoad: function(){
+           this.title = this.title + ' ' + $(this.element).find('img').attr('alt');
+           }
+         });
+        });
+
+    if theme.duoshuo
+      script.
+        var duoshuoQuery = {short_name:'!{theme.duoshuo}'};
+        (function() {
+            var ds = document.createElement('script');
+            ds.type = 'text/javascript';ds.async = true;
+            ds.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') + '//static.duoshuo.com/embed.js';
+            ds.charset = 'UTF-8';
+            (document.getElementsByTagName('head')[0]
+                || document.getElementsByTagName('body')[0]).appendChild(ds);
+        })();
+
+    if theme.tinysou
+      script.
+        var option = {
+          engineKey: '!{theme.tinysou}'
+        };
+        (function(w,d,t,u,n,s,e){
+          s = d.createElement(t);
+          s.src = u;
+          s.async = 1;
+          w[n] = function(r){
+            w[n].opts = r;
+          };
+          e = d.getElementsByTagName(t)[0];
+          e.parentNode.insertBefore(s, e);
+        })(window,document,'script','//tinysou-cdn.b0.upaiyun.com/ts.js','_ts');
+        _ts(option);
+
+    if theme.swiftype
+      script.
+        (function(w,d,t,u,n,s,e){w['SwiftypeObject']=n;w[n]=w[n]||function(){
+        (w[n].q=w[n].q||[]).push(arguments);};s=d.createElement(t);
+        e=d.getElementsByTagName(t)[0];s.async=1;s.src=u;e.parentNode.insertBefore(s,e);
+        })(window,document,'script','//s.swiftypecdn.com/install/v2/st.js','_st');
+
+        _st('install','!{theme.swiftype}','2.0.0');
