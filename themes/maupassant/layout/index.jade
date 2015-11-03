@@ -16,17 +16,17 @@ block content
       if post.description
         .post-content
           != post.description
-      else if page.excerpt
+      else if post.excerpt
         .post-content
           != post.excerpt
       else if post.content
-        - var br = post.content.indexOf('\n')
+        - var br = post.content.indexOf('</p>')
         if br < 0
           .post-content
             != post.content
         else
           .post-content
-            != post.content.substring(0, br)
+            != post.content.substring(0, br + 4)
       p(class="readmore")
         a(href=url_for(post.path))= __('Readmore')
 
