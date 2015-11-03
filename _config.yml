@@ -12,7 +12,7 @@ timezone:
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
-url: http://yoursite.com
+url: http://lotabout.github.io/
 root: /
 permalink: :year/:title/
 permalink_defaults:
@@ -70,7 +70,9 @@ theme: maupassant
 # Deployment
 ## Docs: http://hexo.io/docs/deployment.html
 deploy:
-  type:
+  type: git
+  repo: https://github.com/lotabout/lotabout.github.io
+  branch: master
 
 marked:
   breaks: false
