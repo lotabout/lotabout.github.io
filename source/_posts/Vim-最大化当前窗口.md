@@ -1,6 +1,6 @@
 title: Vim 最大化当前窗口
 date: 2015-11-12 10:21:11
-tags: vim, FAQ
+tags: [vim, FAQ]
 categories: Knowledge
 toc:
 ---
