@@ -517,6 +517,12 @@ exit(30)
 本章中我们回顾了计算机的内部运行原理，并仿照 x86 汇编指令设计并实现了我们自己
 的指令集。
 
+本章的代码可以在 [Github](https://github.com/lotabout/write-a-C-interpreter/tree/step-1) 上下载，也可以直接 clone
+
+```
+git clone -b step-1 https://github.com/lotabout/write-a-C-interpreter
+```
+
 实际计算机中，添加一个新的指令需要设计许多新的电路，会增加许多的成本，但我们的
 需要机中，新的指令几乎不消耗资源，因此我们可以利用这一点，用更多的指令来完成
 更多的功能，从而简化具体的实现。
