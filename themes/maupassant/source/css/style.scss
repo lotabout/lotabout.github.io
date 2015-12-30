@@ -168,6 +168,8 @@ a:focus{
 		color: #555;
 		text-align: left;
 		font: bold 25px/1.1 "ff-tisa-web-pro", Cambria, "Times New Roman", Georgia, Times, sans-serif;
+                border-left: solid 5px #A76B6B;
+                padding-left: 10px;
 		a {
 			color: #555;
 		}
@@ -178,7 +180,7 @@ a:focus{
 		color: #999;
 		float: left;
 		display: inline;
-		text-indent: .15em;
+		//text-indent: .15em;
 	}
 	.ds-thread-count {
 		padding: 0;
