@@ -1,4 +1,4 @@
-title: 手把手教你构建 C 语言编译器（9）- 表达式
+title: 手把手教你构建 C 语言编译器（8）- 表达式
 date: 2016-01-04 21:38:10
 tags: [C, compiler]
 categories: Project
@@ -73,7 +73,7 @@ C 语言定义了各种表达式的优先级，可以参考 [C 语言运算符�
 于‘x’的运算符，之后再计算运算符‘x’。
 
 最后注意的是优先通常只与多元运算符相关，单元运算符往往没有这个问题（因为只有一
-个参数）。
+个参数）。也可以认为“优先级”的实质就是两个运算符在抢参数。
 
 # 一元运算符
 
@@ -465,6 +465,7 @@ LI
             }
             *++text = PUSH;
             *++text = IMM;
+            // ②
             *++text = (expr_type > PTR) ? sizeof(int) : sizeof(char);
             *++text = (tmp == Inc) ? ADD : SUB;
             *++text = (expr_type == CHAR) ? SC : SI;
@@ -473,3 +474,307 @@ LI
 
 对应的汇编代码也比较直观，只是在实现 `++p`时，我们要使用变量 `p` 的地址两次，
 所以我们需要先 `PUSH` （①）。
+
+②则是因为自增自减操作还需要处理是指针的情形。
+
+# 二元运算符
+
+这里，我们需要处理多运算符的优先级问题，就如前文的“优先级”一节提到的，我们需要
+不断地向右扫描，直到遇到优先级 **小于** 当前优先级的运算符。
+
+回想起我们之前定义过的各个标记，它们是以优先级从低到高排列的，即 `Assign` 的
+优先级最低，而 `Brak`（`[`） 的优先级最高。
+
+```c
+enum {
+  Num = 128, Fun, Sys, Glo, Loc, Id,
+  Char, Else, Enum, If, Int, Return, Sizeof, While,
+  Assign, Cond, Lor, Lan, Or, Xor, And, Eq, Ne, Lt, Gt, Le, Ge, Shl, Shr, Add, Sub, Mul, Div, Mod, Inc, Dec, Brak
+};
+```
+
+所以，当我们调用 `expression(level)` 进行解析的时候，我们其实通过了参数
+`level` 指定了当前的优先级。在前文的一元运算符处理中也用到了这一点。
+
+所以，此时的二元运算符的解析的框架为：
+
+```c
+        while (token >= level) {
+            // parse token for binary operator and postfix operator
+        }
+```
+
+解决了优先级的问题，让我们继续讲解如何把运算符编译成汇编代码吧。
+
+## 赋值操作
+
+赋值操作是优先级最低的运算符。考虑诸如 `a = (expession)` 的表达式，在解析 `=`
+之前，我们已经为变量 `a` 生成了如下的汇编代码：
+
+```
+IMM <addr>
+LC/LI
+```
+
+当解析完`=`右边的表达式后，相应的值会存放在 `ax` 中，此时，为了实际将这个值保
+存起来，我们需要类似下面的汇编代码：
+
+```
+IMM <addr>
+PUSH
+SC/SI
+```
+
+明白了这点，也就能理解下面的源代码了：
+
+```c
+            tmp = expr_type;
+            if (token == Assign) {
+                // var = expr;
+                match(Assign);
+                if (*text == LC || *text == LI) {
+                    *text = PUSH; // save the lvalue's pointer
+                } else {
+                    printf("%d: bad lvalue in assignment\n", line);
+                    exit(-1);
+                }
+                expression(Assign);
+
+                expr_type = tmp;
+                *++text = (expr_type == CHAR) ? SC : SI;
+            }
+```
+
+## 三目运算符
+
+这是 C 语言中唯一的一个三元运算符： `? :`，它相当于一个小型的 If 语句，所以生
+成的代码也类似于 If 语句，这里就不多作解释。
+
+```c
+            else if (token == Cond) {
+                // expr ? a : b;
+                match(Cond);
+                *++text = JZ;
+                addr = ++text;
+                expression(Assign);
+                if (token == ':') {
+                    match(':');
+                } else {
+                    printf("%d: missing colon in conditional\n", line);
+                    exit(-1);
+                }
+                *addr = (int)(text + 3);
+                *++text = JMP;
+                addr = ++text;
+                expression(Cond);
+                *addr = (int)(text + 1);
+            }
+```
+
+## 逻辑运算符
+
+这包括 `||` 和 `&&`。它们对应的汇编代码如下：
+
+```
+<expr1> || <expr2>     <expr1> && <expr2>
+
+  ...<expr1>...          ...<expr1>...
+  JNZ b                  JZ b
+  ...<expr2>...          ...<expr2>...
+b:                     b:
+```
+
+所以源码如下：
+
+```c
+            else if (token == Lor) {
+                // logic or
+                match(Lor);
+                *++text = JNZ;
+                addr = ++text;
+                expression(Lan);
+                *addr = (int)(text + 1);
+                expr_type = INT;
+            }
+            else if (token == Lan) {
+                // logic and
+                match(Lan);
+                *++text = JZ;
+                addr = ++text;
+                expression(Or);
+                *addr = (int)(text + 1);
+                expr_type = INT;
+            }
+```
+
+## 数学运算符
+
+它们包括 `|`, `^`, `&`, `==`, `!=` `<=`, `>=`, `<`, `>`, `<<`, `>>`, `+`, `-`,
+`*`, `/`, `%`。它们的实现都很类似，我们以 `|` 为例：
+
+```
+<expr1> | <expr2>
+
+...<expr1>...          <- now the result is on ax
+PUSH
+...<expr2>...          <- now the value of <expr2> is on ax
+XOR
+```
+
+所以它对应的代码为：
+
+```c
+            else if (token == Xor) {
+                // bitwise xor
+                match(Xor);
+                *++text = PUSH;
+                expression(And);
+                *++text = XOR;
+                expr_type = INT;
+            }
+```
+
+其它的我们便不再详述。但这其中还有一个问题，就是指针的加减。在 C 语言中，指针
+加上数值等于将指针移位，且根据不同的类型移动的位移不同。如 `a + 1`，如果 `a`
+是 `char *` 型，则移动一字节，而如果 `a` 是 `int *` 型，则移动 4 个字节（32位
+系统）。
+
+另外，在作指针减法时，如果是两个指针相减（相同类型），则结果是两个指针间隔的
+元素个数。因此要有特殊的处理。
+
+下面以加法为例，对应的汇编代码为：
+
+```
+<expr1> + <expr2>
+
+normal         pointer
+
+<expr1>        <expr1>
+PUSH           PUSH
+<expr2>        <expr2>     |
+ADD            PUSH        | <expr2> * <unit>
+               IMM <unit>  |
+               MUL         |
+               ADD
+```
+
+即当 `<expr1>` 是指针时，要根据它的类型放大 `<expr2>` 的值，因此对应的源码如下：
+
+```c
+            else if (token == Add) {
+                // add
+                match(Add);
+                *++text = PUSH;
+                expression(Mul);
+
+                expr_type = tmp;
+                if (expr_type > PTR) {
+                    // pointer type, and not `char *`
+                    *++text = PUSH;
+                    *++text = IMM;
+                    *++text = sizeof(int);
+                    *++text = MUL;
+                }
+                *++text = ADD;
+            }
+```
+
+相应的减法的代码就不贴了，可以自己实现看看，也可以看文末给出的链接。
+
+## 自增自减
+
+这次是后缀形式的，即 `p++` 或 `p--`。与前缀形式不同的是，在执行自增自减后，
+`ax`上需要保留原来的值。所以我们首先执行类似前缀自增自减的操作，再将 `ax` 中的
+值执行减/增的操作。
+
+```c
+// 前缀形式 生成汇编代码
+*++text = PUSH;
+*++text = IMM;
+*++text = (expr_type > PTR) ? sizeof(int) : sizeof(char);
+*++text = (tmp == Inc) ? ADD : SUB;
+*++text = (expr_type == CHAR) ? SC : SI;
+
+// 后缀形式 生成汇编代码
+*++text = PUSH;
+*++text = IMM;
+*++text = (expr_type > PTR) ? sizeof(int) : sizeof(char);
+*++text = (token == Inc) ? ADD : SUB;
+*++text = (expr_type == CHAR) ? SC : SI;
+*++text = PUSH;                                             //
+*++text = IMM;                                              // 执行相反的增/减操作
+*++text = (expr_type > PTR) ? sizeof(int) : sizeof(char);   //
+*++text = (token == Inc) ? SUB : ADD;                       //
+```
+
+## 数组取值操作
+
+在学习 C 语言的时候你可能已经知道了，诸如 `a[10]` 的操作等价于 `*(a + 10)`。
+因此我们要做的就是生成类似的汇编代码：
+
+```c
+            else if (token == Brak) {
+                // array access var[xx]
+                match(Brak);
+                *++text = PUSH;
+                expression(Assign);
+                match(']');
+
+                if (tmp > PTR) {
+                    // pointer, `not char *`
+                    *++text = PUSH;
+                    *++text = IMM;
+                    *++text = sizeof(int);
+                    *++text = MUL;
+                }
+                else if (tmp < PTR) {
+                    printf("%d: pointer type expected\n", line);
+                    exit(-1);
+                }
+                expr_type = tmp - PTR;
+                *++text = ADD;
+                *++text = (expr_type == CHAR) ? LC : LI;
+            }
+```
+
+# 代码
+
+除了上述对表达式的解析外，我们还需要初始化虚拟机的栈，我们可以正确调用
+`main` 函数，且当 `main` 函数结束时退出进程。
+
+```c
+    int *tmp;
+    // setup stack
+    sp = (int *)((int)stack + poolsize);
+    *--sp = EXIT; // call exit if main returns
+    *--sp = PUSH; tmp = sp;
+    *--sp = argc;
+    *--sp = (int)argv;
+    *--sp = (int)tmp;
+```
+
+当然，最后要注意的一点是：所有的变量定义必须放在语句之前。
+
+本章的代码可以在 [Github](https://github.com/lotabout/write-a-C-interpreter/tree/step-6) 上下载，也可以直接 clone
+
+```
+git clone -b step-6 https://github.com/lotabout/write-a-C-interpreter
+```
+
+通过 `gcc -o xc-tutor xc-tutor.c` 进行编译。并执行 `./xc-tutor hello.c` 查看
+结果。
+
+正如我们保证的那样，我们的代码是自举的，能自己编译自己，所以你可以执行
+`./xc-tutor xc-tutor.c hello.c`。可以看到和之前有同样的输出。
+
+# 小结
+
+本章我们进行了最后的解析，解析表达式。本章有两个难点：
+
+1. 如何通过递归调用 `expression` 来实现运算符的优先级。
+2. 如何为每个运算符生成对应的汇编代码。
+
+尽管代码看起来比较简单（虽然多），但其中用到的原理还是需要仔细推敲的。
+
+最后，恭喜你！通过一步步的学习，自己实现了一个C语言的编译器（好吧，是解释
+器）。
