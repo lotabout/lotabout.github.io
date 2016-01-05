@@ -1,301 +1,184 @@
-title: 手把手教你构建 C 语言编译器（7）- 函数定义
-date: 2016-01-03 20:04:34
+title: 手把手教你构建 C 语言编译器（7）- 语句
+date: 2016-01-04 20:44:29
 tags: [C, compiler]
 categories: Project
 toc:
 ---
 
-由于语法分析本身比较复杂，所以我们将它拆分成 3 个部分进行讲解，分别是：变量定
-义、函数定义、表达式。本章讲解函数定义相关的内容。
+整个编译器还剩下最后两个部分：语句和表达式的解析。它们的内容比较多，主要涉及
+如何将语句和表达式编译成汇编代码。这章讲解语句的解析，相对于表达式来说它还是较
+为容易的。
 
-# EBNF 表示
+# 语句
 
-这是上一章的 EBNF 方法中与函数定义相关的内容。
+C 语言区分“语句”（statement）和“表达式”（expression）两个概念。简单地说，可以
+认为语句就是表达式加上末尾的分号。
+
+在我们的编译器中共识别 6 种语句：
+
+1. `if (...) <statement> [else <statement>]`
+2. `while (...) <statement>`
+3. `{ <statement> }`
+4. `return xxx;`
+5. `<empty statement>`;
+6. `expression;` (expression end with semicolon)
+
+它们的语法分析都相对容易，重要的是去理解如何将这些语句编译成汇编代码，下面我们
+逐一解释。
+
+## IF 语句
+
+IF 语句的作用是跳转，跟据条件表达式决定跳转的位置。我们看看下面的伪代码：
 
 ```
-variable_decl ::= type {'*'} id { ',' {'*'} id } ';'
+if (...) <statement> [else <statement>]
 
-function_decl ::= type {'*'} id '(' parameter_decl ')' '{' body_decl '}'
-
-parameter_decl ::= type {'*'} id {',' type {'*'} id}
-
-body_decl ::= {variable_decl}, {statement}
-
-statement ::= non_empty_statement | empty_statement
-
-non_empty_statement ::= if_statement | while_statement | '{' statement '}'
-                     | 'return' expression | expression ';'
-
-if_statement ::= 'if' '(' expression ')' statement ['else' non_empty_statement]
-
-while_statement ::= 'while' '(' expression ')' non_empty_statement
+  if (<cond>)                   <cond>
+                                JZ a
+    <true_statement>   ===>     <true_statement>
+  else:                         JMP b
+a:                           a:
+    <false_statement>           <false_statement>
+b:                           b:
 ```
 
-# 解析函数的定义
+对应的汇编代码流程为：
 
-上一章的代码中，我们已经知道了什么时候开始解析函数的定义，相关的代码如下：
+1. 执行条件表达式 `<cond>`。
+2. 如果条件失败，则跳转到 `a` 的位置，执行 `else` 语句。这里 `else` 语句是可以
+   省略的，此时 `a` 和 `b` 都指向 IF 语句后方的代码。
+3. 因为汇编代码是顺序排列的，所以如果执行了 `true_statement`，为了防止因为顺序
+   排列而执行了 `false_statement`，所以需要无条件跳转 `JMP b`。
+
+对应的 C 代码如下：
 
 ```c
-        ...
-        if (token == '(') {
-            current_id[Class] = Fun;
-            current_id[Value] = (int)(text + 1); // the memory address of function
-            function_declaration();
-        } else {
-        ...
-```
+    if (token == If) {
+        match(If);
+        match('(');
+        expression(Assign);  // parse condition
+        match(')');
 
-即在这断代码之前，我们已经为当前的标识符（identifier）设置了正确的类型，上面这
-断代码为当前的标识符设置了正确的类别（Fun），以及该函数在代码段（text
-segment）中的位置。接下来开始解析函数定义相关的内容：`parameter_decl` 及
-`body_decl`。
+        *++text = JZ;
+        b = ++text;
 
-## 函数参数与汇编代码
+        statement();         // parse statement
+        if (token == Else) { // parse else
+            match(Else);
 
-现在我们要回忆如何将“函数”转换成对应的汇编代码，因为这决定了在解析时我们需要哪
-些相关的信息。考虑下列函数：
+            // emit code for JMP B
+            *b = (int)(text + 3);
+            *++text = JMP;
+            b = ++text;
 
-```
-int demo(int param_a, int *param_b) {
-    int local_1;
-    char local_2;
-
-    ...
-}
-```
-
-那么它应该被转换成什么样的汇编代码呢？在思考这个问题之前，我们需要了解当
-`demo`函数被调用时，计算机的栈的状态，如下（参照第三章讲解的虚拟机）：
-
-```
-|    ....       | high address
-+---------------+
-| arg: param_a  |    new_bp + 3
-+---------------+
-| arg: param_b  |    new_bp + 2
-+---------------+
-|return address |    new_bp + 1
-+---------------+
-| old BP        | <- new BP
-+---------------+
-| local_1       |    new_bp - 1
-+---------------+
-| local_2       |    new_bp - 2
-+---------------+
-|    ....       |  low address
-```
-
-这里最为重要的一点是，无论是函数的参数（如 `param_a`）还是函数的局部变量（如
-`local_1`）都是存放在计算机的 **栈** 上的。因此，与存放在 **数据段** 中的全局
-变量不同，在函数内访问它们是通过 `new_bp` 指针和对应的位移量进行的。因此，在
-解析的过程中，我们需要知道参数的个数，各个参数的位移量。
-
-## 函数定义的解析
-
-这相当于是整个函数定义的语法解析的框架，代码如下：
-
-```c
-void function_declaration() {
-    // type func_name (...) {...}
-    //               | this part
-
-    match('(');
-    function_parameter();
-    match(')');
-    match('{');
-    function_body();
-    //match('}');                 //  ①
-
-    // ②
-    // unwind local variable declarations for all local variables.
-    current_id = symbols;
-    while (current_id[Token]) {
-        if (current_id[Class] == Loc) {
-            current_id[Class] = current_id[BClass];
-            current_id[Type]  = current_id[BType];
-            current_id[Value] = current_id[BValue];
+            statement();
         }
-        current_id = current_id + IdSize;
+
+        *b = (int)(text + 1);
     }
-}
 ```
 
-其中①中我们没有消耗最后的`}`字符。这么做的原因是：`variable_decl` 与
-`function_decl` 是放在一起解析的，而 `variable_decl` 是以字符 `;` 结束的。而
-`function_decl` 是以字符 `}` 结束的，若在此通过 `match` 消耗了 ';' 字符，那么
-外层的 `while` 循环就没法准确地知道函数定义已经结束。所以我们将结束符的解析放
-在了外层的 `while` 循环中。
+## While 语句
 
-而②中的代码是用于将符号表中的信息恢复成全局的信息。这是因为，局部变量是可以和
-全局变量同名的，一旦同名，在函数体内局部变量就会覆盖全局变量，出了函数体，全局
-变量就恢复了原先的作用。这段代码线性地遍历所有标识符，并将保存在 `BXXX` 中的
-信息还原。
-
-## 解析参数
+While 语句比 If 语句简单，它对应的汇编代码如下：
 
 ```
-parameter_decl ::= type {'*'} id {',' type {'*'} id}
+a:                     a:
+   while (<cond>)        <cond>
+                         JZ b
+    <statement>          <statement>
+                         JMP a
+b:                     b:
 ```
 
-解析函数的参数就是解析以逗号分隔的一个个标识符，同时记录它们的位置与类型。
+没有什么值得说明的内容，它的 C 代码如下：
 
 ```c
-int index_of_bp; // index of bp pointer on stack
+    else if (token == While) {
+        match(While);
 
-void function_parameter() {
-    int type;
-    int params;
-    params = 0;
-    while (token != ')') {
-        // ①
+        a = text + 1;
 
-        // int name, ...
-        type = INT;
-        if (token == Int) {
-            match(Int);
-        } else if (token == Char) {
-            type = CHAR;
-            match(Char);
-        }
+        match('(');
+        expression(Assign);
+        match(')');
 
-        // pointer type
-        while (token == Mul) {
-            match(Mul);
-            type = type + PTR;
-        }
+        *++text = JZ;
+        b = ++text;
 
-        // parameter name
-        if (token != Id) {
-            printf("%d: bad parameter declaration\n", line);
-            exit(-1);
-        }
-        if (current_id[Class] == Loc) {
-            printf("%d: duplicate parameter declaration\n", line);
-            exit(-1);
-        }
+        statement();
 
-        match(Id);
-
-        //②
-        // store the local variable
-        current_id[BClass] = current_id[Class]; current_id[Class]  = Loc;
-        current_id[BType]  = current_id[Type];  current_id[Type]   = type;
-        current_id[BValue] = current_id[Value]; current_id[Value]  = params++;   // index of current parameter
-
-        if (token == ',') {
-            match(',');
-        }
+        *++text = JMP;
+        *++text = (int)a;
+        *b = (int)(text + 1);
     }
-
-    // ③
-    index_of_bp = params+1;
-}
 ```
 
-其中①与全局变量定义的解析十分一样，用于解析该参数的类型。
+## Return 语句
 
-而②则与上节中提到的“局部变量覆盖全局变量”相关，先将全局变量的信息保存（无论是
-是否真的在全局中用到了这个变量）在 `BXXX` 中，再赋上局部变量相关的信息，如
-`Value` 中存放的是参数的位置（是第几个参数）。
-
-③则与汇编代码的生成有关，`index_of_bp` 就是前文提到的 `new_bp` 的位置。
-
-## 函数体的解析
-
-我们实现的 C 语言与现代的 C 语言不太一致，我们需要所有的变量定义出现在所有的
-语句之前。函数体的代码如下：
+Return 唯一特殊的地方是：一旦遇到了 Return 语句，则意味着函数要退出了，所以需
+要生成汇编代码 `LEV` 来表示退出。
 
 ```c
-void function_body() {
-    // type func_name (...) {...}
-    //                   -->|   |<--
+    else if (token == Return) {
+        // return [expression];
+        match(Return);
 
-    // ... {
-    // 1. local declarations
-    // 2. statements
-    // }
-
-    int pos_local; // position of local variables on the stack.
-    int type;
-    pos_local = index_of_bp;
-
-    // ①
-    while (token == Int || token == Char) {
-        // local variable declaration, just like global ones.
-        basetype = (token == Int) ? INT : CHAR;
-        match(token);
-
-        while (token != ';') {
-            type = basetype;
-            while (token == Mul) {
-                match(Mul);
-                type = type + PTR;
-            }
-
-            if (token != Id) {
-                // invalid declaration
-                printf("%d: bad local declaration\n", line);
-                exit(-1);
-            }
-            if (current_id[Class]) {
-                // identifier exists
-                printf("%d: duplicate local declaration\n", line);
-                exit(-1);
-            }
-            match(Id);
-
-            // store the local variable
-            current_id[BClass] = current_id[Class]; current_id[Class]  = Loc;
-            current_id[BType]  = current_id[Type];  current_id[Type]   = type;
-            current_id[BValue] = current_id[Value]; current_id[Value]  = ++pos_local;   // index of current parameter
-
-            if (token == ',') {
-                match(',');
-            }
+        if (token != ';') {
+            expression(Assign);
         }
+
+        match(';');
+
+        // emit code for return
+        *++text = LEV;
+    }
+```
+
+## 其它语句
+
+其它语句并不直接生成汇编代码，所以不多做说明，代码如下：
+
+```c
+    else if (token == '{') {
+        // { <statement> ... }
+        match('{');
+
+        while (token != '}') {
+            statement();
+        }
+
+        match('}');
+    }
+    else if (token == ';') {
+        // empty statement
         match(';');
     }
-
-    // ②
-    // save the stack size for local variables
-    *++text = ENT;
-    *++text = pos_local - index_of_bp;
-
-    // statements
-    while (token != '}') {
-        statement();
+    else {
+        // a = b; or function_call();
+        expression(Assign);
+        match(';');
     }
-
-    // emit code for leaving the sub function
-    *++text = LEV;
-}
 ```
-
-其中①用于解析函数体内的局部变量的定义，代码与全局的变量定义几乎一样。
-
-而②则用于生成汇编代码，我们在第三章的虚拟机中提到过，我们需要在栈上为局部变量
-预留空间，这两行代码起的就是这个作用。
 
 # 代码
 
-本章的代码可以在 [Github](https://github.com/lotabout/write-a-C-interpreter/tree/step-4) 上下载，也可以直接 clone
+本章的代码可以在 [Github](https://github.com/lotabout/write-a-C-interpreter/tree/step-5) 上下载，也可以直接 clone
 
 ```
-git clone -b step-4 https://github.com/lotabout/write-a-C-interpreter
+git clone -b step-5 https://github.com/lotabout/write-a-C-interpreter
 ```
 
-本章的代码依旧无法运行，还有两个重要函数没有完成：`statement` 及
-`expression`，感兴趣的话可以尝试自己实现它们。
+本章的代码依旧无法运行，还剩最后一部分没有完成：`expression`。
 
 # 小结
 
-本章中我们用了不多的代码完成了函数定义的解析。大部分的代码依旧是用于解析变量：
-参数和局部变量，而它们的逻辑和全局变量的解析几乎一致，最大的区别就是保存的信息
-不同。
+本章讲解了如何将语句编译成汇编代码，内容相对容易一些，关键就是去理解汇编代码的
+执行原理。
 
-当然，要理解函数定义的解析过程，最重要的是理解我们会为函数生成怎样的汇编代码，
-因为这决定了我们需要从解析中获取什么样的信息（例如参数的位置，个数等），而这些
-可能需要你重新回顾一下“虚拟机”这一章，或是重新学习学习汇编相关的知识。
+同时值得一提的是，编译器的语法分析部分其实是很简单的，而真正的难点是如何在语法
+分析时收集足够多的信息，最终把源代码转换成目标代码（汇编）。我认为这也是初学者
+实现编译器的一大难点，往往比词法分析/语法分析更困难。
 
-下一章中我们将讲解最复杂的表达式的解析，同时也是整个编译器最后的部分，敬请期
-待。
+所以建议如果没有学过汇编，可以学习学习，它本身不难，但对理解计算机的原理有很大
+帮助。

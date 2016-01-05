@@ -1,528 +1,578 @@
-title: 手把手教你构建 C 语言编译器（3）- 虚拟机
-date: 2015-12-22 12:03:14
+title: 手把手教你构建 C 语言编译器（3）- 词法分析器
+date: 2015-12-29 20:54:12
 tags: [C, compiler]
 categories: Project
 toc:
 ---
 
-本章是“手把手教你构建 C 语言编译器”系列的第三篇，本章我们要构建一台虚拟的电
-脑，设计我们自己的指令集，运行我们的指令集，说得通俗一点就是自己实现一套汇编
-语言。它们将作为我们的编译器最终输出的目标代码。
+本章我们要讲解如何构建词法分析器。
 
-# 计算机的内部工作原理
+# 什么是词法分析器
 
-我们关心计算机的三个基本部件：CPU、寄存器及内存。代码（汇编指令）以二进制的形
-式保存在内存中，CPU 从中一条条地加载指令执行。程序运行的状态保存在寄存器中。
+简而言之，词法分析器用于对源码字符串做预处理，以减少语法分析器的复杂程度。
 
-## 内存
-
-我们从内存开始说起。现代的操作系统都不直接使用内存，而是使用虚拟内存。虚拟内存
-可以理解为一种映射，在我们的程序眼中，我们可以使用全部的内存地址，而操作系统
-需要将它映射到实际的内存上。当然，这些并不重要，重要的是一般而言，进程的内存会
-被分成几个段：
-
-1. 代码段（text）用于存放代码（指令）。
-2. 数据段（data）用于存放初始化了的数据，如`int i = 10;`，就需要存放到数据段
-   中。
-3. 未初始化数据段（bss）用于存放未初始化的数据，如 `int i[1000];`，因为不关心
-   其中的真正数值，所以单独存放可以节省空间，减少程序的体积。
-4. 栈（stack）用于处理函数调用相关的数据，如调用帧（calling frame）或是函数的
-   局部变量等。
-5. 堆（heap）用于为程序动态分配内存。
-
-它们在内存中的位置类似于下图：
+词法分析器以源码字符串为输入，输出为标记流（token stream），即一连串的标记，每
+个标记通常包括： `(token, token value)` 即标记本身和标记的值。例如，源码中若包
+含一个数字 `'998'` ，词法分析器将输出 `(Number, 998)`，即（数字，998）。再例
+如：
 
 ```
-+------------------+
-|    stack   |     |      high address
-|    ...     v     |
-|                  |
-|                  |
-|                  |
-|                  |
-|    ...     ^     |
-|    heap    |     |
-+------------------+
-| bss  segment     |
-+------------------+
-| data segment     |
-+------------------+
-| text segment     |      low address
-+------------------+
+2 + 3 * (4 - 5)
+=>
+(Number, 2) Add (Number, 3) Multiply Left-Bracket (Number, 4) Subtract (Number, 5) Right-Bracket
 ```
 
-但我们的虚拟机并不模拟完整的计算机，我们只关心三个内容：代码段、数据段以及栈。
-其中的数据段我们只存放字符串，因为我们的编译器并不支持初始化变量，因此我们也不
-需要未初始化数据段。理论上我们的虚拟器需要维护自己的堆用于内存分配，但实际实现
-上较为复杂且与编译无关，故我们引入一个指令`MSET`，使我们能直接使用编译器（解释
-器）中的内存。
+通过词法分析器的预处理，语法分析器的复杂度会大大降低，这点在后面的语法分析器我
+们就能体会。
 
-综上，我们需要首先在全局添加如下代码：
+# 词法分析器与编译器
+
+要是深入词法分析器，你就会发现，它的本质上也是编译器。我们的编译器是以标记流为
+输入，输出汇编代码，而词法分析器则是以源码字符串为输入，输出标记流。
+
+```
+                   +-------+                      +--------+
+-- source code --> | lexer | --> token stream --> | parser | --> assembly
+                   +-------+                      +--------+
+```
+
+在这个前提下，我们可以这样认为：直接从源代码编译成汇编代码是很困难的，因为输入
+的字符串比较难处理。所以我们先编写一个较为简单的编译器（词法分析器）来将字符串
+转换成标记流，而标记流对于语法分析器而言就容易处理得多了。
+
+# 词法分析器的实现
+
+由于词法分析的工作很常见，但又枯燥且容易出错，所以人们已经开发出了许多工具来
+生成词法分析器，如 `lex, flex`。这些工具允许我们通过正则表达式来识别标记。
+
+这里注意的是，我们并不会一次性地将所有源码全部转换成标记流，原因有二：
+
+1. 字符串转换成标记流有时是有状态的，即与代码的上下文是有关系的。
+2. 保存所有的标记流没有意义且浪费空间。
+
+所以实际的处理方法是提供一个函数（即前几篇中提到的 `next()`），每次调用该函数
+则返回下一个标记。
+
+## 支持的标记
+
+在全局中添加如下定义：
 
 ```c
-int *text,            // text segment
-    *old_text,        // for dump text segment
-    *stack;           // stack
-char *data;           // data segment
+// tokens and classes (operators last and in precedence order)
+enum {
+  Num = 128, Fun, Sys, Glo, Loc, Id,
+  Char, Else, Enum, If, Int, Return, Sizeof, While,
+  Assign, Cond, Lor, Lan, Or, Xor, And, Eq, Ne, Lt, Gt, Le, Ge, Shl, Shr, Add, Sub, Mul, Div, Mod, Inc, Dec, Brak
+};
 ```
 
-注意这里的类型，虽然是`int`型，但理解起来应该作为无符号的整型，因为我们会在代
-码段（text）中存放如指针/内存地址的数据，它们就是无符号的。其中数据段（data）
-由于只存放字符串，所以是 `char *` 型的
+这些就是我们要支持的标记符。例如，我们会将 `=` 解析为 `Assign`；将 `==` 解析为
+`Eq`；将 `!=` 解析为 `Ne` 等等。
 
-接着，在`main`函数中加入初始化代码，真正为其分配内存：
+所以这里我们会有这样的印象，一个标记（token）可能包含多个字符，且多数情况下如
+此。而词法分析器能减小语法分析复杂度的原因，正是因为它相当于通过一定的编码
+（更多的标记）来压缩了源码字符串。
+
+当然，上面这些标记是有顺序的，跟它们在 C 语言中的优先级有关，如 `*(Mul)` 的优
+先级就要高于 `+(Add)`。它们的具体使用在后面的语法分析中会提到。
+
+最后要注意的是还有一些字符，它们自己就构成了标记，如右方括号 `]` 或波浪号
+`~` 等。我们不另外处理它们的原因是：
+
+1. 它们是单字符的，即并不是多个字符共同构成标记（如 `==` 需要两个字符）；
+2. 它们不涉及优先级关系。
+
+## 词法分析器的框架
+
+即 `next()` 函数的主体：
 
 ```c
-int main() {
-    close(fd);
-    ...
+void next() {
+    char *last_pos;
+    int hash;
 
-    // allocate memory for virtual machine
-    if (!(text = old_text = malloc(poolsize))) {
-        printf("could not malloc(%d) for text area\n", poolsize);
-        return -1;
+    while (token = *src) {
+        ++src;
+        // parse token here
     }
-    if (!(data = malloc(poolsize))) {
-        printf("could not malloc(%d) for data area\n", poolsize);
-        return -1;
-    }
-    if (!(stack = malloc(poolsize))) {
-        printf("could not malloc(%d) for stack area\n", poolsize);
-        return -1;
-    }
-
-    memset(text, 0, poolsize);
-    memset(data, 0, poolsize);
-    memset(stack, 0, poolsize);
-
-    ...
-    program();
+    return;
 }
 ```
 
-## 寄存器
+这里的一个问题是，为什么要用 `while` 循环呢？这就涉及到编译器（记得我们说过词
+法分析器也是某种意义上的编译器）的一个问题：如何处理错误？
 
-计算机中的寄存器用于存放计算机的运行状态，真正的计算机中有许多不同种类的寄存
-器，但我们的虚拟机中只使用 4 个寄存器，分别如下：
+对词法分析器而言，若碰到了一个我们不认识的字符该怎么处理？一般处理的方法有两
+种：
 
-1. `PC` 程序计数器，它存放的是一个内存地址，该地址中存放着 **下一条** 要执行的
-   计算机指令。
-2. `SP` 指针寄存器，永远指向当前的栈顶。注意的是由于栈是位于高地址并向低地址
-   增长的，所以入栈时 `SP` 的值减小。
-3. `BP` 基址指针。也是用于指向栈的某些位置，在调用函数时会使用到它。
-4. `AX` 通用寄存器，我们的虚拟机中，它用于存放一条指令执行后的结果。
+1. 指出错误发生的位置，并退出整个程序
+2. 指出错误发生的位置，跳过当前错误并继续编译
 
-要理解这些寄存器的作用，需要去理解程序运行中会有哪些状态。而这些寄存器只是用于
-保存这些状态的。
+这个 `while` 循环的作用就是跳过这些我们不识别的字符，我们同时还用它来处理空白
+字符。我们知道，C 语言中空格是用来作为分隔用的，并不作为语法的一部分。因此在
+实现中我们将它作为“不识别”的字符，这个 `while` 循环可以用来跳过它。
 
-在全局中加入如下定义：
+## 换行符
 
-```c
-int *pc, *bp, *sp, ax, cycle; // virtual machine registers
-```
-
-在 `main` 函数中加入初始化代码，注意的是`PC`在初始应指向目标代码中的`main`函
-数，但我们还没有写任何编译相关的代码，因此先不处理。代码如下：
+换行符和空格类似，但有一点不同，每次遇到换行符，我们需要将当前的行号加一：
 
 ```c
-    memset(stack, 0, poolsize);
-    ...
+        // parse token here
+        ...
 
-    bp = sp = (int *)((int)stack + poolsize);
-    ax = 0;
-
-    ...
-    program();
+        if (token == '\n') {
+            ++line;
+        }
+        ...
 ```
+## 宏定义
 
-与 CPU 相关的是指令集，我们将专门作为一个小节。
-
-# 指令集
-
-指令集是 CPU 能识别的命令的集合，也可以说是 CPU 能理解的语言。这里我们要为我
-们的虚拟机构建自己的指令集。它们基于 x86 的指令集，但要更为简单。
-
-首先在全局变量中加入一个枚举类型，这是我们要支持的全部指令：
+C 语言的宏定义以字符 `#` 开头，如 `# include <stdio.h>`。我们的编译器并不支持
+宏定义，所以直接跳过它们。
 
 ```c
-// instructions
-enum { LEA ,IMM ,JMP ,CALL,JZ  ,JNZ ,ENT ,ADJ ,LEV ,LI  ,LC  ,SI  ,SC  ,PUSH,
-       OR  ,XOR ,AND ,EQ  ,NE  ,LT  ,GT  ,LE  ,GE  ,SHL ,SHR ,ADD ,SUB ,MUL ,DIV ,MOD ,
-       OPEN,READ,CLOS,PRTF,MALC,MSET,MCMP,EXIT };
-```
-
-这些指令的顺序安排是有意的，稍后你会看到，带有参数的指令在前，没有参数的指令在
-后。这种顺序的唯一作用就是在打印调试信息时更加方便。但我们讲解的顺序并不依据
-它。
-
-## MOV
-
-`MOV` 是所有指令中最基础的一个，它用于将数据放进寄存器或内存地址，有点类似于 C
-语言中的赋值语句。x86 的 `MOV` 指令有两个参数，分别是源地址和目标地址：`MOV
-dest, source` （Intel 风格），表示将 `source` 的内容放在 `dest` 中，它们可以是
-一个数、寄存器或是一个内存地址。
-
-一方面，我们的虚拟机只有一个寄存器，另一方面，识别这些参数的类型（是数还是地
-址）是比较困难的，因此我们将 `MOV` 指令拆分成 5 个指令，这些指令只接受一个参
-数，如下：
-
-1. `IMM <num>` 将 `<num>` 放入寄存器 `ax` 中。
-2. `LC` 将对应地址中的字符载入 `ax` 中，要求 `ax` 中存放地址。
-3. `LI` 将对应地址中的整数载入 `ax` 中，要求 `ax` 中存放地址。
-4. `SC` 将 `ax` 中的数据作为字符存放入地址中，要求栈顶存放地址。
-5. `SI` 将 `ax` 中的数据作为整数存放入地址中，要求栈顶存放地址。
-
-你可能会觉得将一个指令变成了许多指令，整个系统就变得复杂了，但实际情况并非如
-此。首先是 `MOV` 指令其实有许多变种，根据类型的不同有 `MOVB`, `MOVW` 等指令，
-我们这里的 `LC/SC` 和 `LI/SI` 就是对应字符型和整型的存取操作。
-
-但最为重要的是，通过将 `MOV` 指令拆分成这些指令，只有 `IMM` 需要有参数，且不
-需要判断类型，所以大大简化了实现的难度。
-
-在 `eval()` 函数中加入下列代码：
-
-```c
-void eval() {
-    int op, *tmp;
-    while (1) {
-        if (op == IMM)       {ax = *pc++;}                                     // load immediate value to ax
-        else if (op == LC)   {ax = *(char *)ax;}                               // load character to ax, address in ax
-        else if (op == LI)   {ax = *(int *)ax;}                                // load integer to ax, address in ax
-        else if (op == SC)   {ax = *(char *)*sp++ = ax;}                       // save character to address, value in ax, address on stack
-        else if (op == SI)   {*(int *)*sp++ = ax;}                             // save integer to address, value in ax, address on stack
-    }
-
-    ...
-    return 0;
-}
-```
-
-其中的 `*sp++` 的作用是退栈，相当于 `POP` 操作。
-
-这里要解释的一点是，为什么 `SI/SC` 指令中，地址存放在栈中，而 `LI/LC` 中，地址
-存放在 `ax` 中？原因是默认计算的结果是存放在 `ax` 中的，而地址通常是需要通过
-计算获得，所以执行 `LI/LC` 时直接从 `ax` 取值会更高效。另一点是我们的 `PUSH`
-指令只能将 `ax` 的值放到栈上，而不能以值作为参数，详细见下文。
-
-## PUSH
-
-在 x86 中，`PUSH ` 的作用是将值或寄存器，而在我们的虚拟机中，它的作用是将 `ax`
-的值放入栈中。这样做的主要原因是为了简化虚拟机的实现，并且我们也只有一个寄存
-器 `ax` 。代码如下：
-
-```c
-        else if (op == PUSH) {*--sp = ax;}                                     // push the value of ax onto the stack
-```
-
-## JMP
-
-`JMP <addr>` 是跳转指令，无条件地将当前的 `PC` 寄存器设置为指定的 `<addr>`，实现如下：
-
-```
-        else if (op == JMP)  {pc = (int *)*pc;}                                // jump to the address
-```
-
-要记得，`pc` 寄存器指向的是 **下一条** 指令。所以此时它存放的是 `JMP` 指令的
-参数，即 `<addr>` 的值。
-
-## JZ/JNZ
-
-为了实现 `if` 语句，我们需要条件判断相关的指令。这里我们只实现两个最简单的条件
-判断，即结果（`ax`）为零或不为零情况下的跳转。
-
-实现如下：
-
-```c
-        else if (op == JZ)   {pc = ax ? pc + 1 : (int *)*pc;}                   // jump if ax is zero
-        else if (op == JNZ)  {pc = ax ? (int *)*pc : pc + 1;}                   // jump if ax is zero
-```
-
-## 子函数调用
-
-这是汇编中最难理解的部分，所以合在一起说，要引入的命令有 `CALL`, `ENT`, `ADJ`
-及 `LEV`。
-
-首先我们介绍 `CALL <addr>` 与 `RET` 指令，`CALL` 的作用是跳转到地址为 `<addr>` 的
-子函数，`RET` 则用于从子函数中返回。
-
-为什么不能直接使用 `JMP` 指令呢？原因是当我们从子函数中返回时，程序需要回到跳
-转之前的地方继续运行，这就需要事先将这个位置信息存储起来。反过来，子函数要返回
-时，就需要获取并恢复这个信息。因此实际中我们将 `PC` 保存在栈中。如下：
-
-```c
-        else if (op == CALL) {*--sp = (int)(pc+1); pc = (int *)*pc;}           // call subroutine
-        //else if (op == RET)  {pc = (int *)*sp++;}                              // return from subroutine;
-```
-
-这里我们把 `RET` 相关的内容注释了，是因为之后我们将用 `LEV` 指令来代替它。
-
-在实际调用函数时，不仅要考虑函数的地址，还要考虑如何传递参数和如何返回结果。这
-里我们约定，如果子函数有返回结果，那么就在返回时保存在 `ax` 中，它可以是一个
-值，也可以是一个地址。那么参数的传递呢？
-
-各种编程语言关于如何调用子函数有不同的约定，例如 C 语言的调用标准是：
-
-1. 由调用者将参数入栈。
-2. 调用结束时，由调用者将参数出栈。
-3. 参数逆序入栈。
-
-事先声明一下，我们的编译器参数是顺序入栈的，下面的例子（C 语言调用标准）取自
-[维基百科](https://en.wikipedia.org/wiki/X86_calling_conventions)：
-
-```c
-int callee(int, int, int);
-
-int caller(void)
-{
-	int i, ret;
-
-	ret = callee(1, 2, 3);
-	ret += 5;
-	return ret;
-}
-```
-
-会生成如下的 x86 汇编代码：
-
-```assembly
-caller:
-	; make new call frame
-	push    ebp
-	mov     ebp, esp
-        sub     1, esp       ; save stack for variable: i
-	; push call arguments
-	push    3
-	push    2
-	push    1
-	; call subroutine 'callee'
-	call    callee
-	; remove arguments from frame
-	add     esp, 12
-	; use subroutine result
-	add     eax, 5
-	; restore old call frame
-        mov     esp, ebp
-	pop     ebp
-	; return
-	ret
-```
-
-上面这段代码在我们自己的虚拟机里会有几个问题：
-
-1. `push ebp`，但我们的 `PUSH` 指令并无法指定寄存器。
-2. `mov ebp, esp`，我们的 `MOV` 指令同样功能不足。
-3. `add esp, 12`，也是一样的问题（尽管我们还没定义）。
-
-也就是说由于我们的指令过于简单（如只能操作`ax`寄存器），所以用上面提到的指令，
-我们连函数调用都无法实现。而我们又不希望扩充现有指令的功能，因为这样实现起来就
-会变得复杂，因此我们采用的方法是增加指令集。毕竟我们不是真正的计算机，增加指令
-会消耗许多资源（钱）。
-
-### ENT
-
-`ENT <size>` 指的是 `enter`，用于实现 'make new call frame' 的功能，即保存当前的栈指
-针，同时在栈上保留一定的空间，用以存放局部变量。对应的汇编代码为：
-
-```
-	; make new call frame
-	push    ebp
-	mov     ebp, esp
-        sub     1, esp       ; save stack for variable: i
-```
-
-实现如下：
-
-```c
-        else if (op == ENT)  {*--sp = (int)bp; bp = sp; sp = sp - *pc++;}      // make new stack frame
-```
-
-### ADJ
-
-`ADJ <size>` 用于实现 'remove arguments from frame'。在将调用子函数时压入栈中
-的数据清除，本质上是因为我们的 `ADD` 指令功能有限。对应的汇编代码为：
-
-```
-	; remove arguments from frame
-	add     esp, 12
-```
-
-实现如下：
-
-```
-        else if (op == ADJ)  {sp = sp + *pc++;}                                // add esp, <size>
-```
-
-### LEV
-
-本质上这个指令并不是必需的，只是我们的指令集中并没有 `POP` 指令。并且三条指令
-写来比较麻烦且浪费空间，所以用一个指令代替。对应的汇编指令为：
-
-```
-	; restore old call frame
-        mov     esp, ebp
-	pop     ebp
-	; return
-	ret
-```
-
-具体的实现如下：
-
-
-```c
-        else if (op == LEV)  {sp = bp; bp = (int *)*sp++; pc = (int *)*sp++;}  // restore call frame and PC
-```
-
-注意的是，`LEV` 已经把 `RET` 的功能包含了，所以我们不再需要 `RET` 指令。
-
-### LEA
-
-上面的一些指令解决了调用帧的问题，但还有一个问题是如何在子函数中获得传入的参
-数。这里我们首先要了解的是当参数调用时，栈中的调用帧是什么样的。我们依旧用上面
-的例子（只是现在用“顺序”调用参数）：
-
-```
-sub_function(arg1, arg2, arg3);
-
-|    ....       | high address
-+---------------+
-| arg: 1        |    new_bp + 4
-+---------------+
-| arg: 2        |    new_bp + 3
-+---------------+
-| arg: 3        |    new_bp + 2
-+---------------+
-|return address |    new_bp + 1
-+---------------+
-| old BP        | <- new BP
-+---------------+
-| local var 1   |    new_bp - 1
-+---------------+
-| local var 2   |    new_bp - 2
-+---------------+
-|    ....       |  low address
-```
-
-所以为了获取第一个参数，我们需要得到 `new_bp + 4`，但就如上面的说，我们的 `ADD`
-指令无法操作除 `ax` 外的寄存器，所以我们提供了一个新的指令：`LEA <offset>`
-
-实现如下：
-
-```c
-        else if (op == LEA)  {ax = (int)(bp + *pc++);}                         // load address for arguments.
-```
-
-以上就是我们为了实现函数调用需要的指令了。
-
-## 运算符指令
-
-我们为 C 语言中支持的运算符都提供对应汇编指令。每个运算符都是二元的，即有两个
-参数，第一个参数放在栈顶，第二个参数放在 `ax` 中。这个顺序要特别注意。因为像
-`-`，`/` 之类的运算符是与参数顺序有关的。计算后会将栈顶的参数退栈，结果存放在
-寄存器 `ax` 中。因此计算结束后，两个参数都无法取得了（汇编的意义上，存在内存
-地址上就另当别论）。
-
-实现如下：
-
-```c
-        else if (op == OR)  ax = *sp++ | ax;
-        else if (op == XOR) ax = *sp++ ^ ax;
-        else if (op == AND) ax = *sp++ & ax;
-        else if (op == EQ)  ax = *sp++ == ax;
-        else if (op == NE)  ax = *sp++ != ax;
-        else if (op == LT)  ax = *sp++ < ax;
-        else if (op == LE)  ax = *sp++ <= ax;
-        else if (op == GT)  ax = *sp++ >  ax;
-        else if (op == GE)  ax = *sp++ >= ax;
-        else if (op == SHL) ax = *sp++ << ax;
-        else if (op == SHR) ax = *sp++ >> ax;
-        else if (op == ADD) ax = *sp++ + ax;
-        else if (op == SUB) ax = *sp++ - ax;
-        else if (op == MUL) ax = *sp++ * ax;
-        else if (op == DIV) ax = *sp++ / ax;
-        else if (op == MOD) ax = *sp++ % ax;
-```
-
-## 内置函数
-
-程序要有用，除了核心的逻辑外还需要输入输出，如 C 语言中我们经常使用的
-`printf` 函数就是用于输出。但是 `printf` 函数的实现本身就十分复杂，如果我们的
-编译器要达到自举，就势必要实现 `printf` 之类的函数，但它又与编译器没有太大的
-联系，因此我们继续实现新的指令，从虚拟机的角度予以支持。
-
-编译器中我们需要用到的函数有：`exit`, `open`, `close`, `read`, `printf`,
-`malloc`, `memset` 及 `memcmp`。代码如下：
-
-```c
-        else if (op == EXIT) { printf("exit(%d)", *sp); return *sp;}
-        else if (op == OPEN) { ax = open((char *)sp[1], sp[0]); }
-        else if (op == CLOS) { ax = close(*sp);}
-        else if (op == READ) { ax = read(sp[2], (char *)sp[1], *sp); }
-        else if (op == PRTF) { tmp = sp + pc[1]; ax = printf((char *)tmp[-1], tmp[-2], tmp[-3], tmp[-4], tmp[-5], tmp[-6]); }
-        else if (op == MALC) { ax = (int)malloc(*sp);}
-        else if (op == MSET) { ax = (int)memset((char *)sp[2], sp[1], *sp);}
-        else if (op == MCMP) { ax = memcmp((char *)sp[2], (char *)sp[1], *sp);}
-```
-
-这里的原理是，我们的电脑上已经有了这些函数的实现，因此编译编译器时，这些函数的
-二进制代码就被编译进了我们的编译器，因此在我们的编译器/虚拟机上运行我们提供的
-这些指令时，这些函数就是可用的。换句话说就是不需要我们自己去实现了。
-
-最后再加上一个错误判断：
-
-```c
-        else {
-            printf("unknown instruction:%d\n", op);
-            return -1;
+        else if (token == '#') {
+            // skip macro, because we will not support it
+            while (*src != 0 && *src != '\n') {
+                src++;
+            }
         }
 ```
 
-# 测试
+## 标识符与符号表
 
-下面我们用我们的汇编写一小段程序，来计算 `10+20`，在 `main` 函数中加入下列代
-码：
+标识符（identifier）可以理解为变量名。对于语法分析而言，我们并不关心一个变量
+具体叫什么名字，而只关心这个变量名代表的唯一标识。例如 `int a;` 定义了变量
+`a`，而之后的语句 `a = 10`，我们需要知道这两个 `a` 指向的是同一个变量。
+
+基于这个理由，词法分析器会把扫描到的标识符全都保存到一张表中，遇到新的标识符就
+去查这张表，如果标识符已经存在，就返回它的唯一标识。
+
+那么我们怎么表示标识符呢？如下：
 
 ```
-int main(int argc, char *argv[])
-{
-    ax = 0;
+struct identifier {
+    int token;
+    int hash;
+    char * name;
+    int class;
+    int type;
+    int value;
+    int Bclass;
+    int Btype;
+    int Bvalue;
+}
+```
+
+这里解释一下具体的含义：
+
+1. `token`：该标识符返回的标记，理论上所有的变量返回的标记都应该是 `Id`，但实
+   际上由于我们还将在符号表中加入关键字如 `if`, `while` 等，它们都有对应的标
+   记。
+2. `hash`：顾名思义，就是这个标识符的哈希值，用于标识符的快速比较。
+3. `name`：存放标识符本身的字符串。
+4. `class`：该标识符的类别，如数字，全局变量或局部变量等。
+5. `type`：标识符的类型，即如果它是个变量，变量是 `int` 型、`char` 型还是指针
+   型。
+6. `value`：存放这个标识符的值，如标识符是函数，刚存放函数的地址。
+7. `BXXXX`：C 语言中标识符可以是全局的也可以是局部的，当局部标识符的名字与全局
+   标识符相同时，用作保存全局标识符的信息。
+
+由上可以看出，我们实现的词法分析器与传统意义上的词法分析器不太相同。传统意义上
+的符号表只需要知道标识符的唯一标识即可，而我们还存放了一些只有语法分析器才会得
+到的信息，如 `type` 。
+
+
+由于我们的目标是能自举，而我们定义的语法不支持 `struct`，故而使用下列方式。
+
+```
+Symbol table:
+----+-----+----+----+----+-----+-----+-----+------+------+----
+ .. |token|hash|name|type|class|value|btype|bclass|bvalue| ..
+----+-----+----+----+----+-----+-----+-----+------+------+----
+    |<---       one single identifier                --->|
+```
+
+即用一个整型数组来保存相关的ID信息。每个ID占用数组中的9个空间，分析标识符的相
+关代码如下：
+
+```c
+int token_val;                // value of current token (mainly for number)
+int *current_id,              // current parsed ID
+    *symbols;                 // symbol table
+
+// fields of identifier
+enum {Token, Hash, Name, Type, Class, Value, BType, BClass, BValue, IdSize};
+
+
+void next() {
+        ...
+
+        else if ((token >= 'a' && token <= 'z') || (token >= 'A' && token <= 'Z') || (token == '_')) {
+
+            // parse identifier
+            last_pos = src - 1;
+            hash = token;
+
+            while ((*src >= 'a' && *src <= 'z') || (*src >= 'A' && *src <= 'Z') || (*src >= '0' && *src <= '9') || (*src == '_')) {
+                hash = hash * 147 + *src;
+                src++;
+            }
+
+            // look for existing identifier, linear search
+            current_id = symbols;
+            while (current_id[Token]) {
+                if (current_id[Hash] == hash && !memcmp((char *)current_id[Name], last_pos, src - last_pos)) {
+                    //found one, return
+                    token = current_id[Token];
+                    return;
+                }
+                current_id = current_id + IdSize;
+            }
+
+
+            // store new ID
+            current_id[Name] = (int)last_pos;
+            current_id[Hash] = hash;
+            token = current_id[Token] = Id;
+            return;
+        }
+        ...
+}
+```
+
+查找已有标识符的方法是线性查找 `symbols` 表。
+
+## 数字
+
+数字中较为复杂的一点是需要支持十进制、十六进制及八进制。逻辑也较为直接，可能
+唯一不好理解的是获取十六进制的值相关的代码。
+
+```
+token_val = token_val * 16 + (token & 16) + (token >= 'A' ? 9 : 0);
+```
+
+这里要注意的是在ASCII码中，字符`a`对应的十六进制值是 `61`, `A`是`41`，故通过
+`(token & 16)` 可以得到个位数的值。其它就不多说了，这里这样写的目的是装B（其实
+是抄 c4 的源代码的）。
+
+```c
+void next() {
+        ...
+
+        else if (token >= '0' && token <= '9') {
+            // parse number, three kinds: dec(123) hex(0x123) oct(017)
+            token_val = token - '0';
+            if (token_val) {
+                if (*src == 'x' || *src == 'X') {
+                    //hex
+                    token = *++src;
+                    while ((token >= '0' && token <= '9') || (token >= 'a' && token <= 'f') || (token >= 'A' && token <= 'F')) {
+                        token_val = token_val * 16 + (token & 16) + (token >= 'A' ? 9 : 0);
+                        token = *++src;
+                    }
+                } else {
+                    // dec
+                    while (*src >= '0' && *src <= '9') {
+                        token_val = token_val*10 + *src++ - '0';
+                    }
+                }
+            } else {
+                // oct
+                while (*src >= '0' && *src <= '7') {
+                    token_val = token_val*8 + *src++ - '0';
+                }
+            }
+
+            token = Num;
+            return;
+        }
+
+        ...
+}
+```
+
+## 字符串
+
+在分析时，如果分析到字符串，我们需要将它存放到前一篇文章中说的 `data` 段中。
+然后返回它在 `data` 段中的地址。另一个特殊的地方是我们需要支持转义符。例如用
+`\n` 表示换行符。由于本编译器的目的是达到自己编译自己，所以代码中并没有支持除
+`\n` 的转义符，如 `\t`, `\r` 等，但仍支持 `\a` 表示字符 `a` 的语法，如 `\"`
+表示 `"`。
+
+在分析时，我们将同时分析单个字符如 `'a'` 和字符串如 `"a string"`。若得到的是
+单个字符，我们以 `Num` 的形式返回。相关代码如下：
+
+```c
+void next() {
+        ...
+
+        else if (token == '"' || token == '\'') {
+            // parse string literal, currently, the only supported escape
+            // character is '\n', store the string literal into data.
+            last_pos = data;
+            while (*src != 0 && *src != token) {
+                token_val = *src++;
+                if (token_val == '\\') {
+                    // escape character
+                    token_val = *src++;
+                    if (token_val == 'n') {
+                        token_val = '\n';
+                    }
+                }
+
+                if (token == '"') {
+                    *data++ = token_val;
+                }
+            }
+
+            src++;
+            // if it is a single character, return Num token
+            if (token == '"') {
+                token_val = (int)last_pos;
+            } else {
+                token = Num;
+            }
+
+            return;
+        }
+}
+```
+
+## 注释
+
+在我们的 C 语言中，只支持 `//` 类型的注释，不支持 `/* comments */` 的注释。
+
+```c
+void next() {
+        ...
+
+        else if (token == '/') {
+            if (*src == '/') {
+                // skip comments
+                while (*src != 0 && *src != '\n') {
+                    ++src;
+                }
+            } else {
+                // divide operator
+                token = Div;
+                return;
+            }
+        }
+
+        ...
+}
+```
+
+这里我们要额外介绍 `lookahead` 的概念，即提前看多个字符。上述代码中我们看到，
+除了跳过注释，我们还可能返回除号 `/(Div)` 标记。
+
+提前看字符的原理是：有一个或多个标记是以同样的字符开头的（如本小节中的注释与
+除号），因此只凭当前的字符我们并无法确定具体应该解释成哪一个标记，所以只能再向
+前查看字符，如本例需向前查看一个字符，若是 `/` 则说明是注释，反之则是除号。
+
+我们之前说过，词法分析器本质上也是编译器，其实提前看字符的概念也存在于编译器，
+只是这时就是提前看k个“标记”而不是“字符”了。平时听到的 `LL(k)` 中的 `k` 就是需
+要向前看的标记的个数了。
+
+另外，我们用词法分析器将源码转换成标记流，能减小语法分析复杂度，原因之一就是
+减少了语法分析器需要“向前看”的字符个数。
+
+## 其它
+
+其它的标记的解析就相对容易一些了，我们直接贴上代码：
+
+```c
+void next() {
+        ...
+
+        else if (token == '=') {
+            // parse '==' and '='
+            if (*src == '=') {
+                src ++;
+                token = Eq;
+            } else {
+                token = Assign;
+            }
+            return;
+        }
+        else if (token == '+') {
+            // parse '+' and '++'
+            if (*src == '+') {
+                src ++;
+                token = Inc;
+            } else {
+                token = Add;
+            }
+            return;
+        }
+        else if (token == '-') {
+            // parse '-' and '--'
+            if (*src == '-') {
+                src ++;
+                token = Dec;
+            } else {
+                token = Sub;
+            }
+            return;
+        }
+        else if (token == '!') {
+            // parse '!='
+            if (*src == '=') {
+                src++;
+                token = Ne;
+            }
+            return;
+        }
+        else if (token == '<') {
+            // parse '<=', '<<' or '<'
+            if (*src == '=') {
+                src ++;
+                token = Le;
+            } else if (*src == '<') {
+                src ++;
+                token = Shl;
+            } else {
+                token = Lt;
+            }
+            return;
+        }
+        else if (token == '>') {
+            // parse '>=', '>>' or '>'
+            if (*src == '=') {
+                src ++;
+                token = Ge;
+            } else if (*src == '>') {
+                src ++;
+                token = Shr;
+            } else {
+                token = Gt;
+            }
+            return;
+        }
+        else if (token == '|') {
+            // parse '|' or '||'
+            if (*src == '|') {
+                src ++;
+                token = Lor;
+            } else {
+                token = Or;
+            }
+            return;
+        }
+        else if (token == '&') {
+            // parse '&' and '&&'
+            if (*src == '&') {
+                src ++;
+                token = Lan;
+            } else {
+                token = And;
+            }
+            return;
+        }
+        else if (token == '^') {
+            token = Xor;
+            return;
+        }
+        else if (token == '%') {
+            token = Mod;
+            return;
+        }
+        else if (token == '*') {
+            token = Mul;
+            return;
+        }
+        else if (token == '[') {
+            token = Brak;
+            return;
+        }
+        else if (token == '?') {
+            token = Cond;
+            return;
+        }
+        else if (token == '~' || token == ';' || token == '{' || token == '}' || token == '(' || token == ')' || token == ']' || token == ',' || token == ':') {
+            // directly return the character as token;
+            return;
+        }
+
+        ...
+}
+```
+
+代码较多，但主要逻辑就是向前看一个字符来确定真正的标记。
+
+## 关键字与内置函数
+
+虽然上面写完了词法分析器，但还有一个问题需要考虑，那就是“关键字”，例如 `if`,
+`while`, `return` 等。它们不能被作为普通的标识符，因为有特殊的含义。
+
+一般有两种处理方法：
+
+1. 词法分析器中直接解析这些关键字。
+2. 在语法分析前将关键字提前加入符号表。
+
+这里我们就采用第二种方法，将它们加入符号表，并提前为它们赋予必要的信息（还记得
+前面说的标识符 `Token` 字段吗？）。这样当源代码中出现关键字时，它们会被解析成
+标识符，但由于符号表中已经有了相关的信息，我们就能知道它们是特殊的关键字。
+
+内置函数的行为也和关键字类似，不同的只是赋值的信息，在`main`函数中进行初始化如
+下：
+
+```c
+// types of variable/function
+enum { CHAR, INT, PTR };
+int *idmain;                  // the `main` function
+
+void main() {
     ...
 
-    i = 0;
-    text[i++] = IMM;
-    text[i++] = 10;
-    text[i++] = PUSH;
-    text[i++] = IMM;
-    text[i++] = 20;
-    text[i++] = ADD;
-    text[i++] = PUSH;
-    text[i++] = EXIT;
-    pc = text;
+    src = "char else enum if int return sizeof while "
+          "open read close printf malloc memset memcmp exit void main";
+
+     // add keywords to symbol table
+    i = Char;
+    while (i <= While) {
+        next();
+        current_id[Token] = i++;
+    }
+
+    // add library to symbol table
+    i = OPEN;
+    while (i <= EXIT) {
+        next();
+        current_id[Class] = Sys;
+        current_id[Type] = INT;
+        current_id[Value] = i++;
+    }
+
+    next(); current_id[Token] = Char; // handle void type
+    next(); idmain = current_id; // keep track of main
 
     ...
     program();
 }
 ```
 
-编译程序 `gcc xc-tutor.c`，运行程序：`./a.out hello.c`。输出
+# 代码
+
+本章的代码可以在 [Github](https://github.com/lotabout/write-a-C-interpreter/tree/step-2) 上下载，也可以直接 clone
 
 ```
-exit(30)
+git clone -b step-2 https://github.com/lotabout/write-a-C-interpreter
 ```
 
-注意我们的之前的程序需要指令一个源文件，只是现在还用不着，但从结果可以看出，我
-们的虚拟机还是工作良好的。
+上面的代码运行后会出现 'Segmentation Falt'，这是正常的，因为它会尝试运行我们上
+一章创建的虚拟机，但其中并没有任何汇编代码。
 
 # 小结
 
-本章中我们回顾了计算机的内部运行原理，并仿照 x86 汇编指令设计并实现了我们自己
-的指令集。
+本章我们为我们的编译器构建了词法分析器，通过本章的学习，我认为有几个要点需要
+强调：
 
-本章的代码可以在 [Github](https://github.com/lotabout/write-a-C-interpreter/tree/step-1) 上下载，也可以直接 clone
+1. 词法分析器的作用是对源码字符串进行预处理，作用是减小语法分析器的复杂程度。
+2. 词法分析器本身可以认为是一个编译器，输入是源码，输出是标记流。
+3. `lookahead(k)` 的概念，即向前看 `k` 个字符或标记。
+4. 词法分析中如何处理标识符与符号表。
 
-```
-git clone -b step-1 https://github.com/lotabout/write-a-C-interpreter
-```
 
-实际计算机中，添加一个新的指令需要设计许多新的电路，会增加许多的成本，但我们的
-需要机中，新的指令几乎不消耗资源，因此我们可以利用这一点，用更多的指令来完成
-更多的功能，从而简化具体的实现。
+下一章中，我们将介绍递归下降的语法分析器。我们下一章见。
