@@ -59,9 +59,7 @@ Travis 的 [构建周期](https://docs.travis-ci.com/user/customizing-the-build/
 
 所以我们的配置如下：
 
-```yaml
-# .travis.yml
-
+{% codeblock .travis.yml lang:yaml %}
 language: node_js
 
 node_js:
@@ -81,7 +79,7 @@ script:
 - git submodule init      # 用于更新主题
 - git submodule update
 - hexo generate
-```
+{% endcodeblock %}
 
 上面的例子中 `npm install` 安装 hexo 需要的插件，这要求 `package.json` 已经
 设置好。例如，我们要使用 `hexo-deployer-git` 插件来部署，所以我们需要事先运行
@@ -97,24 +95,22 @@ npm install --save hexo-deployer-git
 
 首先，我们需要对 `_config.yml` 进行配置，以执行 `hexo deploy` 进行部署：
 
-```yaml
-# _config.yml
+{%codeblock _config.yml lang:yaml%}
 ## Docs: http://hexo.io/docs/deployment.html
 deploy:
   type: git
   repo: https://github.com/lotabout/lotabout.github.io
   branch: master
-```
+{% endcodeblock %}
 
 然后我们可以在 `.travis.yml` 添加生成成功后的动作：
 
-```yaml
-# .travis.yml
+{%codeblock .travis.yml lang:yaml%}
 after_success:
 - git config --global user.name "Your Name"
 - git config --global user.email "Your Email"
 - hexo deploy
-```
+{% endcodeblock %}
 
 然而在 `hexo deploy` 时，我们需要输入 Github 的用户名和密码，但这又要如何自动
 化呢？
@@ -126,7 +122,7 @@ OAuth](https://github.com/blog/1270-easier-builds-and-deployments-using-git-over
 支持一种特殊的 URL 来执行 push/pull 等等操作，而不需要输入用户名密码。
 但这需要事先在 Github 上创建一个 token：
 
-![Github Create Token](2016-01-14-github-token.png)
+{% asset_img /2016-01-14-github-token.png Github Create Token %}
 
 1. 打开 [Personal Access Tokens](https://github.com/settings/tokens)
 2. 点击 `Create new token`
@@ -166,25 +162,24 @@ travis encrypt 'GH_TOKEN=<TOKEN>' --add
 
 上面命令会在 `.travis.yml` 添加如下内容：
 
-```
+{%codeblock .travis.yml lang:yaml%}
 env:
   global:
     secure: QAH+/EIDC/Jg...
-```
+{% endcodeblock %}
 
 上面的一长串字符串就是加密后的环境变量。之后，在 Travis 执行脚本时，我们就可能
 访问环境变量 `GH_TOKEN` 来获取 github token 了。
 
 最后，我们用 `sed` 命令动态地修改 github 的 URL，加入 token 信息：
 
-```
-# .travis.yml
+{%codeblock .travis.yml lang:yaml%}
 after_success:
 - git config --global user.name "Mark Wallace"
 - git config --global user.email "lotabout@gmail.com"
 - sed -i'' "/^ *repo/s~github\.com~${GH_TOKEN}@github.com~" _config.yml
 - hexo deploy
-```
+{% endcodeblock %}
 
 - [Travis Encryption Keys](https://docs.travis-ci.com/user/encryption-keys/)
 
@@ -192,7 +187,7 @@ after_success:
 
 最后一步，就是启用 Travis CI，连接 Github 后，它会列出你的所有 repo，勾上相应的 repo 即可：
 
-![Travis tick repo](2016-01-14-travis.png)
+{% asset_img 2016-01-14-travis.png Travis tick repo %}
 
 ## 最后
 
