@@ -22,7 +22,7 @@ script:
 
 after_success:
 - sed -i'' "s~https://github.com/lotabout/lotabout.github.io~https://${GH_TOKEN}@github.com/lotabout/lotabout.github~" _config.yml
-- hexo deploy --silent
+- hexo deploy
 
 env:
   global:
