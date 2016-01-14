@@ -21,7 +21,7 @@ script:
 - hexo generate
 
 after_success:
-- sed -i'' "s~https://github.com/lotabout/lotabout.github.io~https://${GH_TOKEN}@github.com/lotabout/lotabout.github~" _config.yml
+- sed -i'' "/^ *repo/s~github\.com~${GH_TOKEN}@github.com~" _config.yml
 - hexo deploy
 
 env:
