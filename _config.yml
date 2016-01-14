@@ -69,6 +69,15 @@ archive_generator:
 #theme: landscape
 theme: very-simple
 
+
+# configuration for themes
+very_simple:
+  social:
+      email: lotabout@gmail.com
+      github: lotabout
+      rss: /atom.xml
+  disqus: lotaboutlife
+
 # Deployment
 ## Docs: http://hexo.io/docs/deployment.html
 deploy:

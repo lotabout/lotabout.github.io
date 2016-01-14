@@ -13,14 +13,14 @@ before_install:
 install:
 - npm install
 
-before_script:
-- git config --global user.name "Mark Wallace"
-- git config --global user.email "lotabout@gmail.com"
-
 script:
+- git submodule init
+- git submodule update
 - hexo generate
 
 after_success:
+- git config --global user.name "Mark Wallace"
+- git config --global user.email "lotabout@gmail.com"
 - sed -i'' "/^ *repo/s~github\.com~${GH_TOKEN}@github.com~" _config.yml
 - hexo deploy
 
