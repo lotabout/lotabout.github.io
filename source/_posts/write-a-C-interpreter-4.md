@@ -7,6 +7,19 @@ toc:
 
 本章我们将讲解递归下降的方法，并用它完成一个基本的四则运算的语法分析器。
 
+<!--more-->
+手把手教你构建 C 语言编译器系列共有10个部分：
+1. [手把手教你构建 C 语言编译器（0）——前言](http://lotabout.me/2015/write-a-C-interpreter-0/)
+2. [手把手教你构建 C 语言编译器（1）——设计](http://lotabout.me/2015/write-a-C-interpreter-1/)
+3. [手把手教你构建 C 语言编译器（2）——虚拟机](http://lotabout.me/2015/write-a-C-interpreter-2/)
+4. [手把手教你构建 C 语言编译器（3）——词法分析器](http://lotabout.me/2015/write-a-C-interpreter-3/)
+4. [手把手教你构建 C 语言编译器（4）——递归下降](http://lotabout.me/2015/write-a-C-interpreter-4/)
+5. [手把手教你构建 C 语言编译器（5）——变量定义](http://lotabout.me/2015/write-a-C-interpreter-5/)
+6. [手把手教你构建 C 语言编译器（6）——函数定义](http://lotabout.me/2015/write-a-C-interpreter-6/)
+7. [手把手教你构建 C 语言编译器（7）——语句](http://lotabout.me/2015/write-a-C-interpreter-7/)
+8. [手把手教你构建 C 语言编译器（8）——表达式](http://lotabout.me/2015/write-a-C-interpreter-8/)
+0. [手把手教你构建 C 语言编译器（9）——总结](http://lotabout.me/2015/write-a-C-interpreter-9/)
+
 # 什么是递归下降
 
 传统上，编写语法分析器有两种方法，一种是自顶向下，一种是自底自上。自顶向下是从

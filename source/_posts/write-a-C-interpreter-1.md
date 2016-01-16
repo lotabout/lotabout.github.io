@@ -1,5 +1,5 @@
 title: 手把手教你构建 C 语言编译器（1）- 设计
-date: 2015-12-22 12:03:14
+date: 2015-12-22 12:04:00
 tags: [C, compiler]
 categories: Project
 toc:
@@ -8,7 +8,20 @@ toc:
 本章是“手把手教你构建 C 语言编译器”系列的第二篇，我们要从整体上讲解如何设计我
 们的 C 语言编译器。
 
-首先要解释的是，虽然标题是编译器，但实际上我们构建的是 C 语言的解释器，这意味
+<!--more-->
+手把手教你构建 C 语言编译器系列共有10个部分：
+1. [手把手教你构建 C 语言编译器（0）——前言](http://lotabout.me/2015/write-a-C-interpreter-0/)
+2. [手把手教你构建 C 语言编译器（1）——设计](http://lotabout.me/2015/write-a-C-interpreter-1/)
+3. [手把手教你构建 C 语言编译器（2）——虚拟机](http://lotabout.me/2015/write-a-C-interpreter-2/)
+4. [手把手教你构建 C 语言编译器（3）——词法分析器](http://lotabout.me/2015/write-a-C-interpreter-3/)
+4. [手把手教你构建 C 语言编译器（4）——递归下降](http://lotabout.me/2015/write-a-C-interpreter-4/)
+5. [手把手教你构建 C 语言编译器（5）——变量定义](http://lotabout.me/2015/write-a-C-interpreter-5/)
+6. [手把手教你构建 C 语言编译器（6）——函数定义](http://lotabout.me/2015/write-a-C-interpreter-6/)
+7. [手把手教你构建 C 语言编译器（7）——语句](http://lotabout.me/2015/write-a-C-interpreter-7/)
+8. [手把手教你构建 C 语言编译器（8）——表达式](http://lotabout.me/2015/write-a-C-interpreter-8/)
+0. [手把手教你构建 C 语言编译器（9）——总结](http://lotabout.me/2015/write-a-C-interpreter-9/)
+
+首先要说明的是，虽然标题是编译器，但实际上我们构建的是 C 语言的解释器，这意味
 着我们可以像运行脚本一样去运行 C 语言的源代码文件。这么做的理由有两点：
 
 1. 解释器与编译器仅在代码生成阶段有区别，而其它方面如词法分析、语法分析是一样的。
