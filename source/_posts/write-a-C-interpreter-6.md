@@ -250,7 +250,7 @@ void function_body() {
                 printf("%d: bad local declaration\n", line);
                 exit(-1);
             }
-            if (current_id[Class]) {
+            if (current_id[Class] == Loc) {
                 // identifier exists
                 printf("%d: duplicate local declaration\n", line);
                 exit(-1);
@@ -310,5 +310,4 @@ git clone -b step-4 https://github.com/lotabout/write-a-C-interpreter
 因为这决定了我们需要从解析中获取什么样的信息（例如参数的位置，个数等），而这些
 可能需要你重新回顾一下“虚拟机”这一章，或是重新学习学习汇编相关的知识。
 
-下一章中我们将讲解最复杂的表达式的解析，同时也是整个编译器最后的部分，敬请期
-待。
+下一章中我们将讲解语句的解析，敬请期待。
