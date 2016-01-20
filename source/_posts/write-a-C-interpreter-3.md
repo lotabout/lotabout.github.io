@@ -262,11 +262,11 @@ void next() {
 唯一不好理解的是获取十六进制的值相关的代码。
 
 ```
-token_val = token_val * 16 + (token & 16) + (token >= 'A' ? 9 : 0);
+token_val = token_val * 16 + (token & 15) + (token >= 'A' ? 9 : 0);
 ```
 
 这里要注意的是在ASCII码中，字符`a`对应的十六进制值是 `61`, `A`是`41`，故通过
-`(token & 16)` 可以得到个位数的值。其它就不多说了，这里这样写的目的是装B（其实
+`(token & 15)` 可以得到个位数的值。其它就不多说了，这里这样写的目的是装B（其实
 是抄 c4 的源代码的）。
 
 ```c
@@ -281,7 +281,7 @@ void next() {
                     //hex
                     token = *++src;
                     while ((token >= '0' && token <= '9') || (token >= 'a' && token <= 'f') || (token >= 'A' && token <= 'F')) {
-                        token_val = token_val * 16 + (token & 16) + (token >= 'A' ? 9 : 0);
+                        token_val = token_val * 16 + (token & 15) + (token >= 'A' ? 9 : 0);
                         token = *++src;
                     }
                 } else {
