@@ -1,7 +1,7 @@
 title: 写一个 Mustache 模板引擎
 date: 2016-01-23 10:53:35
 tags: [mustache, template engine]
-categories: Project
+categories: [Project]
 toc:
 ---
 
@@ -41,7 +41,7 @@ Java 的编译器将 Java 代码转换成 Java 字节码，硬件（CPU）本身
 ## Mustache 简介
 
 [Mustache](https://mustache.github.io/mustache.5.html) 自称为 logic-less，与一
-般模板不同，它不包含 `if`, `for` 这样的逻辑标签，而统一用 `{{#prop}}` 之类的
+般模板不同，它不包含 `if`, `for` 这样的逻辑标签，而统一用 {%raw%}{{#prop}}{%endraw%} 之类的
 标签解决。下面是一个 Mustache 模板：
 
 ```
@@ -73,8 +73,8 @@ Well, 6000.0 dollars, after taxes.
 
 所以这里稍微总结一下 Mustache 的标签：
 
-- `{{ name }}`: 获取数据中的 `name` 替换当前文本
-- `{{# name }} ... {{/name}}`: 获取数据中的 `name` 字段并依据数据的类型，执行如下操作：
+- {%raw%}{{ name }}{%endraw%}: 获取数据中的 `name` 替换当前文本
+- {%raw%}{{# name }} ... {{/name}}{%endraw%}: 获取数据中的 `name` 字段并依据数据的类型，执行如下操作：
     - 若 `name` 为假，跳过当前块，即相当于 `if` 操作
     - 若 `name` 为真，则将 `name` 的值加入上下文并解析块中的文本
     - 若 `name` 是数组且个数大于 0，则逐个迭代其中的数据，相当于 `for`
@@ -86,7 +86,7 @@ Well, 6000.0 dollars, after taxes.
 如前文所述，我们实现的模板引擎需要包括一个编译器，以及一个虚拟机，我们选择
 抽象语法树作为中间表示。下图是一个图示：
 
-{% asset_img /template-engine-structure.png Template Engine Structure %}
+{% asset_img template-engine-structure.png Template Engine Structure %}
 
 学过编译原理的话，你可能知道编译器包括了词法分析器、语法分析器及目标代码的生
 成。但是我们不会单独实现它们，而是一起实现原因有两个：
@@ -101,9 +101,9 @@ Well, 6000.0 dollars, after taxes.
 ### 上下文查找
 
 首先，Mustache 有所谓上下文栈（context stack）的概念，每进入一个
-`{{#name}}...{{/name}}` 块，就增加一层栈，下面是一个图示：
+{%raw%}{{#name}}...{{/name}}{%endraw%} 块，就增加一层栈，下面是一个图示：
 
-{% asset_img /context-stack.png Context Stack %}
+{% asset_img context-stack.png Context Stack %}
 
 这个概念和 Javscript 中的原型链是一样的。只是 Python 中并没有相关的支持，因此
 我们实现自己的查找函数：
@@ -150,7 +150,7 @@ def is_standalone(text, start, end):
 符。向前是一个个字符地判断，向后则偷懒用了正则表达式。右是单独行则返回单独行的
 位置：`(start+1, right.end())`。
 
-{% asset_img /standalone.png Standalone Line %}
+{% asset_img standalone.png Standalone Line %}
 
 ## 语法树
 
@@ -175,15 +175,15 @@ class Token():
 这 6 种类型中除了 `ROOT`，其余都对应了 Mustache 的一种类型，对应关系如下：
 
 - `LITERAL`：纯文本，即最终按原样输出的部分
-- `VARIABLE`：变量字段，即 `{{ name }}` 类型
-- `SECTION`：对应 `{{#name}} ... {{/name}}`
-- `INVERTED`：对应 `{{^name}} ... {{/name}}`
-- `COMMENT`：注释字段 `{{! name }}`
-- `PARTIAL`：对应 `{{> name}}`
+- `VARIABLE`：变量字段，即 {%raw%}{{ name }}{%endraw%} 类型
+- `SECTION`：对应 {%raw%}{{#name}} ... {{/name}}{%endraw%}
+- `INVERTED`：对应 {%raw%}{{^name}} ... {{/name}}{%endraw%}
+- `COMMENT`：注释字段 {%raw%}{{! name }}{%endraw%}
+- `PARTIAL`：对应 {%raw%}{{> name}}{%endraw%}
 
 而最后的 `ROOT` 则代表整棵语法树的根节点。
 
-{% asset_img /AST.png AST %}
+{% asset_img AST.png AST %}
 
 了解了节点的类型，我们还需要知道每个节点需要保存什么样的信息，例如对于
 `Section` 类型的节点，我们需要保存它对应的子节点，另外为了支持 `lambda` 类型的
@@ -201,14 +201,14 @@ class Token():
         self.indent = 0 # used for partial
 ```
 
-- `name` ：保存该节点的名字，例如 `{{ header }}` 是变量类型，`name` 字段保存
+- `name` ：保存该节点的名字，例如 {%raw%}{{ header }}{%endraw%} 是变量类型，`name` 字段保存
   的就是 `header` 这个名字。
 - `type`：保存前文介绍的节点的类型
 - `value`：保存该节点的值，不同类型的节点保存的内容也不同，例如 `LITERAL` 类型
   保存的是字符串本身，而 `VARIABLE` 保存的是变量的名称，和 `name` 雷同。
 - `text` ：只对 `SECTION` 和 `INVERTED` 有用，即保存包含的文本
 - `children`：`SECTION`、`INVERTED`及`ROOT`类型使用，保存子节点
-- `escape`：输出是否要转义，例如 `{{name}}` 是默认转义的，而`{{{name}}}`默认不
+- `escape`：输出是否要转义，例如 {%raw%}{{name}}{%endraw%} 是默认转义的，而{%raw%}{{{name}}}{%endraw%}默认不
   转义
 - `delimiter`：与 `lambda` 的支持有关。Mustache 要求，若 `SECTION` 的变量是一
   个函数，则先调用该函数，返回时的文本用当前的分隔符解释，但在编译期间这些文本
@@ -256,7 +256,7 @@ class Token():
 ②的逻辑很简单，就是根据当前节点的类型执行不同的函数用来渲染（render）文本。
 
 另外每个“渲染函数”都有两个参数，即上下文栈`contexts` 和 `partials`。
-`partials`是一个字典类型。它的作用是当我们在模板中遇见如 `{{> part}}` 的标签
+`partials`是一个字典类型。它的作用是当我们在模板中遇见如 {%raw%}{{> part}}{%endraw%} 的标签
 中，就从 `partials` 中查找 `part`，并用得到的文本替换当前的标签。具体的使用方
 法可以参考 [Mustache 文档](http://mustache.github.io/mustache.5.html#Partials)
 
@@ -305,7 +305,7 @@ class Token():
 这里有两点特殊的地方：
 
 1. 若变量名为 `.`，则返回当前上下文栈中栈顶的变量。这是 Mustache 的特殊语法。
-2. 支持诸如以 `.` 号为分隔符的层级访问，如 `{{a.b.c}}` 代表首先查找变量 `a`，
+2. 支持诸如以 `.` 号为分隔符的层级访问，如 {%raw%}{{a.b.c}}{%endraw%} 代表首先查找变量 `a`，
    在 `a` 的值中查找变量 `b`，以此类推。
 
 ### 字面量
@@ -332,7 +332,7 @@ class Token():
 
 ### 变量
 
-即遇到诸如 `{{name}}`、`{{{name}}}` 或 `{{&name}}` 等的标签时，从上下文栈中查
+即遇到诸如 {%raw%}{{name}}{%endraw%}、{%raw%}{{{name}}}{%endraw%} 或 {%raw%}{{&name}}{%endraw%} 等的标签时，从上下文栈中查
 找相应的值即可：
 
 ```python
@@ -492,14 +492,14 @@ partial 及 lambda，这些机制使得用户能动态地为模板添加新的�
 Mustache 的词法较为简单，并且要求能动态改变分隔符，所以我们用正则表达式来一个
 个匹配。
 
-Mustache 标签由左右分隔符包围，默认的左右分隔符分别是 `{{` 和 `}}`：
+Mustache 标签由左右分隔符包围，默认的左右分隔符分别是 `{ {`（忽略中间的空格） 和 `}}`：
 
 ```python
 DEFAULT_DELIMITERS = ('{{', '}}')
 ```
 
 而标签的模式是：左分隔符 + 类型字符 + 标签名 + （可选字符）+ 右分隔符，例如：
-`{{# name}}` 和 `{{{name}}}`。其中 `#` 就代表类型，`{{{name}}}` 中的`}` 就是
+{%raw%}{{# name}}{%endraw%} 和 {%raw%}{{{name}}}{%endraw%}。其中 `#` 就代表类型，{%raw%}{{{name}}}{%endraw%} 中的`}` 就是
 可选的字符。
 
 ```python
