@@ -86,7 +86,7 @@ Well, 6000.0 dollars, after taxes.
 如前文所述，我们实现的模板引擎需要包括一个编译器，以及一个虚拟机，我们选择
 抽象语法树作为中间表示。下图是一个图示：
 
-TODO: add image
+{% asset_img /template-engine-structure.png Template Engine Structure %}
 
 学过编译原理的话，你可能知道编译器包括了词法分析器、语法分析器及目标代码的生
 成。但是我们不会单独实现它们，而是一起实现原因有两个：
@@ -103,7 +103,7 @@ TODO: add image
 首先，Mustache 有所谓上下文栈（context stack）的概念，每进入一个
 `{{#name}}...{{/name}}` 块，就增加一层栈，下面是一个图示：
 
-TODO: add image
+{% asset_img /context-stack.png Context Stack %}
 
 这个概念和 Javscript 中的原型链是一样的。只是 Python 中并没有相关的支持，因此
 我们实现自己的查找函数：
@@ -150,7 +150,7 @@ def is_standalone(text, start, end):
 符。向前是一个个字符地判断，向后则偷懒用了正则表达式。右是单独行则返回单独行的
 位置：`(start+1, right.end())`。
 
-TODO: add picture
+{% asset_img /standalone.png Standalone Line %}
 
 ## 语法树
 
@@ -183,7 +183,7 @@ class Token():
 
 而最后的 `ROOT` 则代表整棵语法树的根节点。
 
-TODO: add picture for tranlation
+{% asset_img /AST.png AST %}
 
 了解了节点的类型，我们还需要知道每个节点需要保存什么样的信息，例如对于
 `Section` 类型的节点，我们需要保存它对应的子节点，另外为了支持 `lambda` 类型的
