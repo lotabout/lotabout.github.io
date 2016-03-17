@@ -72,6 +72,10 @@ theme: very-simple
 
 # configuration for themes
 very_simple:
+  menu:
+      Home: /
+      Archives: archives
+      About: about
   social:
       email: lotabout@gmail.com
       github: lotabout
