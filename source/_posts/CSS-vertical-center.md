@@ -6,41 +6,41 @@ toc:
 ---
 
 简单一句 `margin: 0 auto` 我们便能搞定水平居中，而正当我们开心地写出 `margin:
-auto 0` 时，浏览器却没却无情无情地拒绝了我们，那我们来看看如何用 CSS 实现垂直
+auto 0` 时，浏览器却没却无情地拒绝了我们，那我们来看看如何用 CSS 实现垂直
 居中吧。
 
 要完全理解本文，我们假设你已经对 CSS 较为熟悉，包括 CSS 盒模型(box model)，
-position 的常用方法，伪元素的使用等等。但若只是想快速完成，照抄就是！
+position 的常用方法，伪元素的使用等等。但若只是工作需要，照抄就是！
 
 本文示例用 [Jsfiddle](http://jsfiddle.net/) 编辑，可能载入较慢，请耐心等待。
 
 ## 垂直居个中，怎么就这么难
 
 正如前言所说，水平居中，通常只需要一句：`margin: 0 auto` 即可解决。而同样的方
-法对于垂直居中却没用，有下例为证：
+法对于垂直居中却没用，下例为证：
 
 {% jsfiddle lotabout/jcvo1p9r/1 result,html,css%}
 
 原因何在？我们查一下 [CSS 2 的标
-准](https://www.w3.org/TR/CSS2/visudet.html#normal-block)：如果 `margin-top`
-或 `margin-bottom` 的值为 `auto`，则它们的 'used value' 为 `0`。也就是在计算高
-度时，maring 根本就没有 `auto` 的概念。
+准](https://www.w3.org/TR/CSS2/visudet.html#normal-block)：计算高度时如果
+`margin-top` 或 `margin-bottom` 的值为 `auto`，则它们的 'used value' 为
+`0`。也就是在计算高度时，margin 根本就没有 `auto` 的概念。
 
 好吧，那让我们静下来想想，既然 `auto` 不能用，那我们自己设置不就行了吗？当然这
 就需要事先知道需要居中的元素的高度，再用 `calc` 指定 `margin-top` 就能搞定了。
 
-{% jsfiddle lotabout/jcvo1p9r/2 result,html,css%}
+{% jsfiddle lotabout/jcvo1p9r/2 css,html,result%}
 
-诶？怎么跟说好的不一样？说好的这回就能居中呢？上网一查，好嘛，CSS 果然是坑啊。
-[W3school](http://www.w3schools.com/cssref/pr_margin-top.asp)就写得明明白白：
-如果使用百分比作为 `margin-top` 的值，则百分比的基准是它的父元素的 **宽度** 。
+诶？怎么跟说好的不一样？说好的这回就能居中呢？上网一查，CSS 果然是坑啊。
+[W3school](http://www.w3schools.com/cssref/pr_margin-top.asp) 就写得明明白白：
+如果使用百分比作为 `margin-top` 的值，则百分比的基准是父元素的 **宽度** 。
 好吧，三观都粉碎了。但再仔细一查，`margin-top` 是按父元素的宽度算，但
 `top/bottom` 是按父元素的高度算啊！于是我们想到了用 `position: relative` +
 `top: calc(50% - height/2)` 的手段：
 
 {% jsfiddle lotabout/jcvo1p9r/13 result,html,css%}
 
-皇天不负苦心人，终于被我们给拿下了！这时旁边的设计表示：你帮我在居中的元素里加
+皇天不负苦心人，终于被我们给拿下了！这时身后的设计表示：你再帮我在居中的元素里加
 点东西吧。WTF？居中元素的高度不准变啊，混蛋！
 
 于是我们下面要处理的就是未知父元素高度，未知子元素高度情况下的垂直居中问题（图
@@ -56,16 +56,16 @@ position 的常用方法，伪元素的使用等等。但若只是想快速完�
 的，老实站出来 -_-
 
 好吧，既然不明白为什么，那就继续好好看文档吧：`vertical-align` 是用来指定内嵌
-元素(inline element) 和 table-cell 的垂直对齐方式。那么我们先用第一种方式，将
-元素转换成 `table` 来进行对齐。首先为父元素加上 `display: table`，为子元素加上
-`display: table-cell` 来将它们变成表格的样式，再为子元素加上 `vertical-align:
-middle` 即可。如下例所示。
+元素(inline element) 和 table-cell 的垂直对齐方式。我们先将 元素转换成 `table`
+来试试对齐。首先为父元素加上 `display: table`，为子元素加上 `display:
+table-cell` 来将它们变成表格的样式，再为子元素加上 `vertical-align: middle`
+即可。如下例所示。
 
 {% jsfiddle lotabout/jcvo1p9r/14 result,html,css%}
 
 嗯，居中是居中了，而且也跟子元素的实际高度无关，但怎么感觉有点奇怪？嗯，是的，
-奇怪是因为父元素的宽度变小了，不像原来占是 100% 的宽度了。原因就是 `table` 本
-质上也是 inline 元素，因此现在变成 inline 元素的父元素，它的宽度将与子元素的
+奇怪是因为父元素的宽度变小了，不像原来是 100% 的宽度。原因是 `table` 本
+质上也是 inline 元素，因此现在变成 inline 的父元素，它的宽度将与子元素的
 宽度相同。当然，我们也可以为父元素加上 `width: 100%` 来强制指定它的宽度。
 
 另一个问题是子元素的高度变得和父元素一样高了。这对读者而言也许是问题，也许不
@@ -73,9 +73,9 @@ middle` 即可。如下例所示。
 
 ## 伪元素的救赎
 
-前面说到 `vertical-align` 可以用于垂直对齐，但它只能用于 inline 元素。一个直接
-的想法就是把子元素改成 `display: inline-block`，并加上 `vertical-align: middle`。只
-是可惜的是这样并不成功。
+前面说到 `vertical-align` 可以用于垂直对齐，但它只能用于 inline 元素。比起
+`table`，更为直接 的想法就是把子元素改成 `display: inline-block`，并加上
+`vertical-align: middle`。只是可惜的是这样并不成功。
 
 原因是 `vertical-align` 指的是当前 inline 元素自己，与其它 inline 元素如何对
 齐。而我们现在的情况是，只有一个 inline 元素，那自己跟自己，怎么对齐嘛。
@@ -100,7 +100,8 @@ middle` 即可。如下例所示。
 之前我们想到了用 `position: relative` + `top: calc(50% - height/2)` 的方法，但
 这种方法需要知道子元素的高度，但有了
 [transform](https://developer.mozilla.org/en-US/docs/Web/CSS/transform)，我们
-就可以用 `translateY(-50%)` 来达到 `- height/2` 的目的。
+就可以用 `translateY(-50%)` 来达到 `- height/2` 的目的，而不需要知道居中元素的
+高度。
 
 {% jsfiddle lotabout/jcvo1p9r/15 css,html,result%}
 
@@ -154,7 +155,7 @@ middle` 即可。如下例所示。
 }
 ```
 
-需要注意的是 CSS3 的支持问题。例如 flexbox 需要 IE11 才能支持。
+需要注意的是 CSS3 的支持问题。例如 IE 需要 IE11 才能支持。
 
 关于 flexbox 如何使用，可以参考 [A Complete Guide to Flexbox](https://css-tricks.com/snippets/css/a-guide-to-flexbox/)。
 
@@ -164,4 +165,4 @@ middle` 即可。如下例所示。
 们也一步步接近关于 CSS 的丑陋真相。以及旧社会（CSS2）下的人们水深火热的生活，
 但好在社会是在不断发展进步的。我们最终还是迎来的美好的新时代。
 
-由于本人水平有限，如有错误，再所难免，还请不吝赐教。
+由于本人水平有限，难免会有错误，还请不吝赐教。
