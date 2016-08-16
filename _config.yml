@@ -67,11 +67,11 @@ archive_generator:
 ## Plugins: http://hexo.io/plugins/
 ## Themes: http://hexo.io/themes/
 #theme: landscape
-theme: very-simple
+theme: noise
 
 
 # configuration for themes
-very_simple:
+noise:
   menu:
       Home: /
       Archives: archives
