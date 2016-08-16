@@ -1,12 +1,12 @@
-title: JSONP
+title: JSONP 简介
 date: 2016-03-21 20:46:38
-tags: [javascript, jsonp, ajax, jquery, cross-domain]
+tags: [jsonp, ajax, cross-domain]
 categories: [Knowledge]
 toc:
 ---
 
-今天面试被问到“听说过 JSONP 吗？”，虽然名字很熟悉，却不记得在哪听过用过，于是
-回家立马研究一下是什么，本文就是研究后的小结。
+JSONP 不是 JSON，它是跨域访问的一种机制。那么什么是跨域访问？什么是 JSONP？如
+果你不清楚的话，不妨点开看看吧。
 
 ## 跨域访问
 
