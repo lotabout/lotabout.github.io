@@ -7,8 +7,8 @@ tags: [closure]
 只是他们依旧不把它叫作“函数闭包”。
 
 之前的文章里，我们已经试图说服大家：闭包与面向对象在本质上是一样的。这篇文章中，
-我们要看看闭包与 `lambda` 的区别；将函数作为数据的优缺点；以及其它一些你可能想了解
-的概念。
+我们要仔细看看什么是闭包；闭包与 `lambda` 的区别；将函数作为数据的优缺点；以及
+其它一些你可能想了解的概念。
 
 ## 什么是闭包
 
@@ -247,6 +247,210 @@ Nice! 又一次体现了我们惊人的智慧！只是，这时，原先的代�
 
 ## 闭包不是 lambda
 
+lambda 函数，一般也称为匿名函数，它允许我们定义一个函数，同时不为它命名。相信
+用过 Javascipt 的同学们已经很熟悉了，因为它经常出现在回调函数里。
+
+由于现今的主流语言中，lambda 与闭包经常同时出现，使得许多人将二者等同对待，但
+实际情况并非如此，它们本是两个独立的概念，但现在密不可分又是情有可原。
+
+1. 创建闭包并不需要 lambda 函数。
+2. 创建了 lambda 函数并不一定生成闭包。
+
+我们知道，闭包的生成通常需要我们能够嵌套定义函数，并且要求语言采用静态作用域。
+那么在下面的 Python 代码里，我们没有用到 lambda ，却生成了闭包。
+
+```python
+def gen_adder(n):
+    def adder(x):
+        return n + x
+    return adder
+
+add_10 = gen_adder(10)
+add_10(20) # => 30
+```
+
+调用 `gen_adder` 时生成了一个环境，而返回的 `adder` 函数中的自由变量 `n` 则与
+这个环境绑定，构成了一个闭包。整个过程不没有用到匿名函数。
+
+而创建 lambda 函数时也不一定生成闭包，例如如前一节所说，如果一门语言采用了动态
+作用域，那么它根本不可能产生闭包。例如下面的 Emacs Lisp 代码：
+
+```elisp
+(defun gen-adder (n)
+  (lambda (x) (+ n x)))
+
+(defvar adder (gen-adder 10))
+
+(let ((n 5))                   ; otherwise `n` is undefined
+  (funcall adder 20))          ; => 25
+```
+
+由于 Emacs Lisp 是动态作用域语言，在调用 `adder` 时，自由变量 `n` 指向的是运行
+时环境中的 `n = 5` 而不是定义时环境 `n = 10`。由此可见它并没有生成闭包。
+
+那么 lambda 有何好处呢？我个人认为最大的好处就是方便书写，方便修改。例如回调函
+数使用了 lambda 函数，就相当于直接将回调的逻辑写在了需要使用它的地方，这样当
+逻辑需要修改时，就不需要首先找到函数定义的位置再去修改，更加方便。还有就是不要
+想方设法命名了啊！
+
 ## 函数、数据、对象
 
+现代的许多语言者喜欢鼓吹“函数是头等公民 (first-class function)”，以及配套的“将
+函数作用数据 (function as data)”。最近在看 SICP 等二章的时候就在思考这样做的
+优势在哪？
+
+将 SICP 第二章的图像语言做一个简化。考虑我们要写一个画图的程序，首先我们定义一
+个画家，画家的能力是画图，而图是由一些线段构成的，这些线段是事先给定的。一个
+画家只会画这个事先定义好的图，但他可以把图画在不同的画板上，自行地进行缩放：
+
+```
++-----------+             +------------------+
+|    /\     |             |        /\        |
+|   /  \    |             |      /    \      |
+|  /----\   |             |    /--------\    |
+| /      \  |             |  /            \  |
+|/        \ |             |/                \|
++-----------+             +------------------+
+```
+
+根据上面的需求，SICP 中使用与下文类似的代码：
+
+```scheme
+(define (make-frame ...) ...)
+
+(define (make-painter line-segments)
+  (lambda (frame)                     ; define a painter as lambda
+    ... ))
+
+(define painter-A (make-painter ...))
+(define small-frame (make-frame ...))
+
+; Draw
+(painter-A small-frame)
+```
+
+上述代码中，画家 A (painter-A) 由调用 `(make-painter ...)` 生成，而
+`make-painter` 是返回的是一个函数，之后我们再生成一个画板 `small-frame` 就可以
+直接通过调用画家函数来进行绘画：`(painter-A small-frame)`。
+
+如果你习惯了 Scheme(Lisp) 的思维习惯，会觉得这种用函数来表示数据的方法特别地
+自然，当然也特别地神奇。而这么做的好处，[SICP 视频](http://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-001-structure-and-interpretation-of-computer-programs-spring-2005/video-lectures/3a-henderson-escher-example)
+里是这么说的：
+
+> the crucial thing that's going on here is you're using the representation of
+> pictures as procedures to automatically get the closure property.
+
+Closure Property 指的是一个函数的返回值还可以做为这个函数的参数进行处理，我们
+会在下小节中进行介绍。在当前语境下，可以这么理解，如果我们实现一个新的函数，它
+以一个 painter 作为参数，返回一个新的 painter，那么我们还可以继续用这个函数去
+处理返回的 painter。例如我们定义一个新的函数，可以将画家的画并排地放在一起。
+
+```scheme
+(define (beside painter1 painter2)
+  ...)
+
+(define painter3 (beside painter1 painter2))
+(define painter4 (beside painter3 painter2))
+```
+
+可以看到 painter3 是函数 `beside` 的返回值，却可以继续作为它的参数处理。然而，
+对于现代的程序员而言，用面向对象的思想完全可以实现这些性质：
+
+```python
+class Painter():
+    def __init__(self, line_segments):
+        self.line_segments = line_segments
+
+    def paint(self, frame):
+        # ... some painter logic
+        pass
+        
+def beside(painter1, painter2):
+    ... painter1.paint(...) ...
+    ... painter2.paint(...) ...
+
+painter3 = beside(painter1, painter2)
+painter4 = beside(ainter3, painter2)
+```
+
+所以视频里说的这个特性并不能说服我，经过一番思考，得出的结论是：用函数来表示
+数据的优点，是可以无缝地表示一个动作。
+
+例如画家最主要的特性是“画”这个动作，而园丁的主要动作是“浇水”，等等。当我们使用
+函数来表示这些对象时，我们不在乎它们具体是什么动作，只需要知道可以直接把它们当
+作函数来调用，这里它们就会执行它们的默认动作。
+
+然而……现代的面向对象语言仍旧可以做到这点……：
+
+```python
+class Painter():
+    def __init__(self, line_segments):
+        self.line_segments = line_segments
+
+    def paint(self, frame):
+        # ... some painter logic
+        pass
+
+    def __call__(self, frame):   # default action 
+        self.paint(frame)
+
+painter = Painter()
+painter(frame)          # use it as a function
+```
+
+在 Python 中为一个类实现 `__call__` 函数，就可以将生成的对象作为函数进行调用。
+这样就可以将它作为这个类的默认“动作”。
+
+因此也可以看到，即使形式差异很大，这些语言解决问题的本质思想依旧是极其的相似，
+甚至可以说是相同的。
+
 ## Closure Property
+
+最后说一说 Closure Property，它其实是一个数学上的概念，我们举一个例子：考虑自
+然数的集合，任意两个自然数相加，结果依旧属于自然数的集合，我们就称自然数集对加
+法操作是闭合的，这就是 Closure property。而对于减法则不是如此，`1-2 = -1` 而
+`-1` 不是自然数，因此自然数对减法不闭合。
+
+在程序设计里，闭包属性则为如下定义（SICP）：
+
+> In general, an operation for combining data objects satisfies the closure
+> property if the results of combining things with that operation can
+> themselves be combined using the same operation.
+
+用通俗的话说就是上节提到的，一个函数的返回值可以作为这个函数的参数。我们可以将
+闭包属性理解成一个递归属性，例如我们熟悉的树结构，如果一个操作以一棵树为参数，
+返回一棵新的树，那么如果这棵新的树能继续作为这个操作的参数，生成另一棵新的树，
+则这个操作对树结构是闭合的。
+
+这种概念上的描述相当绕口，但概念本身还是相当有效且重要的。
+
+如果一些操作对某些数据能够闭合，那么我们就能以各种各样的方式来组合这些操作，来
+构建极其复杂的结构。例如 Lisp 中的 `cons`，也可以称为 `pair`。基本的结构就是
+两个 `cell`：
+
+```
++----+----+
+|    |    |
+|    |    |
++----+----+
+```
+
+而由于 `cons` 返回的值依旧可以作为 cons 的参数，所以我们就能用这么简单的结构
+构建成极为复杂的结构，如列表，树，森林等。
+
+因此在程序设计里，闭合的操作能够用极少的代价提供极为复杂的抽象。只是现实生活中
+的许多问题，没有办法分解成一个基本的结构，因此想要将操作设计成闭合的也是十分
+困难的，但可能的话收益是很高的。
+
+## 小结
+
+文章中通过介绍自由变量与作用域试图让读者了解闭包的概念和原理；同时对一些容易与
+闭包混淆的概念作了区分；再对“函数即数据”的实际意义进行分析；最后介绍了一个与闭
+包名字很像的数学概念。
+
+本文的目的是让读者对闭包能有一个更清晰的认识，同时注意到它与面向对象间的异同
+点，借此能在日常的编码中应用其中的一些思想。
+
+最后说明一下，闭包的出现早于面向对象（根据维基的信息），所以也不必迷信优劣，
+理解它们要解决的问题和解决问题的方法才是最重要的。本人水平有限，如有错误，敬请
+指出，谢谢！
