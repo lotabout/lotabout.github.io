@@ -81,6 +81,7 @@ noise:
       github: lotabout
       rss: /atom.xml
   disqus: lotaboutlife
+  google_analytics: UA-39956831-2
 
 # Deployment
 ## Docs: http://hexo.io/docs/deployment.html
