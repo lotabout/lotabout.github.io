@@ -5,6 +5,8 @@ categories: Project
 toc:
 ---
 
+*EDIT*: Note that I've include the full tutorial in the project [write-a-C-interpreter](https://github.com/lotabout/write-a-C-interpreter/tree/master/tutorial/en). Please check that instead.
+
 In "Let's Build a C Compiler" series, we will build a compiler from scratch
 for C programming language. I hope you will get some understanding of compiler
 construction by the end of this tutorial. At the same time we will build a
