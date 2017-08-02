@@ -63,7 +63,7 @@ Travis 的 [构建周期](https://docs.travis-ci.com/user/customizing-the-build/
 language: node_js
 
 node_js:
-- '0.12'
+- '6.0.0'
 
 branches:
   only:
