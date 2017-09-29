@@ -169,7 +169,7 @@ def timer(func):
 这里的 `timer` 函数就是一个 “装饰器”，它接受一个函数，并返回一个新的函数。在
 装饰器的内部，对原函数进行了“包装”。
 
-注：上面的例子取自 [What Does it Take to Be an Expert At Python](https://www.youtube.com/watch?v=7lmCu8wz8ro&t=2079s)。
+注：上面的例子取自 [What Does it Take to Be an Expert At Python](https://youtu.be/7lmCu8wz8ro?t=45m25s)。
 
 ## @ 语法糖
 
@@ -282,6 +282,6 @@ def add(x, y=10):
 
 - [PEP 0318 -- Decorators for Functions and Methods](PEP 0318 -- Decorators for Functions and Methods)
 - [Python Decorator in Detail](http://python-3-patterns-idioms-test.readthedocs.io/en/latest/PythonDecorators.html)
-- [What Does it Take to Be an Expert At Python](https://www.youtube.com/watch?v=7lmCu8wz8ro&t=2079s)
+- [What Does it Take to Be an Expert At Python](https://youtu.be/7lmCu8wz8ro?t=45m25s)
 - [理解 Python 装饰器看这一篇就够了](https://foofish.net/python-decorator.html)
 - [How you implemented your Python decorator is wrong](http://blog.dscpl.com.au/2014/01/how-you-implemented-your-python.html)
