@@ -1,19 +1,25 @@
-title: CSS flex-shrink 优先级
-date: 2016-03-22 16:23:48
-tags: [flex-shrink, css]
-categories: [Knowledge]
+title: CSS 子元素依次收缩的实现
+tags:
+  - flex-shrink
+  - css
+categories:
+  - Knowledge
+date: 2017-09-29 21:27:49
 toc:
 ---
+
 
 当子元素的宽度（或高度）超过父元素时，如果父元素设置了 `display: flex`，则子
 元素将按比例缩小自己的宽度（或高度），但现在我们希望子元素按一定的优先级缩小。
 即：当宽度不足时，优先缩小某一个子元素，当达到该元素的最小宽度（`min-width`）
 时，再开始缩小另外的元素。下面是一个示例图：
 
-![expected](expected.gif)
+{% asset_img expected.gif Expected Behavior%}
 
 可以看到，当宽度不足时，上例中优先缩小了最右的元素，当最右元素达到最小宽度
 100px 时开始缩小左边的元素，依此类推。
+
+<!--more-->
 
 本文我们将分析 flexbox 中的 `flex-shrink` 属性，来实现上述效果。本文假设你
 熟悉 flexbox 的基本用法。
@@ -60,13 +66,12 @@ flex-shrink，那么元素就一定会缩小，也就达不到前文需要的效
 然后如果仔细观察输入的情况，会发现输入到一定长度时，虽然最后一个元素还没有达到
 `min-width`，第三个元素也发生了收缩：
 
-![Wrong Answer](wrong.gif)
+{% asset_img wrong.gif Wrong Answer %}
 
-难道是缩小系数还不够大？调成 10000 试试。还真的就成功了！于是我们就要深入研究
-为什么 1000/1 不够大，而 10000/1 就能正常工作；需要多大的比例还能实现一个元
-素优先收缩的效果。
+难道是缩小系数还不够大？调成 10000 试试。还真的就成功了！但为什么 1000/1 不够
+大，而 10000/1 就能正常工作；需要多大的比例还能实现一个元素优先收缩的效果？
 
-## flex-shrink 的算法
+## flex-shrink 如何计算？
 
 显然我们之前据说的计算方法是错误的，那 `flex-shrink` 真正的作用方式如何呢？
 
@@ -80,7 +85,8 @@ flexbox](http://madebymike.com.au/writing/understanding-flexbox/) 的例子。
 得到这个比例之后，再除于所有子元素的系数之和作为最终的缩小的比例，用这个
 比例乘于总共需要缩小的宽度，就是该元素需要缩小的宽度了。还是看看例子吧：
 
-![Flex Shrink Calculation](flex-shrink-calculation.png)
+{% asset_img flex-shrink.png Flex Shrink Calculation %}
+
 
 ```
 .flex-container{ width: 600px; }
@@ -104,21 +110,70 @@ Item 3 shrink factor: (1×400) / (100px + 400px + 400px) = .444 × -300px = -133
 
 我们打印出了一些信息：
 
-{% jsfiddle lotabout/xozxdz3z/9 result,html,css,js %}
+{% jsfiddle lotabout/xozxdz3z/10 result,html,css,js %}
 
 下面是在我本机上得到的输出结果，下面是在第三个元素缩小之前：
 
-![Before Shrink](before-shrink.png)
+{% asset_img before-shrink.png Before Shrink %}
 
 下面是第三个元素缩小之后：
 
-![After Shrink](after-shrink.png)
+{% asset_img after-shrink.png After Shrink %}
 
-因此，当最后输入一个字母 `l` 时，子元素共需要缩小 5px。所以根据前面的计算公
-式，第三个元素需要缩小的最为
+上面这两张图只能对比第三个元素的信息，这里直接说下，在第四个元素收缩之前，它的
+大小是 `191px`。在第三个元素收缩时（即变成 `...`）时：
 
 ```
-(186/(186+183*1000))*5
-.00507680717958795975
-186 - .
-185.99492319282041204025
+总宽度: 600px (去掉父元素的 border 2px)
+总缩小宽度：600-60-176-186-191 = -13px
+第3个元素的 shrink factor: (1×186)    / (186px + 1000×191px)
+                           = 0.00094674680015273484 × -13px = -0.01230770840198555292px
+第4个元素的 shrink factor: (1000×191) / (186px + 1000×191px)
+                           = 0.99905325319984726515 * -13px = -12.98769229159801444695px
+```
+
+因此，计算后第 3 个元素的宽度为 `186 - 0.01230770840198555292 =
+185.98769229159801444708` 并不等于图片中的结果 `185.98333740234375`。恭喜，发
+现了一个很深的坑。
+
+问题其实在于，浏览器会保留多少精度。这是一个没有标准定义的内容，叫作 "subpixel
+rendering"。一个简单的例子就是指定 3 个 `width: 33.33333%` 的 div 时，由于精度问
+题，浏览器可能并不会占满 100%。
+
+那精度到底是多少呢？这个精度叫作
+[LayoutUnit](http://trac.webkit.org/wiki/LayoutUnit)，Chrome 是 `1/64px`，而
+Firefox 是 `1/60px`。
+
+我们这里取整：
+
+```
+185.98769229159801444708 * 60
+=> 11159.26153749588086682480
+11159 / 60
+=> 185.98333333333333333333
+```
+
+当然，由于 `1/60` 的精度是无限的，还是会有精度丢失，这里看到 `185.98 < 186`
+因此导致元素 3 发生了 overflow。
+
+最后，如果你愿意计算，这个 flex-shrink 的大小是跟各个元素的宽度相关的，在这个
+特定的例子里，假设元素 3 宽度为 `a`，元素 4 宽度为 `b`，元素 4 的 `min-width`
+为 `c`，则要使元素 3 保持正常，则要满足 `a/(a + bx) * (b-c) < 1/60`，即使 a
+元素缩小的量小于一个 LayoutUnit，即 `x > (60*a*(b-c) -a)/b`，算得约 5316。
+
+当然，由于我们输入的字符并不是 1px 的，所以可能相差几倍也不太重要。
+
+## 小结
+
+1. 想让子元素按优先级收缩，可以通过设置大倍率的 flex-shrink 完成。
+2. flex-shrink 的算法与 flex-grow 不同，需要先与 flex-basis 相乘得到 shrink
+   factor。
+3. 浏览器的 pixel 最小单位称为 LayoutUnit，Chrome 为 `1/64px`，Firefox 为
+   `1/60px`。
+
+## 扩展阅读
+
+1. [MDN: flex-shrink](https://developer.mozilla.org/en-US/docs/Web/CSS/flex-shrink)
+2. [Understanding Flexbox](http://madebymike.com.au/writing/understanding-flexbox/)
+3. [Browser Rounding and Fractional Pixels](http://cruft.io/posts/percentage-calculations-in-ie/)
+4. [LayoutUnit](http://trac.webkit.org/wiki/LayoutUnit)
