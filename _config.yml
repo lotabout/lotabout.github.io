@@ -90,12 +90,5 @@ deploy:
   repo: https://github.com/lotabout/lotabout.github.io
   branch: master
 
-marked:
-  breaks: false
-
-math:
-  engine: 'mathjax' # or 'katex'
-  mathjax:
-    src: https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-AMS-MML_HTMLorMML
-    config:
-      # MathJax config
+markdown_it:
+    breaks: false
