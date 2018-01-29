@@ -90,5 +90,23 @@ deploy:
   repo: https://github.com/lotabout/lotabout.github.io
   branch: master
 
-markdown_it:
+markdown:
+  render:
+    html: true
+    xhtmlOut: false
     breaks: false
+    linkify: true
+    typographer: true
+    quotes: '“”‘’'
+  plugins:
+    - markdown-it-abbr
+    - markdown-it-footnote
+    - markdown-it-ins
+    - markdown-it-sub
+    - markdown-it-sup
+  anchors:
+    level: 2
+    collisionSuffix: 'v'
+    permalink: true
+    permalinkClass: header-anchor
+    permalinkSymbol: '#'
