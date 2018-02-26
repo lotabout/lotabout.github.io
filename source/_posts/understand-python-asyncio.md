@@ -8,10 +8,10 @@ toc:
 协程 (coroutine) 几乎是 Python 里最为复杂的特性之一了，这篇文章我们来说一说
 asyncio 的内部实现机制，借此来理解一门语言要支持协程需要做的工作。
 
-本文需要提前了解 Python 的 `yeild from` 语法，不了解的话，可以看看
-{% post_link Python-Generator 之前关于 Generator 的文章 %} ；另外，最好对
-future/promise 的概念有一定了解。文中不会介绍如何使用 asyncio 及协程，并且文中
-给出的代码不一定能实际运行（不然代码量太大）。
+本文需要提前了解 Python 的 `yeild from` 语法，不了解的话，可以看看{% post_link
+Python-Generator 之前关于 Generator 的文章 %} ；另外，最好对 future/promise 的
+概念有一定了解。文中不会介绍如何使用 asyncio 及协程，并且文中给出的代码不一定
+能实际运行（不然代码量太大）。
 
 ## 多线程与协程
 
