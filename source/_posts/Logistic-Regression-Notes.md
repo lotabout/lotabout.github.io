@@ -207,6 +207,23 @@ $\theta$ 通常意味着过拟合程度的减小，因为高次项所占的比�
 
 {% asset_img learning-rate-scaled.svg Learning Curve Scaled vs Not-scaled %}
 
+## 偏置
+
+在训练的时候，其实是需要手工加上偏置项 `1` 的，例如两维样本 $[x_1, x_2]$ 就需
+要扩充成 $[1, x_1, x_2]$，这个 `1` 就是所谓的偏置项。这样训练出来的 $\theta$
+就会比维度多一。偏置项有什么用呢？
+
+让我们考虑一维数据，此时我们的 $h(x) = \theta \times x$，它代表了一条直线，且
+**必须过原点** 。这样，如果样本偏离了原点，这条直线（决策边界）就没有办法很好
+地将数据分开。而加了偏置项，相当于模型变成 $h(x) = \theta_1 \times x +
+\theta_0$，就能表示任意的直线了。下面我们用 iris 数据分别训练了带偏置和不带偏
+置的两个模型：
+
+{% asset_img bias-or-not.svg Decision Boundary with Bias or Not %}
+
+我们看到，不带偏置 (bias) 的模型的决策边界过原点，因此没有办法将数据很好地划分
+开，而带偏置的模型则能很好地对数据进行划分。换句话说，偏置提供了平移的能力。
+
 ## 参考
 
 - [机器学习系列(1)_逻辑回归初步](http://blog.csdn.net/han_xiaoyang/article/details/49123419)
