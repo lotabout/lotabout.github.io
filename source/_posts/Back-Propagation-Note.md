@@ -32,7 +32,7 @@ Michael Nielsen 的 [深度学习
 4. 反射传播错误：对于 $l = L-1, L-2, ..., 2$ 计算
    $\delta^l = (( w^{l+1} )^T \delta^{l+1} ) \odot \sigma'(z^l)$
 5. 输出每层的梯度变化：
-  $\nabla_{w^l} C = \delta^l a^{l-1}$ ， $\nabla_{b^l} C = \delta^l$
+  $\nabla_{w^l} C = \delta^l (a^{l-1} )^T $ ， $\nabla_{b^l} C = \delta^l$
 
 如果算法需要计算多个样本 $x$ 对应的梯度变化，然后取平均时，可以输入 $X = [x_1,
 x_2, ..., x_m]$，其中 $m$ 为样本数目。上面的算法不需要任何的修改，算法的输入变
@@ -57,7 +57,7 @@ m}$ 代表第 $m$ 个样本对应的第 $l$ 层。这可以认为是算法在多
 \tag{BP3a}\end{eqnarray}
 
 \begin{eqnarray}
-  \nabla_{w^l} C = \delta^l a^{l-1}
+  \nabla_{w^l} C = \delta^l (a^{l-1} )^T
 \tag{BP4a}\end{eqnarray}
 
 分量形式：
@@ -277,7 +277,7 @@ w_j^l
 \end{bmatrix} \begin{bmatrix}
  a_1^{l-1} & a_2^{l-1} & \dots & a_k^{l-1}
 \end{bmatrix} \\\\
-&=& \delta^l a^{l-1}
+&=& \delta^l (a^{l-1} )^T
 \tag{BP4a}\end{eqnarray}
 
 ## 代码实现
