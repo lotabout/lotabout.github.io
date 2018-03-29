@@ -123,14 +123,17 @@ $$D_f(P||Q)=\int_x q(x)(\frac{p(x)}{q(x)}-1)^2dx = \int_x\frac{(p(x)-q(x))^2}{q(
 4. $d(x, z) \le d(x, y) + d (y, z)$ 三角不等式
 
 上面我们看到它满足前两个条件（严格来说 $D_f(P||Q) = 0$ 能不能推出 $P = Q$ 还不
-知道）。对剩下的条件，不同的 ƒ-divergence 有不同的情况。例如 KL divergence 并
-不满足后对称性： $D_f(P||Q) \ne D_f(Q||P)$，也不满足三角不等式。证明我是肯定不
-会的，大家参考 [维基百科](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Relation_to_metrics)。
+知道）。对剩下的条件，不同的 ƒ-divergence 有不同的情况。
 
-现在很火的 WGAN 就是用 [Wasserstein
-metric](https://en.wikipedia.org/wiki/Wasserstein_metric) 替换 ƒ-divergence 作
-为优化目标，从而有了许多良好的性质。因此注意到 ƒ-divergence 并不是“距离”的度量
-是很重要的。
+例如 KL divergence 并不满足后对称性： $D_f(P||Q) \ne D_f(Q||P)$，也不满足三角
+不等式。证明我是肯定不会的，大家参考 [维基百科
+](https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Relation_to_metrics)
+。
+
+而 [Jensen–Shannon (JS)
+Divergence](https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence)就
+满足所有条件。一如既往，想看证明，请查看 [原论文
+](http://www.math.ku.dk/~topsoe/ISIT2004JSD.pdf)。
 
 ## Fenchel Conjugate
 
@@ -214,8 +217,6 @@ GAN 的目的是训练生成器 D 使之生成的数据对应的分布 $P_G$ 与
 $P_{data}$ 尽可能接近，即最小化 $D_f(P||Q)$。然而我们无法确切算出 $p(x)$ 及
 $q(x)$，因此我们通过 Conjugate 将求 $D_f(P||Q)$ 转变成一个优化问题，于是我们的
 目标变成找到一个合适的函数 $D$ 来逼近 $D_f(P||Q)$。
-
-但是也要注意到使用 $D_f(P||Q)$ 作为衡量 P 与 Q 距离的度量有一些缺点。
 
 ## 参考
 
