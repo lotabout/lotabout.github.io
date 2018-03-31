@@ -9,7 +9,7 @@ toc:
 `@Autowired` 只是告诉 Spring 当前的 Bean 依赖了其它的 Bean，那么如何让 Spring
 真正“启用”自动装配的功能呢？
 
-（Quick Question and Answer，指在提出一个问题然后快速解答）
+（Quick Question and Answer 系列旨在对小问题做简短解答）
 
 <!--more-->
 
