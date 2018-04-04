@@ -1,7 +1,7 @@
 title: 'QQA: Python 中的 str 与 repr'
 date: 2018-04-04 17:09:37
-tags:
-categories:
+tags: [QQA, python, str, repr]
+categories: [QQA]
 toc:
 ---
 
