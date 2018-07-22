@@ -82,6 +82,7 @@ noise:
       rss: /atom.xml
   disqus: lotaboutlife
   google_analytics: UA-39956831-2
+  infinite_scroll: true
 
 # Deployment
 ## Docs: http://hexo.io/docs/deployment.html
