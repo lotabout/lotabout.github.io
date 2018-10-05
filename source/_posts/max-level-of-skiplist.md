@@ -1,6 +1,6 @@
 title: 最高楼层问题
 date: 2018-10-04 10:21:23
-tags: [Data Structure]
+tags: [Data Structure, skip list]
 categories: [Knowledge]
 math: true
 toc:

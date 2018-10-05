@@ -1,7 +1,7 @@
 title: 跳表──没听过但很犀利的数据结构
 date: 2018-10-05 08:02:33
-tags:
-categories:
+tags: [Data Structure, skip list]
+categories: [Knowledge]
 math: true
 toc:
 ---
