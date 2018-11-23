@@ -2,7 +2,7 @@ title: 结构的悖论
 date: 2016-01-30 18:04:11
 tags: [structure]
 categories: [Tweet]
-toc:
+toc: true
 ---
 
 > The paradox of structure is that, whatever its nature, any structure is both
@@ -75,7 +75,7 @@ deadline 的情况下工作效率更高。
 
 现在社会的结构感觉像是完全一边倒了呢。
 
-### 5
+## 5
 
 综上，看了一个不错的视频，激起了几个心中的想法，总结一下就是：
 

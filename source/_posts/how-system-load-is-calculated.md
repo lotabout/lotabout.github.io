@@ -2,7 +2,7 @@ title: 理解系统负载
 date: 2018-10-30 08:27:20
 tags: [Linux, Load]
 categories: [Knowledge]
-toc:
+toc: true
 ---
 
 `top` 或 `uptime` 等命令会输出系统的平均负载 (Load Average)，一般会有三个值，

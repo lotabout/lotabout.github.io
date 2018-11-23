@@ -2,7 +2,7 @@ title: 2^128 有多大
 date: 2018-06-27 20:55:55
 tags:
 categories: Notes
-toc:
+toc: true
 math: true
 ---
 

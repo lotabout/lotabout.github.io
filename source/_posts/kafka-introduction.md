@@ -2,7 +2,7 @@ title: Kafka 入门介绍
 date: 2018-07-13 22:51:58
 tags: [Kafka, Big Data]
 categories: [Knowledge]
-toc:
+toc: true
 ---
 
 Kafka 的大名相信大家早有耳闻，就是《变形记》的作者……咳咳……是一个著名的分布式消

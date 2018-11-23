@@ -3,7 +3,7 @@ date: 2018-03-10 20:40:40
 tags: [Machine Learning, Logistic, Regression]
 categories: Knowledge
 math: true
-toc:
+toc: true
 ---
 
 最近在看 Andrew Ng 老师的 [机器学习课程

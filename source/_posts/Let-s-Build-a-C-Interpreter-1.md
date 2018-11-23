@@ -2,7 +2,7 @@ title: "Let's Build a C Compiler (1) -- Design"
 date: 2016-02-06 10:56:31
 tags: [C, compiler]
 categories: Project
-toc:
+toc: true
 ---
 
 This is the second chapter of series "Let's Build a C Compiler", In this

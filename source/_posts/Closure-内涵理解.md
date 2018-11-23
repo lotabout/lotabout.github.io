@@ -2,7 +2,7 @@ title: Closure 内涵理解
 date: 2015-11-15 00:52:33
 tags: [closure, python]
 categories: Knowledge
-toc:
+toc: true
 ---
 
 > 某人学习了许久的闭包，认为自己已掌握了其中的精髓，于是问禅师：

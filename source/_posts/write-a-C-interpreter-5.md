@@ -2,7 +2,7 @@ title: 手把手教你构建 C 语言编译器（5）- 变量定义
 date: 2016-01-03 08:44:38
 tags: [C, compiler]
 categories: Project
-toc:
+toc: true
 ---
 
 本章中我们用 EBNF 来大致描述我们实现的 C 语言的文法，并实现其中解析变量定义
@@ -24,7 +24,7 @@ toc:
 8. [手把手教你构建 C 语言编译器（8）——表达式](http://lotabout.me/2016/write-a-C-interpreter-8/)
 0. [手把手教你构建 C 语言编译器（9）——总结](http://lotabout.me/2016/write-a-C-interpreter-9/)
 
-# EBNF 表示
+## EBNF 表示
 
 EBNF 是对前一章提到的 BNF 的扩展，它的语法更容易理解，实现起来也更直观。
 但真正看起来还是很烦，如果不想看可以跳过。
@@ -59,11 +59,11 @@ while_statement ::= 'while' '(' expression ')' non_empty_statement
 
 P.S. 我是先写程序再总结上面的文法，所以实际上它们间的对应关系并不是特别明显。
 
-# 解析变量的定义
+## 解析变量的定义
 
 本章要讲解的就是上节文法中的 `enum_decl` 和 `variable_decl` 部分。
 
-## program()
+### program()
 
 首先是之前定义过的 `program` 函数，将它改成：
 
@@ -80,7 +80,7 @@ void program() {
 我知道 `global_declaration` 函数还没有出现过，但没有关系，采用自顶向下的编写
 方法就是要不断地实现我们需要的内容。下面是 `global_declaration` 函数的内容：
 
-## global_declaration()
+### global_declaration()
 
 即全局的定义语句，包括变量定义，类型定义（只支持枚举）及函数定义。代码如下：
 
@@ -191,7 +191,7 @@ enum { CHAR, INT, PTR };
 时，如 `int *data`，我们就将它的类型加上 `PTR` 即代码中的：`type = type + PTR;`。
 同理，如果是指针的指针，则再加上 `PTR`。
 
-## enum_declaration()
+### enum_declaration()
 
 用于解析枚举类型的定义。主要的逻辑用于解析用逗号（`,`）分隔的变量，值得注意的
 是在编译器中如何保存枚举变量的信息。
@@ -232,7 +232,7 @@ void enum_declaration() {
 }
 ```
 
-## 其它
+### 其它
 
 其中的 `function_declaration` 函数我们将放到下一章中讲解。`match` 函数是一个
 辅助函数：
@@ -250,7 +250,7 @@ void match(int tk) {
 
 它将 `next` 函数包装起来，如果不是预期的标记则报错并退出。
 
-# 代码
+## 代码
 
 本章的代码可以在 [Github](https://github.com/lotabout/write-a-C-interpreter/tree/step-3) 上下载，也可以直接 clone
 
@@ -261,7 +261,7 @@ git clone -b step-3 https://github.com/lotabout/write-a-C-interpreter
 本章的代码还无法正常运行，因为还有许多功能没有实现，但如果有兴趣的话，可以自己
 先试着去实现它。
 
-# 小结
+## 小结
 
 本章的内容应该不难，除了开头的 EBNF 表达式可能相对不好理解一些，但如果你查看了
 EBNF 的具体表示方法后就不难理解了。

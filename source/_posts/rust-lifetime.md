@@ -2,7 +2,7 @@ title: 理解 Rust 中的生命周期
 date: 2016-12-24 22:00:08
 tags: [rust, lifetime, ownership, borrowing]
 categories: Knowledge
-toc:
+toc: true
 ---
 
 Ownership, Borrowing 与 Lifetime 共同成就了 rust 中的内存安全，也是 rust 语言

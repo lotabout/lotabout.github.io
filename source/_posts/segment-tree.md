@@ -3,7 +3,7 @@ date: 2018-02-08 20:29:04
 tags: [Data Structure]
 categories: [Knowledge]
 math: true
-toc:
+toc: true
 ---
 
 不查不知道，一查吓一跳，“线段树”这个名字的定义真是混乱到一定程度了。

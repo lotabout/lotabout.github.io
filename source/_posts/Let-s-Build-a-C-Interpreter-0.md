@@ -2,7 +2,7 @@ title: Let's Build a C Compiler(0) -- Preface
 date: 2016-02-06 09:37:13
 tags: [C, compiler]
 categories: Project
-toc:
+toc: true
 ---
 
 *EDIT*: Note that I've include the full tutorial in the project [write-a-C-interpreter](https://github.com/lotabout/write-a-C-interpreter/tree/master/tutorial/en). Please check that instead.

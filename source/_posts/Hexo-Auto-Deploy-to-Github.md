@@ -2,7 +2,7 @@ title: Hexo 自动部署到 Github
 date: 2016-01-14 12:00:19
 tags: [Hexo, Github, Travis CI]
 categories: [Notes]
-toc:
+toc: true
 ---
 
 使用 [Hexo](http://hexo.io/) 写博客是十分惬意的事。唯一有点不爽的，就是每次修改

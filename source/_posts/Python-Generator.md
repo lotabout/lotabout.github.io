@@ -2,7 +2,7 @@ title: Python Generator
 date: 2017-08-29 21:25:35
 tags: [python, Generator]
 categories: Notes
-toc:
+toc: true
 ---
 
 Python 中的生成器 (generator) 是一个十分有用的工具，它让我们能方便地生成迭代器

@@ -2,7 +2,7 @@ title: Vim 小技巧——合并行块
 date: 2015-12-21 14:21:31
 tags: [vim, FAQ]
 categories: Knowledge
-toc:
+toc: true
 ---
 
 看教程时，自己动手输入教程的例子有助于学习和理解。但有时会发现自己输入的代码

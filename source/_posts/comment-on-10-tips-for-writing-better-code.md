@@ -2,7 +2,7 @@ title: 评：30 多年的编码经验浓缩成的 10 条最佳实践
 date: 2017-09-1 09:51:38
 tags: [comment, programming, tips]
 categories: [Comment]
-toc:
+toc: true
 ---
 
 文章

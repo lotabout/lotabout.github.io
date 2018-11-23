@@ -2,7 +2,7 @@ title: 手把手教你构建 C 语言编译器（6）- 函数定义
 date: 2016-01-03 20:04:34
 tags: [C, compiler]
 categories: Project
-toc:
+toc: true
 ---
 
 由于语法分析本身比较复杂，所以我们将它拆分成 3 个部分进行讲解，分别是：变量定
@@ -21,7 +21,7 @@ toc:
 8. [手把手教你构建 C 语言编译器（8）——表达式](http://lotabout.me/2016/write-a-C-interpreter-8/)
 0. [手把手教你构建 C 语言编译器（9）——总结](http://lotabout.me/2016/write-a-C-interpreter-9/)
 
-# EBNF 表示
+## EBNF 表示
 
 这是上一章的 EBNF 方法中与函数定义相关的内容。
 
@@ -44,7 +44,7 @@ if_statement ::= 'if' '(' expression ')' statement ['else' non_empty_statement]
 while_statement ::= 'while' '(' expression ')' non_empty_statement
 ```
 
-# 解析函数的定义
+## 解析函数的定义
 
 上一章的代码中，我们已经知道了什么时候开始解析函数的定义，相关的代码如下：
 
@@ -63,7 +63,7 @@ while_statement ::= 'while' '(' expression ')' non_empty_statement
 segment）中的位置。接下来开始解析函数定义相关的内容：`parameter_decl` 及
 `body_decl`。
 
-## 函数参数与汇编代码
+### 函数参数与汇编代码
 
 现在我们要回忆如何将“函数”转换成对应的汇编代码，因为这决定了在解析时我们需要哪
 些相关的信息。考虑下列函数：
@@ -103,7 +103,7 @@ int demo(int param_a, int *param_b) {
 变量不同，在函数内访问它们是通过 `new_bp` 指针和对应的位移量进行的。因此，在
 解析的过程中，我们需要知道参数的个数，各个参数的位移量。
 
-## 函数定义的解析
+### 函数定义的解析
 
 这相当于是整个函数定义的语法解析的框架，代码如下：
 
@@ -144,7 +144,7 @@ void function_declaration() {
 变量就恢复了原先的作用。这段代码线性地遍历所有标识符，并将保存在 `BXXX` 中的
 信息还原。
 
-## 解析参数
+### 解析参数
 
 ```
 parameter_decl ::= type {'*'} id {',' type {'*'} id}
@@ -213,7 +213,7 @@ void function_parameter() {
 
 ③则与汇编代码的生成有关，`index_of_bp` 就是前文提到的 `new_bp` 的位置。
 
-## 函数体的解析
+### 函数体的解析
 
 我们实现的 C 语言与现代的 C 语言不太一致，我们需要所有的变量定义出现在所有的
 语句之前。函数体的代码如下：
@@ -289,7 +289,7 @@ void function_body() {
 而②则用于生成汇编代码，我们在第三章的虚拟机中提到过，我们需要在栈上为局部变量
 预留空间，这两行代码起的就是这个作用。
 
-# 代码
+## 代码
 
 本章的代码可以在 [Github](https://github.com/lotabout/write-a-C-interpreter/tree/step-4) 上下载，也可以直接 clone
 
@@ -300,7 +300,7 @@ git clone -b step-4 https://github.com/lotabout/write-a-C-interpreter
 本章的代码依旧无法运行，还有两个重要函数没有完成：`statement` 及
 `expression`，感兴趣的话可以尝试自己实现它们。
 
-# 小结
+## 小结
 
 本章中我们用了不多的代码完成了函数定义的解析。大部分的代码依旧是用于解析变量：
 参数和局部变量，而它们的逻辑和全局变量的解析几乎一致，最大的区别就是保存的信息

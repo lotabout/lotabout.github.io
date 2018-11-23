@@ -2,7 +2,7 @@ title: Python Decorator(装饰器)
 date: 2017-09-29 09:23:41
 tags: [python, decorator]
 categories:
-toc:
+toc: true
 ---
 
 今天来说说 Python 里的装饰器 (decorator)。它不难，但却几乎是 “精通” Python 的

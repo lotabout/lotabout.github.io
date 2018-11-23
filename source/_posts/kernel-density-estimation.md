@@ -3,7 +3,7 @@ date: 2018-02-27 14:43:05
 tags: [KDE, Statistics]
 categories: [Knowledge]
 math: true
-toc:
+toc: true
 ---
 
 有一些数据，想“看看”它长什么样，我们一般会画直方图（Histogram）。现在你也可以

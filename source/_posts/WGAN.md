@@ -3,7 +3,7 @@ date: 2018-03-29 18:25:30
 tags: [Machine Learning, GAN, WGAN]
 categories: [Notes]
 math: true
-toc:
+toc: true
 ---
 
 Wasserstein GAN(WGAN) 解决传统 GAN 的训练难，训练过程不稳定等问题了。WGAN 的背

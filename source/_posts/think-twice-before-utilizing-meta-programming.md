@@ -2,7 +2,7 @@ title: 不要轻易使用元编程
 date: 2018-01-07 12:01:55
 tags: [meta-programming, macro]
 categories: [Comment]
-toc:
+toc: true
 ---
 
 元编程就像核弹，自己梦寐以求，却不希望别人拥有。

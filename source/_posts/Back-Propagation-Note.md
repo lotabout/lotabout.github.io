@@ -3,7 +3,7 @@ date: 2018-03-13 21:19:45
 tags: [Machine Learning, Neural Network]
 categories: Notes
 math: true
-toc:
+toc: true
 ---
 
 Michael Nielsen 的 [深度学习

@@ -2,7 +2,7 @@ title: Python 元类 (MetaClass) 小教程
 date: 2018-04-06 15:43:59
 tags: [python, meta-programming]
 categories: Knowledge
-toc:
+toc: true
 ---
 
 可能是 Ruby 带的头，大家喜欢把“元编程”称作魔法，其实哪有什么魔法，一切都是科学

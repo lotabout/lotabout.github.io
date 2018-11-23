@@ -2,7 +2,7 @@ title: 为 vim + tmux 开启真彩色(true color)
 date: 2018-07-11 23:02:11
 tags: [tmux, vim]
 categories: [Notes]
-toc:
+toc: true
 ---
 
 有一些 vim 主题（如 [gruvbox](https://github.com/morhetz/gruvbox) 或

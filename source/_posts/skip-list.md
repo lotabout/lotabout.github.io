@@ -3,7 +3,7 @@ date: 2018-10-05 08:02:33
 tags: [Data Structure, skip list]
 categories: [Knowledge]
 math: true
-toc:
+toc: true
 ---
 
 跳表(skip list) 对标的是平衡树(AVL Tree)，是一种 插入/删除/搜索 都是 `O(log

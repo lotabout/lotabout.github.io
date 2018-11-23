@@ -2,7 +2,7 @@ title: Test of Hexo
 date: 2015-11-03 10:49:16
 tags: test
 categories:
-toc:
+toc: true
 ---
 
 折腾许久的博客工具，反而没有实际写多少内容。遂决定“尽量”不折腾了，而是专心写些

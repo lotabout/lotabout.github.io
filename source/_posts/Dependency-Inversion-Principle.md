@@ -2,7 +2,7 @@ title: DIP vs IoC vs DI
 date: 2018-01-03 09:51:55
 tags: [SOLID, Dependency Inversion Principle, Dependency Injection, Inversion of Control]
 categories: [Notes]
-toc:
+toc: true
 ---
 
 你听过 SOLID 设计原则吗？你了解 Spring 里的控制反转（IoC）吗？你知道依赖注入

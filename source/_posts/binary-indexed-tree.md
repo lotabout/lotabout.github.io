@@ -3,7 +3,7 @@ date: 2018-01-29 18:08:18
 tags: [Data Structure]
 categories: [Knowledge]
 math: true
-toc:
+toc: true
 ---
 
 二叉索引树(Binary Indexed Tree) 也称为 [Fenwick

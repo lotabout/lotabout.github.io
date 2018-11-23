@@ -2,7 +2,7 @@ title: Vim 小技巧－删除行末空格
 date: 2015-12-14 19:24:14
 tags: [vim, FAQ]
 categories: Knowledge
-toc:
+toc: true
 ---
 
 在编写代码时，我们时常一不留神就在行末多打了几个空格。却又看不出来

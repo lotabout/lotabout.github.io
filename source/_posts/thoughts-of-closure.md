@@ -2,7 +2,7 @@ title: 再谈闭包
 date: 2016-08-27 14:20:38
 tags: [closure]
 categories: [Knowledge]
-toc:
+toc: true
 ---
 
 > 在 Algol/Fortran 世界生活的人们总是不相信在未来的编程中，函数闭包对编程的效率

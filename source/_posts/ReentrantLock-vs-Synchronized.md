@@ -2,7 +2,7 @@ title: 性能对比：ReentrantLock vs Synchronized
 date: 2018-08-22 23:35:37
 tags: [ReentrantLock, synchronized, CAS, java]
 categories: [Notes]
-toc:
+toc: true
 ---
 
 记一次并发相关的性能测试。

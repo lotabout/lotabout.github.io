@@ -2,7 +2,7 @@ title: 分享创造 rargs
 date: 2018-04-14 09:50:33
 tags: [rargs, xargs]
 categories: Project
-toc:
+toc: true
 ---
 
 [rargs](https://github.com/lotabout/rargs) 是一个 rust 实现的命令行工具，它解

@@ -2,7 +2,7 @@ title: 在面向对象语言中写纯函数！
 date: 2017-04-30 11:21:10
 tags: ['FP']
 categories:
-toc:
+toc: true
 ---
 
 通常我们说函数式编程时，提到的都是 lambda 表达式，也即函数式编程中的“函数是头等

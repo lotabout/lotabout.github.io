@@ -2,7 +2,7 @@ title: 手把手教你构建 C 语言编译器（0）- 前言
 date: 2015-12-22 12:03:14
 tags: [C, compiler]
 categories: Project
-toc:
+toc: true
 ---
 
 “手把手教你构建 C 语言编译器” 这一系列教程将带你从头编写一个 C 语言的编译器。

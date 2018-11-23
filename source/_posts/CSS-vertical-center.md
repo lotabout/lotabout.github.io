@@ -2,7 +2,7 @@ title: CSS 垂直居中
 date: 2016-03-17 12:03:29
 tags: [CSS, align]
 categories: [Knowledge]
-toc:
+toc: true
 ---
 
 简单一句 `margin: 0 auto` 我们便能搞定水平居中，而正当我们开心地写出 `margin:

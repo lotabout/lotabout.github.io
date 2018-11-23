@@ -2,7 +2,7 @@ title: 写一个 Mustache 模板引擎
 date: 2016-01-23 10:53:35
 tags: [mustache, template engine]
 categories: [Project]
-toc:
+toc: true
 ---
 
 前几天在伯乐在线上看到 [介绍 mustache.js 的文

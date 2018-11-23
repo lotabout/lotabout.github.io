@@ -2,7 +2,7 @@ title: 'Git: merge vs rebase'
 date: 2018-01-18 17:02:51
 tags: [Git]
 categories: Knowledge
-toc:
+toc: true
 ---
 
 Merge 还是 Rebase，这是一个问题。网上有许多教程说明二者的区别，之前我写的一个

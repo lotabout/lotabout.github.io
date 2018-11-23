@@ -2,7 +2,7 @@ title: Java Annotation Processor 小记
 date: 2017-12-31 20:33:19
 tags: [Java, Annotation]
 categories: [Notes]
-toc:
+toc: true
 ---
 
 最近基于工作上的需求调研了下 Java Annotation Processor 的使用方式，开篇博客记

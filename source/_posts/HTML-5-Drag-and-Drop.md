@@ -2,7 +2,7 @@ title: HTML 5 Drag and Drop 入门教程
 date: 2018-07-21 10:50:21
 tags: [DnD, HTML5]
 categories: [Knowledge]
-toc:
+toc: true
 ---
 
 在 HTML 5 之前，想要实现 Drag and Drop（拖拽/拖放）一般需要求助于 JQuery，所幸

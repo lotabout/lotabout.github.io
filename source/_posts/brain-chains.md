@@ -2,7 +2,7 @@ title: 《慢思考》大脑超载时代的思考学
 date: 2016-12-21 22:12:16
 tags: [Book, brainchain]
 categories: Reading
-toc:
+toc: true
 ---
 
 会有这样的感觉吗？忙碌了一整天，却不知道忙了些什么。《慢思考》这本书正是以科学

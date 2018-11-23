@@ -3,7 +3,7 @@ date: 2018-03-02 14:40:56
 tags: [decision tree, Statistics]
 categories: Knowledge
 math: true
-toc:
+toc: true
 ---
 
 通过训练，我们可以从样本中学习到决策树，作为预测模型来预测其它样本。两个问题：

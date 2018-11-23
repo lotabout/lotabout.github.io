@@ -2,7 +2,7 @@ title: 简谈 Rust 中的错误处理
 date: 2017-01-07 14:17:00
 tags: [rust, error-handling]
 categories: [Knowledge]
-toc:
+toc: true
 ---
 
 在学习 Rust 的过程中，错误处理是一个必需要迈过的坎。主要原因是所有的标准库都以

@@ -2,7 +2,7 @@ title: 及时获取反馈以提升工作效率
 date: 2017-11-19 11:27:15
 tags: [feedback, efficiency]
 categories: [Post]
-toc:
+toc: true
 ---
 
 最近发现自己及整个团队的开发效率低下，思前想后认为跟反馈链太长脱不了干系，于是

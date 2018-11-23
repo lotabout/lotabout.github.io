@@ -3,7 +3,7 @@ date: 2018-10-04 10:21:23
 tags: [Data Structure, skip list]
 categories: [Knowledge]
 math: true
-toc:
+toc: true
 ---
 
 一个人爬楼梯，每爬一层前先抛个硬币，如果是正面则继续向上，如果是反面则停下结束

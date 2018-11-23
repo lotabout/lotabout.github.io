@@ -2,7 +2,7 @@ title: 手把手教你构建 C 语言编译器（7）- 语句
 date: 2016-01-04 20:44:29
 tags: [C, compiler]
 categories: Project
-toc:
+toc: true
 ---
 
 整个编译器还剩下最后两个部分：语句和表达式的解析。它们的内容比较多，主要涉及
@@ -22,7 +22,7 @@ toc:
 8. [手把手教你构建 C 语言编译器（8）——表达式](http://lotabout.me/2016/write-a-C-interpreter-8/)
 0. [手把手教你构建 C 语言编译器（9）——总结](http://lotabout.me/2016/write-a-C-interpreter-9/)
 
-# 语句
+## 语句
 
 C 语言区分“语句”（statement）和“表达式”（expression）两个概念。简单地说，可以
 认为语句就是表达式加上末尾的分号。
@@ -39,7 +39,7 @@ C 语言区分“语句”（statement）和“表达式”（expression）两�
 它们的语法分析都相对容易，重要的是去理解如何将这些语句编译成汇编代码，下面我们
 逐一解释。
 
-## IF 语句
+### IF 语句
 
 IF 语句的作用是跳转，跟据条件表达式决定跳转的位置。我们看看下面的伪代码：
 
@@ -91,7 +91,7 @@ b:                           b:
     }
 ```
 
-## While 语句
+### While 语句
 
 While 语句比 If 语句简单，它对应的汇编代码如下：
 
@@ -127,7 +127,7 @@ b:                     b:
     }
 ```
 
-## Return 语句
+### Return 语句
 
 Return 唯一特殊的地方是：一旦遇到了 Return 语句，则意味着函数要退出了，所以需
 要生成汇编代码 `LEV` 来表示退出。
@@ -148,7 +148,7 @@ Return 唯一特殊的地方是：一旦遇到了 Return 语句，则意味着�
     }
 ```
 
-## 其它语句
+### 其它语句
 
 其它语句并不直接生成汇编代码，所以不多做说明，代码如下：
 
@@ -174,7 +174,7 @@ Return 唯一特殊的地方是：一旦遇到了 Return 语句，则意味着�
     }
 ```
 
-# 代码
+## 代码
 
 本章的代码可以在 [Github](https://github.com/lotabout/write-a-C-interpreter/tree/step-5) 上下载，也可以直接 clone
 
@@ -184,7 +184,7 @@ git clone -b step-5 https://github.com/lotabout/write-a-C-interpreter
 
 本章的代码依旧无法运行，还剩最后一部分没有完成：`expression`。
 
-# 小结
+## 小结
 
 本章讲解了如何将语句编译成汇编代码，内容相对容易一些，关键就是去理解汇编代码的
 执行原理。

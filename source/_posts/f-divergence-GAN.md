@@ -3,7 +3,7 @@ date: 2018-03-29 09:35:18
 tags: [Machine Learning, GAN]
 categories: [Notes]
 math: true
-toc:
+toc: true
 ---
 
 f-divergence GAN 是对 GAN 框架的理论统一，本文学习过程中的一些笔记，包括基本公式的推导和重要概念的理解。

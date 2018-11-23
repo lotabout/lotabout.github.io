@@ -3,7 +3,7 @@ date: 2018-11-13 21:27:43
 tags: [Algorithm, WRS]
 categories: [Knowledge]
 math: true
-toc:
+toc: true
 ---
 
 一个集合里有 `n` 个元素，每个元素有不同的权重，现在要不放回地随机抽取 `m` 个元素

@@ -2,7 +2,7 @@ title: Maven Profile 与 Spring Profile 管理多环境打包
 date: 2018-09-28 07:58:04
 tags: [java, maven, spring]
 categories: [Notes]
-toc:
+toc: true
 ---
 
 一般开发团队会有多个部署环境，如 dev 环境用于开发自测，QA 环境让测试团队测试，

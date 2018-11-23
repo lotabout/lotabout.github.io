@@ -2,7 +2,7 @@ title: Vim 最大化当前窗口
 date: 2015-11-12 10:21:11
 tags: [vim, FAQ]
 categories: Knowledge
-toc:
+toc: true
 ---
 
 在编辑/查看文件时，时常遇到的一个需求是：临时最大化当前窗口（vim 术语中的
