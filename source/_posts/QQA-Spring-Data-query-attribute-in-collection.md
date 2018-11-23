@@ -80,15 +80,15 @@ public class Tag {
 ```sql
     select
         distinct post0_.id as id1_0_,
-        post0_.name as name2_0_ 
+        post0_.name as name2_0_
     from
-        post post0_ 
+        post post0_
     inner join
-        post_tags tags1_ 
-            on post0_.id=tags1_.posts_id 
+        post_tags tags1_
+            on post0_.id=tags1_.posts_id
     inner join
-        tag tag2_ 
-            on tags1_.tags_id=tag2_.id 
+        tag tag2_
+            on tags1_.tags_id=tag2_.id
     where
         tag2_.id in (
             ? , ?
