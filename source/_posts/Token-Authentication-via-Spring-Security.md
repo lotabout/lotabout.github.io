@@ -350,3 +350,10 @@ public class PredictorSecurityConfig extends WebSecurityConfigurerAdapter {
 
 最后我们用了上面的知识实现了基于 API token 的认证，授权仍旧用的 Spring
 Security 默认的机制。
+
+## 参考
+
+- https://spring.io/guides/topicals/spring-security-architecture/ Spring
+    Security 官方架构文档，本文的知识很多来源于此
+- [Spring Security源码分析一：Spring Security认证过程](http://www.spring4all.com/article/439) 详细认证过程分析，对于理解认证链路很有帮助。
+- [Spring Security源码分析二：Spring Security授权过程](http://www.spring4all.com/article/458) 
