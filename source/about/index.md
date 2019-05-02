@@ -1,8 +1,8 @@
 title: About
 ---
 
-> Past won't tell us about the future.
+> 种一棵树最好的时间是十年前，其次是现在
 
-全端工程师，目前常年使用 [Github @lotabout](https://github.com/lotabout)。
-
-未完待续……
+* [lotabout@gmail.com](mailto:lotabout@gmail.com)
+* [Github@lotabout](https://github.com/lotabout)
+* [RSS](/atom.xml)
