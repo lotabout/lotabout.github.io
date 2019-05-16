@@ -24,7 +24,7 @@ Java Servlet 和 Spring Security 都使用了设计模式中的 [责任链模式
 们都定义了许多过滤器（Filter），每一个请求都会经过层层过滤器的处理，最终返回。
 如下图：
 
-{% asset_img filter-chain.svg Spring Security Fitler Chain %}
+{% asset_svg filter-chain.svg Spring Security Fitler Chain %}
 
 其中，Spring Security 在 Servlet 的过滤链（filter chain）中注册了一个过滤器
 `FilterChainProxy`，它会把请求代理到 Spring Security 自己维护的多个过滤链，每
@@ -83,7 +83,7 @@ public interface AuthenticationProvider {
 另外，ProviderManager 还定义了父子关系，如果当前 ProviderManager 中所有的
 Provier 都无法认证某个信息，它就会让父 ProviderManager 来判断。如图：
 
-{% asset_img provider-manager-hierarchy.svg Provider Manager Hierarchy %}
+{% asset_svg provider-manager-hierarchy.svg Provider Manager Hierarchy %}
 
 理论上我们不需要理解这些内容，完全可以自己编写一个过滤器来处理所有需求。只
 是如果使用了这套接口，就能享受 Spring Security 的一些“基础设施”，例如抛

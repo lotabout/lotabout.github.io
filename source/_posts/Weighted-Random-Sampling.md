@@ -15,7 +15,7 @@ toc: true
 权重，假设为 `0.71`，而后从第一个元素开始，不断累加它们的权重，直到有一个元素
 的累加权重包含 `0.71`，则选取该元素。下面是个示意图：
 
-{% asset_img naive-weighted-sampling.svg Naive weighted sampling %}
+{% asset_svg naive-weighted-sampling.svg Naive weighted sampling %}
 
 要选取 m 个元素，则可以按上面的方法先选取一个，将该元素从集合中去除，再反复按
 上面的方法抽取剩余的元素。这种方法的复杂度是 `O(mn)`，并且将元素从集合中删除其

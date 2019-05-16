@@ -103,7 +103,7 @@ public class AreaService {
 映射关系要么以数据为主来组织（面向对象编程中，类的方法需要写在类中），要么以操
 作为主来组织（函数式编程中，对不同数据的处理需要写在同一个代码块中）。
 
-{% asset_img data-operation.svg Data vs Operation %}
+{% asset_svg data-operation.svg Data vs Operation %}
 
 如上图，以数据为主看到两类数据：`Square` 和 `Circle`，它们有各自的方法；以操作
 为主看到两个方法：`area` 和 `perimeter`，它们分别能接受各自的数据作为参数。

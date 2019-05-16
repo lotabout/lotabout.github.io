@@ -28,7 +28,7 @@ loop 就可以调用回调函数完成剩余的操作。
 
 我们用“餐厅”类比的话，就像下图：
 
-{% asset_img reactor-old-servers.svg Connection Per Thread %}
+{% asset_svg reactor-old-servers.svg Connection Per Thread %}
 
 对于每个新来的顾客，前台都需要找到一个服务员和厨师来服务这个顾客。
 
@@ -52,7 +52,7 @@ loop 就可以调用回调函数完成剩余的操作。
 于是老板就对服务员说，客人点菜的时候你们就别傻站着了，先去服务其它客人，有客人
 点好的时候喊你们再过去。对应于下图：
 
-{% asset_img reactor-new-servers.svg Server with Reactor %}
+{% asset_svg reactor-new-servers.svg Server with Reactor %}
 
 最后，老板发现根本不需要那么多的服务员，于是裁了一波员，最终甚至可以只有一个服务员。
 

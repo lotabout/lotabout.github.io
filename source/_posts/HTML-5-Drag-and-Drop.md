@@ -19,7 +19,7 @@ HTML 5 已经把 DnD 标准化，现在我们能“轻易”地为几乎任意�
 Intermediate Element，最终进入 Target Element 并松开鼠标，则路径上会触发的事件
 如下图所示：
 
-{% asset_img drag-and-drop-events.svg Drag and Drop Events %}
+{% asset_svg drag-and-drop-events.svg Drag and Drop Events %}
 
 这些事件的具体内容下面会讲到，你可以先跳过之后再回来查看，简单来说：
 

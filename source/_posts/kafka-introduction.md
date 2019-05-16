@@ -14,7 +14,7 @@ Kafka 的基本概念。
 
 一个 Topic（主题）对应一个消息队列。Kafka 支持多生产者，多消费者，对应下图：
 
-{% asset_img kafka-topic.svg Kafka Topic %}
+{% asset_svg kafka-topic.svg Kafka Topic %}
 
 多个生产者将数据发送到 Kafka 中，Kafka 将它们顺序存储，消费者的行为留到下面讨
 论。我们知道 Kafka 的目标是大数据，如果将消息存在一个“中心”队列中，势必缺少可
@@ -26,7 +26,7 @@ Kafka 的基本概念。
 的 ID ，一般称为偏移量(offset)。这样当性能/存储不足时 Kafka 就可以通过增加
 Partition 实现横向扩展。
 
-{% asset_img kafka-partition.svg Kafka Partition %}
+{% asset_svg kafka-partition.svg Kafka Partition %}
 
 现在我们有了一个队列的消息，那么如何发送给消费者呢？
 
@@ -38,7 +38,7 @@ Partition 实现横向扩展。
     消费者。
 - 发布/订阅模式。多个消费者订阅主题，每个消息会发布给所有的消费者。
 
-{% asset_img kafka-consumer-model.svg Kafka Consumer Model %}
+{% asset_svg kafka-consumer-model.svg Kafka Consumer Model %}
 
 两种方式各有优缺点：
 - 队列模式中多个消费者共同消费同一个队列，效率高。
@@ -50,7 +50,7 @@ Consumer Group（消费组）的概念，Consumer Group 是以发布/订阅模�
 个 Consumer Group 中可以有多个 Consumer（消费者），Group 内的消费者以队列模式工作
 ，如下图：
 
-{% asset_img kafka-consumer-group.svg Kafka Consumer Group %}
+{% asset_svg kafka-consumer-group.svg Kafka Consumer Group %}
 
 上面提到，Kafka 中的消息是以 Partition 存储的，那么它是如何与 Consumer 对接的呢？
 
@@ -72,7 +72,7 @@ Group 当前消费的位置呢？
 2. Partition 会为每个 Consumer Group 保存一个偏移量，记录 Group 消费到的位置。
    如下图：
 
-{% asset_img kafka-consumer-position.svg Kafka Consumer Position %}
+{% asset_svg kafka-consumer-position.svg Kafka Consumer Position %}
 
 上面我们提到的都是 Partition 与 Consumer Group 之间的关系，那 Group 中的
 Consumer 又是如何与 Partition 对应的呢？一般来说这也是最不容易理解的部分。但其
@@ -83,7 +83,7 @@ Consumer 又是如何与 Partition 对应的呢？一般来说这也是最不容
 * 推论2：如果 Consumer 的数量小于 Partition 数量，则一个 Consumer 可能消费多个
     Partition。
 
-{% asset_img kafka-partition-consumer.svg Kafka Partition Consumer Relationship %}
+{% asset_svg kafka-partition-consumer.svg Kafka Partition Consumer Relationship %}
 
 左边的 Consumer Group 中的 C4 是空闲的，而右边 Group 中的 C1 则需要消费两个
 Partition 。由于 C1 中消息可能来源于两个 Partition，此时如果需要确保消息的顺序
@@ -103,7 +103,7 @@ Partition 。由于 C1 中消息可能来源于两个 Partition，此时如果�
 (replication)。换言之，需要存储多份 Partition 在不同的 Broker 上，并为它们的数
 据进行同步。那么从物理的视角：
 
-{% asset_img kafka-broker.svg Kafka Partition Broker View %}
+{% asset_svg kafka-broker.svg Kafka Partition Broker View %}
 
 上图中，某个 Topic 分成了 3 个 Partition，每个 Partition 保存了两个副本，副本
 平均分配到 3 个 Broker 上。图中即使有一个 Broker 挂了，剩余的两个 Broker 依
