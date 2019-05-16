@@ -1,6 +1,13 @@
 title: Raft 一致性算法
-tags: [Raft, Consensus, Algorithm]
+tags:
+  - Raft
+  - Consensus
+  - Algorithm
+toc: true
+date: 2019-05-16 23:43:53
+categories:
 ---
+
 
 分布式系统中，如何保证多个节点的状态一致？Raft 一致性算法与 Paxos 不同，号称简
 单易学，且已经广泛应用在生产中。例如 k8s 和 CoreOS 中使用的 etcd；tikv 中使用
