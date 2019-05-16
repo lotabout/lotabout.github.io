@@ -6,19 +6,20 @@ tags:
 toc: true
 date: 2019-05-16 23:43:53
 categories:
+  - Knowledge
 ---
 
 
 分布式系统中，如何保证多个节点的状态一致？Raft 一致性算法与 Paxos 不同，号称简
 单易学，且已经广泛应用在生产中。例如 k8s 和 CoreOS 中使用的 etcd；tikv 中使用
-Raft 做分布式同步；Redis Cluster 中使用的类似 Raft 的选主机制等等。今天我们
-来一探究竟吧。
+Raft 完成分布式同步；Redis Cluster 中使用类似 Raft 的选主机制等等。今天我们来
+一探究竟吧。
 
 ## 复制状态机/Replicated state machines
 
-复制状态机将服务器看成一个状态机，而一致性算法的目的是让多台服务器/状态机能够
-计算得到相同的状态，同时，如果有部分机器宕机，集群作为一个整体依然能继续工作。
-复制状态机一般通过复制日志（replicated log）来实现，如下图：
+复制状态机的想法是将服务器看成一个状态机，而一致性算法的目的是让多台服务器/状
+态机能够计算得到相同的状态，同时，如果有部分机器宕机，集群作为一个整体依然能继
+续工作。复制状态机一般通过复制日志（replicated log）来实现，如下图：
 
 {% asset_img raft-replicated-state-machine.svg Replicated State Machine %}
 
