@@ -32,7 +32,7 @@ f-divergence GAN 是对 GAN 框架的理论统一，本文学习过程中的一�
 们再训练一个判别器(Discriminator) 来尽量近似这个完美的 loss 函数。GAN 的基本结
 构如下：
 
-{% asset_svg GAN.svg GAN Model %}
+{% asset_img GAN.svg GAN Model %}
 
 为了训练判别器 D，我们需要有正样本（动漫头像），也需要有负样本（非动漫头像）。
 正样本已经收集完毕，负样本哪里来呢？这就是 GAN 犀利的地方，它用生成器 G 生成的

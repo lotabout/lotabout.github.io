@@ -125,7 +125,7 @@ x.get_counter()
 要了解元类(meta-class)的作用，我们就需要了解 Python 里[类的创建过程
 ](https://docs.python.org/3/reference/datamodel.html#metaclasses)，如下：
 
-{% asset_svg class-creation.svg Class Creation Step in Python %}
+{% asset_img class-creation.svg Class Creation Step in Python %}
 
 1. 当 Python 见到 `class` 关键字时，会首先解析 `class ...` 中的内容。例如解析
    基类信息，最重要的是找到对应的元类信息（默认是 `type`)。

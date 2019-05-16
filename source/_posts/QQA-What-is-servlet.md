@@ -32,7 +32,7 @@ Servlet 没有标准的中文译名，我们会在学习 Java Web 编程（如 S
 成模块。于是 1,5 就被做成了 web server ，如 tomcat；2,4就被独立成 web 框架，如
 Spring。
 
-{% asset_svg servlet.svg Structure of Web Application %}
+{% asset_img servlet.svg Structure of Web Application %}
 
 如上，Servlet 接口就是 web server 与框架间的通信协议，所以在学习 Web 框架的实
 现时容易遇到它。但写具体的应用时，因为框架已经屏蔽了这些细节，所以基本也不会用
