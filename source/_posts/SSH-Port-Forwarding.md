@@ -2,7 +2,7 @@ title: SSH 端口转发教程
 toc: true
 date: 2019-06-09 09:20:16
 tags: [ssh, Port Forwarding]
-categories:
+categories: [Knowledge]
 ---
 
 什么是端口转发？骑士想给公主写信，却被国王禁止，骑士只得请侍女将信带到，这就是
