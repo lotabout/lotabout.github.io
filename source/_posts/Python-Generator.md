@@ -30,7 +30,7 @@ images = get_images(n)
 后续的图片，并且， `get_image_by_id` 是一个很耗时的操作，我们希望在不需要的
 情况下尽量避免调用它。
 
-换句话说，我们希望能对 `get_image_by_id` 进行懒执行 (lazy evalution)。这也不
+换句话说，我们希望能对 `get_image_by_id` 进行懒执行 (lazy evaluation)。这也不
 难，我们可以这么做：
 
 ```python
@@ -148,7 +148,7 @@ next(fibos) #=> 2
 
 ## Generator 与控制流
 
-前面我们提到，Generator 的作用其实是实现了懒执行 (lazy evalution) ，即在真正
+前面我们提到，Generator 的作用其实是实现了懒执行 (lazy evaluation) ，即在真正
 需要某个值的时候才真正去计算这个值。因此，更进一步，Generator 其实是返回了控制
 流。当一个 generator 执行到 yeild 语句时，它便保存当前的状态，返回所给的结果
 （也可以没有），并将当前的执行流还给调用它的函数，而当再次调用它时，Generator
