@@ -72,7 +72,7 @@ GC 通常比 Full GC 快很多，如果系统有卡顿，一般需要关注 Full
 | YGC     | 程序启动以来 Young GC 发生的次数            |
 | YGCT    | 程序启动以来 Young GC 共消耗的时间(s)       |
 | FGC     | 程序启动以来 Full GC 发生的次数             |
-| FGCT    | 程序启动以来 Young GC 共消耗的时间(s)       |
+| FGCT    | 程序启动以来 Full GC 共消耗的时间(s)       |
 | GCT     | 程序启动以来 GC 的总用时(s)                 |
 
 `-gc` 的输出如下
@@ -92,7 +92,7 @@ GC 通常比 Full GC 快很多，如果系统有卡顿，一般需要关注 Full
 | YGC     | 程序启动以来 Young GC 发生的次数            |
 | YGCT    | 程序启动以来 Young GC 共消耗的时间(s)       |
 | FGC     | 程序启动以来 Full GC 发生的次数             |
-| FGCT    | 程序启动以来 Young GC 共消耗的时间(s)       |
+| FGCT    | 程序启动以来 Full GC 共消耗的时间(s)       |
 | GCT     | 程序启动以来 GC 的总用时(s)                 |
 
 ## 参考
@@ -100,6 +100,6 @@ GC 通常比 Full GC 快很多，如果系统有卡顿，一般需要关注 Full
 - [Garbage Collection in Java](https://plumbr.io/handbook/garbage-collection-in-java) Plumbr 的 GC 教程，深入浅出。
 - [Java Platform, Standard Edition HotSpot Virtual Machine Garbage Collection Tuning Guide](https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/index.html) 官方 GC 教程，据说你需要知道的都在里面。
 
-最后是一张 GC 流程图（来源：https://blog.csdn.net/u012102536/article/details/58587090）
+最后是一张 GC 流程图（来源：https://blog.csdn.net/u012102536/article/details/58587090 ）
 
 ![GC 流程](https://img-blog.csdn.net/20170228112452691)
