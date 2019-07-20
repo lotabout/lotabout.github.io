@@ -1,11 +1,13 @@
 language: node_js
-node_js:
-- '6.0.0'
+node_js: stable
 branches:
   only:
   - source
 before_install:
-- npm install -g hexo-cli@1.0.3
+- npm install -g hexo-cli
+cache:
+  directories:
+    - node_modules
 install:
 - npm install
 script:
@@ -13,7 +15,7 @@ script:
 - git submodule update
 - hexo generate
 after_success:
-- git config --global user.name "Mark Wallace"
+- git config --global user.name "Jinzhou Zhang"
 - git config --global user.email "lotabout@gmail.com"
 - sed -i'' "/^ *repo/s~github\.com~${GH_TOKEN}@github.com~" _config.yml
 - hexo deploy --silent
