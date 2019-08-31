@@ -1,6 +1,6 @@
 title: Java Annotation Processor 小记
 date: 2017-12-31 20:33:19
-tags: [Java, Annotation]
+tags: [java, annotation]
 categories: [Notes]
 toc: true
 ---
