@@ -3,13 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "hexo": {
-    "version": "3.7.1"
+    "version": "3.9.0"
   },
   "dependencies": {
     "hexo": "^3.2.0",
     "hexo-clean-css": "0.0.3",
     "hexo-deployer-git": "0.0.4",
-    "hexo-filter-fix-cjk-spacing": "0.0.4",
+    "hexo-filter-fix-cjk-spacing": "0.0.5",
     "hexo-footnotes": "^1.0.1",
     "hexo-generator-archive": "^0.1.4",
     "hexo-generator-category": "^0.1.3",
