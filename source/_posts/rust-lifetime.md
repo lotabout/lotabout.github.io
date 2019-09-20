@@ -345,6 +345,7 @@ fn foo<'a, 'b>(x: &'a str, y: &'b str) -> &'a str {
     if random() % 2 == 0 { x } else { y }
 }
 
+// 下面的代码编译不过，用来演示如果没有 lifetime 分析可能造成的“不安全”
 fn main() {
     let x = String::from("X");
     let z;
@@ -359,7 +360,7 @@ fn main() {
 由于 rust 做的是静态分析，因此在 ① 处分析时，`z` 的 Lifetime 为函数 `foo` 返
 回值的 Lifetime `'a`，它小于变量 `x` 的生命周期，因此如果 rust 不强制执行
 Lifetime 的推导规则，则上述代码能通过静态分析，但若运行时函数 `foo` 返回了
-`y`，则又产生了内存安全的问题。上例可以用这种方式解决：
+`y`，则又产生了内存安全的问题。上例中的 random 函数修复如下：
 
 ```rust
 fn foo<'a, 'b: 'a>(x: &'a str, y: &'b str) -> &'a str
