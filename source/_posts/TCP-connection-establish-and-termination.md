@@ -93,3 +93,4 @@ number 的同步。使用随机生成的 sequence number 是为了防止在网�
     TIME_WAIT 有细致的讲解
 - https://en.wikipedia.org/wiki/Transmission_Control_Protocol 维基百科，依旧是
     你最好的朋友
+- http://blog.qiusuo.im/blog/2014/03/19/tcp-timeout/ TCP 中的各种超时
