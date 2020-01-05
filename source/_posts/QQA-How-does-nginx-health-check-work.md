@@ -1,7 +1,7 @@
 title: 'QQA: Nginx 如何做健康检查?'
 toc: true
 date: 2019-12-20 15:34:50
-tags: [QQA, nginx]
+tags: [QQA, nginx, health check]
 categories: [QQA]
 ---
 
