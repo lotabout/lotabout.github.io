@@ -282,9 +282,10 @@ loop.run_until_complete(print_sum(1, 2))
 loop.close()
 ```
 
-上面的代码的执行流程是：
+上面的代码的执行流程是（图源自 python 3.6 [官方文档
+](https://docs.python.org/3.6/library/asyncio-task.html)，3.7 及之后无此配图）
 
-![Control Flow of Coroutine](https://docs.python.org/3/_images/tulip_coro.png)
+![Control Flow of Coroutine](https://docs.python.org/3.6/_images/tulip_coro.png)
 
 这里有两个问题：
 1. 谁向 event loop 注册了事件（及回调）？
