@@ -1,6 +1,6 @@
 title: Reactor 模式简介
 date: 2018-06-28 10:07:24
-tags: [reactor, asyncio]
+tags: [reactor, async]
 categories: [QQA]
 toc: true
 ---

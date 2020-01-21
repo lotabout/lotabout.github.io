@@ -1,6 +1,6 @@
 title: 理解 Python asyncio
 date: 2017-09-03 12:02:00
-tags: [python, asyncio, coroutine]
+tags: [python, async, coroutine]
 categories: [Notes]
 toc: true
 ---
