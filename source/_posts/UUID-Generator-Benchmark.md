@@ -1,7 +1,7 @@
 title: UUID 生成器有多快？
 toc: true
 date: 2019-05-26 19:57:58
-tags: [UUID, java]
+tags: [benchmark, UUID, java]
 categories: [Notes]
 ---
 
