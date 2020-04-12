@@ -1,7 +1,7 @@
 title: 过早优化为什么是万恶之源？
 toc: true
 date: 2020-04-06 20:24:43
-tags: []
+tags: [optimization]
 categories: [Post]
 ---
 
