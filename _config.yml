@@ -12,7 +12,7 @@ timezone:
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
-url: http://lotabout.github.io/
+url: https://lotabout.me/
 root: /
 permalink: :year/:title/
 permalink_defaults:
@@ -89,6 +89,11 @@ deploy:
   type: git
   repo: https://github.com/lotabout/lotabout.github.io
   branch: master
+
+sitemap:
+  path: sitemap.xml
+  tag: false
+  category: false
 
 markdown:
   render:
