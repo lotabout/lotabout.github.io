@@ -1,4 +1,4 @@
-title: C3 算法：Python 多重继承的内部原理
+title: C3 算法：Python 多继承的内部原理
 toc: true
 date: 2020-04-15 18:56:42
 tags: [python, mixin, multiple inheritance, C3]
@@ -7,15 +7,15 @@ math: true
 ---
 
 在 Python 中使用 Mixin 有没有遇到过 `Cannot create a consistent method
-resolution` 错误？Mixin 在 Python 里只是多重继承(multiple inheritance) 的一种
-用法，而多重继承时，Python 是如何决定父类的顺序呢？咱们就来看看 C3 算法是何方
+resolution` 错误？Mixin 在 Python 里只是多继承(multiple inheritance) 的一种
+用法，而多继承时，Python 是如何决定父类的顺序呢？咱们就来看看 C3 算法是何方
 神圣。
 
 TLDR; 我个人觉得 C3 算法就是拓扑排序…
 
 ## Method Resolution Order(MRO)
 
-考虑下面的多重继承的代码：
+考虑下面的多继承的代码：
 
 ```python
 class A(object):
@@ -33,7 +33,7 @@ C().hello()
 
 上面的 `C().hello()` 输出是什么呢？这里会输出 `hello from A`。
 
-Python 的多重继承符合直觉，可以认为：在查找一个方法或类时，**会从左到右查找父
+Python 的多继承符合直觉，可以认为：在查找一个方法或类时，**会从左到右查找父
 类的方法或类**，找到为止。这个查找顺序叫作 Method Resolution Order，简称 MRO。
 可以通过 `<class>.mro()` 查看，如：
 
