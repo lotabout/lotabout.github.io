@@ -70,7 +70,6 @@ archive_generator:
 #theme: landscape
 theme: noise
 
-
 # configuration for themes
 noise:
   menu:
