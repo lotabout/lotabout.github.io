@@ -1,5 +1,5 @@
 language: node_js
-node_js: stable
+node_js: 10
 branches:
   only:
   - source
@@ -14,7 +14,9 @@ script:
 - git submodule init
 - git submodule update
 - hexo generate
-- "[ \"$(wc -c public/index.html | awk '{print $1}')\" -le 0 ] && exit 1"
+- export INDEX_CHARS=$(wc -c public/index.html | awk '{print $1}')
+- echo $INDEX_CHARS
+- "(( INDEX_CHARS > 0 ))"
 after_success:
 - git config --global user.name "Jinzhou Zhang"
 - git config --global user.email "lotabout@gmail.com"
