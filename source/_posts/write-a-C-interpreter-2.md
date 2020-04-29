@@ -251,7 +251,7 @@ void eval() {
 
 ```c
         else if (op == JZ)   {pc = ax ? pc + 1 : (int *)*pc;}                   // jump if ax is zero
-        else if (op == JNZ)  {pc = ax ? (int *)*pc : pc + 1;}                   // jump if ax is zero
+        else if (op == JNZ)  {pc = ax ? (int *)*pc : pc + 1;}                   // jump if ax is not zero
 ```
 
 ### 子函数调用
@@ -525,6 +525,13 @@ int main(int argc, char *argv[])
 ```
 exit(30)
 ```
+
+另外，我们的代码里有一些指针的强制转换，默认是 32 位的，因此在 64 位机器下，会
+出现 `segmentation fault`，解决方法（二选一）：
+
+1. 编译时加上 `-m32` 参数：`gcc -m32 xc-tutor.c`
+2. 在代码的开头，增加 `#define int long long`，`long long` 是 64 位的，不会出
+   现强制转换后的问题。
 
 注意我们的之前的程序需要指令一个源文件，只是现在还用不着，但从结果可以看出，我
 们的虚拟机还是工作良好的。
