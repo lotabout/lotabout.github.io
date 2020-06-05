@@ -70,7 +70,7 @@ categories: [Knowledge]
 * 典型时序A3：`r1[P]...w2[y in P]...c2...r1[P]...c1`
 * 问题时序P3：`r1[P]...w2[y in P]...(c1 or a1)`
 
-与 Fuzzy REad 不同，Phantom（幻读）涉及的不是单个数据行，而是查询（如 `SELECT
+与 Fuzzy Read 不同，Phantom（幻读）涉及的不是单个数据行，而是查询（如 `SELECT
 ...  WHERE P`）。
 
 {% asset_img A3-phantom.svg A3 Phanom %}
