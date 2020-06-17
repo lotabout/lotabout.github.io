@@ -1,9 +1,13 @@
-title: 'Java 并发（零）- 原子性'
+title: 'Deprecated. Java 并发（零）- 原子性'
 toc: true
 date: 2020-06-14 10:24:05
 tags: [Java Concurrency]
 categories: Project
 ---
+
+Deprecated. 这篇文章写得太仓促了，急切地想表达原子性的重要性，但内容组织得不太
+好，感觉文章比较乱，另一方面也不是一个好的系列开篇。不建议阅读。不过为了完整性
+还是保留，有兴趣的也可以看看写得有多烂哈。
 
 并发问题主要有三个根源：原子性、可见性及有序性。作为 Java 并发系列的开篇，我们
 先来谈谈原子性，以及引发原子性问题的 Shared Mutable State(共享可变状态)。
