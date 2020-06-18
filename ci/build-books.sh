@@ -11,7 +11,7 @@ if [ ! -d $TARGET_DIR ]; then
     mkdir -p $TARGET_DIR
 fi
 
-for book in $(find books -type d -d 1); do
+for book in $(find books -depth 1 -type d); do
     echo "Building $book"
     cd $TOPDIR/$book
     gitbook build
