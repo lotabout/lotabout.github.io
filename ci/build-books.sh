@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+set -ex
 
 DIR=$(cd `dirname $0`; pwd)
 TOPDIR=$DIR/..
