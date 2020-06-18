@@ -9,3 +9,4 @@ public/
 *.swp
 *.swo
 _book
+package-lock.json

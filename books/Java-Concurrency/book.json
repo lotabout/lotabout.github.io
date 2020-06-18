@@ -1,0 +1,19 @@
+{
+  "title": "Java 并发知识",
+  "description": "记录学习到的一些 Java 并发知识",
+  "author": "Jinzhou Zhang",
+  "gitbook": "3.x.x",
+  "language": "zh-hans",
+  "structure": {
+    "readme": "README.md"
+  },
+  "links": {
+    "sidebar": {
+      "Home": "https://lotabout.com"
+    }
+  },
+  "plugins": [
+    "mathjax"
+  ],
+  "pluginsConfig": {}
+}
