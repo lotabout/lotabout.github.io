@@ -14,6 +14,8 @@ fi
 for book in $(find books -type d -mindepth 1 -maxdepth 1); do
     echo "Building $book"
     cd $TOPDIR/$book
+    npm install
+    gitbook install
     gitbook build
 
     echo "copy to publish folder"
