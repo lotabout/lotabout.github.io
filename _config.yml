@@ -74,6 +74,7 @@ theme: noise
 noise:
   menu:
       Home: /
+      Books: books
       Archives: archives
       About: about
   social:
