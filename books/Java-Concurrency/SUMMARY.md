@@ -4,6 +4,6 @@
 
 ## 理解线程安全
 
-- [都是顺序的错](Ordering.md)
+- [都是顺序的错](Ordering/index.md)
 
 ## 压榨多线程性能

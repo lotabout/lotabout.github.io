@@ -4,12 +4,12 @@
 
 并发(Concurrency)有两层含义：
 
-- 宏观层面，并发意味着有事件“同时”发生[^1]，如：网络里的多台机器同时发请求；同
+- 宏观层面，并发意味着有事件“同时”发生[^mit-reading-17]，如：网络里的多台机器同时发请求；同
     一台机器上的多个进程；同一个进程里的多个线程等。
 - 微观层面，并发意味着执行单元（如请求、操作、指令等）乱序或部分有序
-    地执行，依然不影响最终的结果[^2]
+    地执行，依然不影响最终的结果[^wiki-definition]
 
-在 Java 里，并发的宏观表现就是多线程[^3]，微观上直接相关的是字节码，但为了理解
+在 Java 里，并发的宏观表现就是多线程[^go]，微观上直接相关的是字节码，但为了理解
 并发问题，我们还要站在 JVM 的角度，思考系统的 CPU 指令和内存等对乱序的影响。
 
 并发产生的问题通常也叫线程安全问题，本书的第一部分我们就会讨论线程安全相关的话
@@ -28,6 +28,6 @@
 另外，本人水平有限，有理解不正确的地方，欢迎批评指正，我相信相互交流才能让我们
 彼此有更大的提升。
 
-[^1]: https://web.mit.edu/6.005/www/fa14/classes/17-concurrency/#concurrency
-[^2]: https://en.wikipedia.org/wiki/Concurrency_(computer_science)
-[^3]: 在一些支持协程的语言(如 Go)中，单线程也可以产生并发，关键是微观上是否有乱序
+[^mit-reading-17]: https://web.mit.edu/6.005/www/fa14/classes/17-concurrency/#concurrency
+[^wiki-definition]: https://en.wikipedia.org/wiki/Concurrency_(computer_science)
+[^go]: 在一些支持协程的语言(如 Go)中，单线程也可以产生并发，关键是微观上是否有乱序

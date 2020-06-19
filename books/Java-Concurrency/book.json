@@ -13,6 +13,7 @@
     }
   },
   "plugins": [
+    "footnote-string-to-number",
     "mathjax"
   ],
   "pluginsConfig": {}
