@@ -6,5 +6,6 @@
 
 - [理想的并发世界](Ideal-World/index.md)
 - [残酷的现实](Cruel-World/index.md)
+- [Happens Before](Happens-Before/index.md)
 
 ## 压榨多线程性能
