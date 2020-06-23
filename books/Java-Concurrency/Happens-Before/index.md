@@ -22,13 +22,21 @@
 
 说了这么久并发问题，我们还是没有说 Java 的内容，这里先简单提一提 Java 的同步原
 语，大家先有个印象。Java 语言提供的同步原语主要有三种：`synchronized` 和
-`volatile` 关键字，还有JUC 包中的其它工具，如原子类`AtomicInteger` 等。
+`volatile` 关键字，还有JUC 包中的其它工具，如原子类`AtomicInteger` 等。而语法
+层面提供的只有 `synchronized` 和 `volatile`[^final]。
 
-这里先从语法而非语义层面描述下怎么使用 `synchronized` 和 `volatile`，这样在下
-面描述操作和规则时，能有点概念。
+这些高层的原语通常都会起到多个作用，如 synchronized 同时保证了原子性、可见性、
+和顺序性，如 volatile 保证了可见性和顺序性。
 
-`synchronized` 需要给定一个要上锁的对象，后面跟一个代码块代表临界区，代表需要
-原子地执行的代码整体，如：
+### synchronized
+
+Java 会为每个对象都生成一个监视器 monitor，可以用来 lock 或 unlock，JVM 保证同
+一时刻只有一个线程能拿到锁。其它获取锁的线程会被阻塞，直到该锁被释放。另外这个
+锁是“可重入”的，即一个线程可以获取锁多次，这种机制有有效减少死锁发生（但注意
+Java 不保证检测死锁）。
+
+`synchronized` 语句需要给定一个要上锁的对象，后面跟一个代码块代表临界区，代表
+需要同步执行的代码整体。如：
 
 ```java
 public withdraw(int x) {
@@ -49,15 +57,24 @@ public synchronized withdraw(int x) {
 如果不指定“上锁对象”，则默认使用 `this`，如果是静态方法，则默认使用类对象
 (Class Object)。
 
-注：Java 会为每个对象都生成一个监视器 monitor，可以用来 lock 或 unlock，同一时
-刻只有一个线程能拿到锁。`synchronized` 语法会尝试 lock 指定的对象的监视器。这
-个内容比较细节，主要记住“监视器”这个名词，下文会用到。
+`synchronized` 在执行时，会先拿到上锁对象的引用，然后尝试对该对象的监视器执行
+lock 操作，得到锁后开始执行代码块里的操作，代码块执行结束后（不管是正常结束还
+是抛异常），会在同样的监视器上执行 unlock 操作释放锁。
 
-`volatile` 语法上比较简单，用来修饰变量：
+这里只提到了锁的“原子性”，下面的 Happens Before 会定义 lock/unlock 的可见性和
+顺序性。
+
+### volatile
+
+`volatile` 关键词在语法上比较简单，用来修饰变量：
 
 ```java
 private volatile balance;
 ```
+
+直觉上，它说明一个变量是“易变的”，这意味着读写该变量的时候，缓存上的数据都不可
+靠，得从内存中读写。这个关键词语义主要关心的是可见性，不过下面的 Happens
+Before 除了会定义它的可见性，还会定义它的顺序性语义。
 
 ## 跨线程操作
 
@@ -152,6 +169,7 @@ HB 规则很重要，本身也不复杂，但需要较多的背景知识，这�
 
 ---
 
+[^final]: final 修饰的变量也有一些特殊的语义，本章先不提及，有兴趣的可以参考 JSL 第 17 章
 [^lock-and-visibility]: 示例来源于书本《Java 并发编程实战》
 [^partial-order]: Happens Before 是一种[偏序关系](https://zh.wikipedia.org/wiki/%E5%81%8F%E5%BA%8F%E5%85%B3%E7%B3%BB)，偏序是集合上的一种关系，满足自反性(`a<=a`)、反对称(`a<=b && b<=a` => `a = b`)、和传递性(`a<=b && b<=c` => `a<=c`)。
 [^java-concurrency-book]: 参考《Java 并发编程实战》第 16 章，我觉得它比 JLS 17 章和 JSR 133 中的描述都要清晰
