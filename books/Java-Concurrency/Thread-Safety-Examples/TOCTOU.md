@@ -71,9 +71,13 @@ public static class LazyInitialization {
 }
 ```
 
-这样可以保证在同一时刻，只可能有一个线程在检查 instance 是否为空，且在状态使用
-之前，instance 不会被其它线程更改。换句话说，在状态的使用时，检查时得到的条件
-依旧成立。
+在 `getInstance` 方法前加上 `synchronized` 关键词，可以保证在同一时刻，只可能
+有一个线程在执行 `getInstance` 内的逻辑。这样保证了只会有一个线程在检查
+instance 是否为空，且在状态使用之前，instance 不会被其它线程更改。换句话说，在
+状态的使用时，检查时得到的条件依旧成立。
+
+当然，`synchronized` 是互斥锁，意味着即使初始化正确完成后，依然只有一个线程能
+执行代码，于是在高并发下性能不好，之后的章节中会介绍如何优化。
 
 ## Java 外的 TOCTOU
 
