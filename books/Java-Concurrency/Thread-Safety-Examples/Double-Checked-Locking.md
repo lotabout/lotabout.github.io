@@ -6,10 +6,12 @@
 Declaration](https://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html)
 文章的脉络，结合前几章学习的知识，尝试理解这些知识点。
 
+（这章属于“骚操作”的内容。）
 
 ## 初次尝试
 
-我们的目标是在获取某个实例时只初始化一次，在单线程语境中，我们会这么实现：
+上节中说过 Lazy Initialization，我们的目标是在获取某个实例时只初始化一次，在单
+线程语境中，我们会这么实现：
 
 ```java
 class Foo {

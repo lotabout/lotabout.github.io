@@ -1,11 +1,13 @@
 # Time-Of-Check to Time-Of-Use
 
-Time-Of-Check to Time-of-Use[^wiki] 简称为 TOCTOU 或 TOCTTOU，是指在检查某个状态到使
-用某个状态之间有时间间隔，而在这段时间间隔中，状态被其它人修改了，从而导致软件
-Bug 或系统漏洞。在《Java 并发编程实战》里，也称为“先检查后执行”(Check-then-Act)模式。
+Time-Of-Check to Time-of-Use[^wiki] 简称为 TOCTOU 或 TOCTTOU，是指在检查某个状
+态到使用某个状态之间存在时间间隔，而在这段间隔中，状态被其它人修改了，从而导致
+软件Bug 或系统漏洞。在《Java 并发编程实战》里，也称为“先检查后执行”
+(Check-then-Act)模式。
 
 不管是写系统脚本、Java 程序、与数据库打交道，TOCTOU 都是常见的问题。我们先来看
-看“延迟初始化”(Lazy Initialization)问题[^dubbo]，几乎所有并发书里都会讨论这个问题。
+看“延迟初始化”(Lazy Initialization)问题[^dubbo]，它是一个典型的 TOCTOU 问题，
+也是几乎所有并发书籍会讨论的问题。
 
 ## 延迟初始化
 
@@ -34,7 +36,7 @@ public static class LazyInitialization {
 `ExpensiveObject` 对象），最后返回初始化完成的对象。这是一个典型的 TOCTOU 的操
 作。
 
-它的问题在于，如果有两个线程执行，有可能执行顺序如下：
+问题在于，如果有两个线程同时执行这段代码，可能执行顺序如下：
 
 
 ```
@@ -119,6 +121,10 @@ TOCTOU 问题的根源是使用状态时，其实依赖了之前的状态检查�
 
 解法是：将检查、操作整体用锁保护起来，保证整体的原子性。Java 里最方便的是
 `synchronized`关键词，当然也可以用如 `ReentrantLock` 等机制。
+
+其实线程安全问题，就是因为由代码顺序带来的逻辑预期被破坏了。如上例中，在执行初
+始化时经过了 `if (instance == null)` 的判断，`instance == null` 是初始化的大前
+提，但在执行时大前提被破坏了，此时再执行初始化本身就是错误的行为。
 
 ---
 

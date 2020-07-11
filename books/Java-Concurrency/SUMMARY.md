@@ -8,8 +8,8 @@
 - [残酷的现实](Cruel-World/index.md)
 - [Happens Before](Happens-Before/index.md)
 - [常见线程安全问题](Thread-Safety-Examples/index.md)
-    - [Double Checked Locking](Thread-Safety-Examples/Double-Checked-Locking.md)
     - [TOCTOU](Thread-Safety-Examples/TOCTOU.md)
+    - [Double Checked Locking](Thread-Safety-Examples/Double-Checked-Locking.md)
     - [复合操作](Thread-Safety-Examples/Compound-Actions.md)
 
 ## 压榨多线程性能
