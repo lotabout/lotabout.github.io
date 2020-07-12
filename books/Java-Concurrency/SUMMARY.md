@@ -12,5 +12,9 @@
     - [Double Checked Locking](Thread-Safety-Examples/Double-Checked-Locking.md)
     - [复合操作](Thread-Safety-Examples/Compound-Actions.md)
     - [小结](Thread-Safety-Examples/Summary.md)
+- [良好的并发编程习惯](Best-Practice/index.md)
+    - [封闭](Best-Practice/Confinement.md)
+    - [不可变](Best-Practice/Immutability.md)
+    - [利用线程安全类](Best-Practice/Threadsafe-Data-Types.md)
 
 ## 压榨多线程性能
