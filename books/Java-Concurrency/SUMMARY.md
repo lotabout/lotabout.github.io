@@ -11,5 +11,6 @@
     - [TOCTOU](Thread-Safety-Examples/TOCTOU.md)
     - [Double Checked Locking](Thread-Safety-Examples/Double-Checked-Locking.md)
     - [复合操作](Thread-Safety-Examples/Compound-Actions.md)
+    - [小结](Thread-Safety-Examples/Summary.md)
 
 ## 压榨多线程性能
