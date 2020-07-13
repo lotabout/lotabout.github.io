@@ -9,9 +9,9 @@ Safety](https://web.mit.edu/6.005/www/fa15/classes/20-thread-safety/) 一文，�
 Mutable State)，因为这种情况下，程序的正确性依赖了底层操作的某些特定顺序。也因
 此，有几种常见的保证线程安全的方式：
 
-- 封闭(Confinement)，简单地说，就是不要在线程间共享状态
-- 不可变(Immutability)，可以共享，但是共享的变量“不可变”[^immutable]
-- 线程安全类(Threadsafe Data Types)，用已有的线程安全类来封装共享的状态，不需要自己实现同步
-- 同步(Synchronization)，万不得以必须自己实现共享可变状态，需要通过同步保证运行顺序
+- 封闭（Confinement），简单地说，就是不要在线程间共享状态
+- 不可变（Immutability），可以共享，但是共享的变量“不可变”[^immutable]
+- 线程安全类（Threadsafe Data Types），用已有的线程安全类来封装共享的状态，不需要自己实现同步
+- 同步（Synchronization），万不得以必须自己实现共享可变状态，需要通过同步保证运行顺序
 
 [^immutable]: “不可变”不单纯指“不修改”，因为还会有可见性问题，后面我们会详细说明
