@@ -18,3 +18,6 @@
     - [5.3 利用线程安全类](Best-Practice/Threadsafe-Data-Types.md)
 
 ## 压榨多线程性能
+
+- [6. Amdahl 定律](Amdahl-Law/index.md)
+- [7. 线程的代价](Cost-of-Thread/index.md)
