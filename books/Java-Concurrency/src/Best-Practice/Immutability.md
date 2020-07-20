@@ -166,6 +166,8 @@ Java 会对 `final` 修饰的字段做可见性和顺序性的保证。但如果
 ---
 
 [^ref-book]: 摘抄自《Java 并发编程实战》
+
 [^JSL-chap17]: [JSL 第 17 章](https://docs.oracle.com/javase/specs/jls/se8/html/jls-17.html#jls-17.5) 有关于 final 语义的详细介绍
+
 [^ref-infoq]: [深入理解 Java 内存模型（六）——final](https://www.infoq.cn/article/java-memory-model-6)
 

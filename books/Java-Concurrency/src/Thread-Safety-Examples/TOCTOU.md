@@ -129,4 +129,5 @@ TOCTOU 问题的根源是使用状态时，其实依赖了之前的状态检查�
 ---
 
 [^wiki]: https://en.wikipedia.org/wiki/Time-of-check_to_time-of-use
+
 [^dubbo]: 例如知名 RPC 框架 dubbo 中的 [NetUtils](https://github.com/apache/dubbo/blob/master/dubbo-common/src/main/java/org/apache/dubbo/common/utils/NetUtils.java#L198) 使用了延迟初始化来获取本机 IP

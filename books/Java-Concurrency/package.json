@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "gitbook-plugin-footnote-string-to-number": "0.0.2",
-    "mathjax": "^2.7.6"
-  }
-}

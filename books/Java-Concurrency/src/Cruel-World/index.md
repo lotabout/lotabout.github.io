@@ -213,9 +213,15 @@ public class Shared {
 ---
 
 [^cache-hierarchy]: 图来源于《深入理解计算机系统》
+
 [^atomic-induction]: 虽然可能大家都知道，原子也是可分的，但在长时间内，原子是被认为不可分的
+
 [^cas]: CMPXCHG 指令代表的是 CAS(compare and swap) 机制，Java 的 AtomicInteger 和 ReentrantLock 等的实现依赖了 CAS 机制，后续章节会介绍。
+
 [^visibility-caution]: 注意这个示例是理论模型上会发生的，实际上现代的一些 CPU 在缓存之间有诸如 MESI 的同步机制，能保证写入缓存的数据可以被其它核读取，这叫作缓存一致性(cache-coherency)，可以参考[这篇文章](https://software.rajivprab.com/2018/04/29/myths-programmers-believe-about-cpu-caches/)
+
 [^visibility-single-thread]: 参考这个回答 https://stackoverflow.com/a/59159989/826907
+
 [^cache-improvement]: 如上面的注脚提到的，CPU 层面也在尝试优化缓存间的数据同步，如 MESI 协议
+
 [^reordering-example]: 例子取自 [Herb Sutter 的演讲](https://www.youtube.com/watch?v=A8eCGOqgvH4)，[PPT 链接](https://onedrive.live.com/?authkey=%21AMtj%5FEflYn2507c&cid=4E86B0CF20EF15AD&id=4E86B0CF20EF15AD%2124884&parId=4E86B0CF20EF15AD%21180&o=OneUp)

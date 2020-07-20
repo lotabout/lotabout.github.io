@@ -170,6 +170,9 @@ HB 规则很重要，本身也不复杂，但需要较多的背景知识，这�
 ---
 
 [^final]: final 修饰的变量也有一些特殊的语义，本章先不提及，有兴趣的可以参考 JSL 第 17 章
+
 [^lock-and-visibility]: 示例来源于书本《Java 并发编程实战》
+
 [^partial-order]: Happens Before 是一种[偏序关系](https://zh.wikipedia.org/wiki/%E5%81%8F%E5%BA%8F%E5%85%B3%E7%B3%BB)，偏序是集合上的一种关系，满足自反性(`a<=a`)、反对称(`a<=b && b<=a` => `a = b`)、和传递性(`a<=b && b<=c` => `a<=c`)。
+
 [^java-concurrency-book]: 参考《Java 并发编程实战》第 16 章，我觉得它比 JLS 17 章和 JSR 133 中的描述都要清晰

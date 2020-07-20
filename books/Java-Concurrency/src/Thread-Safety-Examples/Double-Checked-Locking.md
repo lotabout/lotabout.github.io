@@ -295,5 +295,7 @@ Declaration](https://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.
 ---
 
 [^csdn]: 参考 CSDN 文章 [双重检查锁定（double-checked locking）与单例模式](https://blog.csdn.net/zhangzeyuaaa/article/details/42673245)
+
 [^jmm-cookbook]: 关于重排序和内存可见性，可以参考 Doug Lea 的 [The JSR-133 Cookbook for Compiler Writers](http://gee.cs.oswego.edu/dl/jmm/cookbook.html)
+
 [^bidirectional-memory-barrier]: [这里](https://www.cs.umd.edu/~pugh/java/memoryModel/BidirectionalMemoryBarrier.html)介绍了一种方法，不要用在生产中

@@ -34,7 +34,7 @@ Consistency](https://www.microsoft.com/en-us/research/uploads/prod/2016/12/How-t
 > ... the result of any execution is the same as if the operations of all the
 > processors were executed in some sequential order, and the operations of
 > each individual processor appear in this sequence in the order specified by
-> its program.[^sequential-consistency]
+> its program.[^ref-wiki]
 
 考虑 CPU 多个核的执行顺序，多核的执行结果，相当于把每个核要执行的操作汇总排个
 序，在这个顺序里，要求每个核的操作依旧保持在单核内的相对顺序。例如，下图中有两
@@ -126,5 +126,6 @@ Consistency。
 
 ---
 
-[^sequential-consistency]: https://en.wikipedia.org/wiki/Sequential_consistency
+[^ref-wiki]: https://en.wikipedia.org/wiki/Sequential_consistency
+
 [^visibility]: [维基百科](https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency) 里说：Sequential Consistency 中一个写入一个变量不需要被“立即”看到。与我们文中说的“操作对下一个操作可见”似乎有冲突。我翻了很多资料，最终的理解是：“写入不需要被立即看到”的语境是排序前，如果有一写两读，`W(2)`, `R1, R2`，最终如果排序成 `R1, W(2), R2` 则代表了 `W(2)` 被延时感知了。但是排序后的操作仍旧必须对下一个操作可见。
