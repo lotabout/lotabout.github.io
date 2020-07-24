@@ -22,7 +22,7 @@
 - [Amdahl 定律](Amdahl-Law/index.md)
 - [线程的代价](Cost-of-Thread/index.md)
 - [线程池](Thread-Pool/index.md)
-    - [线程池相关概念]()
+    - [线程池相关概念](Thread-Pool/Concepts.md)
     - [线程的取消与关闭]()
     - [线程池的使用策略]()
 
