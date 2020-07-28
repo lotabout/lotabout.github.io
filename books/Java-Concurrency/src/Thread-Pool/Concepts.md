@@ -159,7 +159,6 @@ Future<Integer> result = executorService.submit(() -> {
 有，它的方法如下：
 
 ```java
-
 public interface Future<V> {
     boolean isDone();
     V get() throws InterruptedException, ExecutionException;
