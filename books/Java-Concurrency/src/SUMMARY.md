@@ -23,6 +23,7 @@
 - [线程的代价](Cost-of-Thread/index.md)
 - [线程池](Thread-Pool/index.md)
     - [线程池相关概念](Thread-Pool/Concepts.md)
-    - [线程的取消与关闭](Thread-Pool/Interrupt.md)
-    - [线程池的使用策略]()
+    - [线程池使用](Thread-Pool/Usage.md)
+    - [线程的中断](Thread-Pool/Interrupt.md)
+    - [如何优雅退出](Thread-Pool/Shutdown.md)
 
