@@ -10,4 +10,5 @@ command = "mdbook-fix-cjk-spacing"
 
 [output.html]
 mathjax-support = true
+google-analytics = "UA-39956831-2"
 additional-css = ["css/lotabout.css"]
