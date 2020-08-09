@@ -16,6 +16,8 @@
     - [封闭](Best-Practice/Confinement.md)
     - [不可变](Best-Practice/Immutability.md)
     - [利用线程安全类](Best-Practice/Threadsafe-Data-Types.md)
+- [思考题](Thread-Safety-Home-Work/index.md)
+    - [Spring Bean 初始化](Thread-Safety-Home-Work/Spring-Bean-Initialization.md)
 
 # 线程与线程池
 
