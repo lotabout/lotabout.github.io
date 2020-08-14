@@ -81,8 +81,8 @@ public interface ExecutorService extends Executor {
 ```
 
 除了无需多言的运行中（Running）状态，`ExecutorService` 又定义了关闭（Shutdown
-）、终止（Terminate）两个状态。具体的语义在 JDK 文档中有详细说明，这里简要说明
-如下：
+）、终止（Terminate）两个状态[^more-internal-state]。具体的语义在 JDK 文档中有
+详细说明，这里简要说明如下：
 
 * `shutdown` 时不接收新的请求，会等待正在运行和排队的任务完成
 * `shutdownNow` 时不接收新的请求，不处理等待的任务，会中断正在运行的任务
@@ -178,60 +178,6 @@ public interface Future<V> {
 有了 `Callable`、`Future` 以及 `submit` 方法，我们也能方便地表达提交任务到线程
 池，并期待任务返回结果的需求了。
 
-## 预设的线程池实现
-
-之前我们介绍了“池化”的思想和基本结构，本章前面的小节中主要介绍了 Java 中对线程
-池操作的抽象概念，并没有介绍线程池的实现。这个小节中，我们会先介绍 JUC 的
-`Executors` 类中预定义的一些线程池实现。
-
-一些预定义的线程池是用不同的参数创建 `ThreadPoolExecutor` 来构建的，我们先来看
-看它的构造函数：
-
-```java
-public ThreadPoolExecutor(int corePoolSize,
-                          int maximumPoolSize,
-                          long keepAliveTime,
-                          TimeUnit unit,
-                          BlockingQueue<Runnable> workQueue,
-                          ThreadFactory threadFactory,
-                          RejectedExecutionHandler handler) {
-    // ...
-}
-```
-
-我们看到，多数概念跟我们之前提到的“池化”的基本结构是对应的：
-
-1. `corePoolSize`，线程池中线程的保底数量
-2. `maximumPoolSize`，池中线程不够时，会创建新线程，该参数决定允许创建的最大的
-   线程数
-3. `keepAliveTime`，多出保底线程数的线程不用时需要被销毁，该参数表示最大空闲等
-   待时间
-4. `unit`，等待时间的单位
-5. `workQueue`，提交任务的等待队列
-6. `threadFactory`，创建新线程时使用的工厂实例
-7. `handler`，当线程占满，等待队列占满时的处理方法
-
-那么 `Executors` 中提供了哪些预设的线程池呢？
-
-- `newFixedThreadPool`，创建固定线程数的线程池，新任务提交时，线程池会不断
-    创建新的线程，直到达到设定的最大值，其后不创建也不销毁线程，如果线程意外退
-    出，会再创建新线程直到最大值。
-- `newSingleThreadExecutor`，创建只有单个线程的线程池，所以实际上提交到这个线
-    程池的任务并不会并发运行。
-- `newCachedThreadPool`，创建可缓存的线程池，当任务多于当前线程，则会创建新的
-    线程用于执行任务，当线程空闲时会被回收，创建的线程数不受限制。
-
-除此之外，`Executors` 还提供了
-
-- `newScheduledThreadPool`，创建固定大小的线程池，提交的任务可以指定以延迟或定
-    时的方式运行，严格来说它返回的是 `ScheduledExecutorService`，虽然这个接口
-    也继承了 `ExecutorService`
-- `newSingleThreadScheduledExecutor` 与 `newScheduledThreadPool` 类似，只是线
-    程池中只有单个线程。
-- `newWorkStealingPool` 构造工作窃取队列，是 JDK 1.8 新增的方法，基于 JDK 1.7
-  增加的 `ForkJoinPool` 实现，内部会使用多个工作队列来降低对队列的竞争，队列大
-  小无上限。
-
 ## 小结
 
 想要融入环境先要学会它们的语言，而 Java 中语言通常由接口描述。
@@ -250,3 +196,9 @@ Java 中的线程池使用围绕这些概念构建，最后我们也大概了解
 
 本节中我们主要讲解了线程池的概念，下节中我们会回到任务本身，关注如何取消或关闭
 一个任务。
+
+---
+
+[^more-internal-state]: 如 `ThreadPoolExecutor` 内部还有更多的状态：`RUNNING`,
+  `SHUTDOWN`, `STOP`, `TIDYING`, `TERMINATED`，只是从接口层面只有 `shutdown`
+  和 `terminated` 两种

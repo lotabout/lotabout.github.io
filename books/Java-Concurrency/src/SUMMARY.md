@@ -17,7 +17,7 @@
     - [不可变](Best-Practice/Immutability.md)
     - [利用线程安全类](Best-Practice/Threadsafe-Data-Types.md)
 - [思考题](Thread-Safety-Home-Work/index.md)
-    - [Spring Bean 初始化](Thread-Safety-Home-Work/Spring-Bean-Initialization.md)
+    - [Spring Bean 初始化如何线程安全](Thread-Safety-Home-Work/Spring-Bean-Initialization.md)
 
 # 线程与线程池
 
@@ -25,7 +25,7 @@
 - [线程的代价](Cost-of-Thread/index.md)
 - [线程池](Thread-Pool/index.md)
     - [线程池相关概念](Thread-Pool/Concepts.md)
+    - [预定义的线程池](Thread-Pool/Predefined.md)
     - [线程池使用](Thread-Pool/Usage.md)
     - [线程的中断](Thread-Pool/Interrupt.md)
     - [如何优雅退出](Thread-Pool/Shutdown.md)
-
