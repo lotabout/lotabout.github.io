@@ -38,5 +38,5 @@
     - [AtomicInteger](Source-Atomic/AtomicInteger.md)
     - [AtomicIntegerArray](Source-Atomic/AtomicIntegerArray.md)
     - [Striped64](Source-Atomic/Striped64.md)
-    - [LongAdder](Source-Atomic/LongAdder.md)
+    - [Adder](Source-Atomic/Adder.md)
     - [FieldUpdater](Source-Atomic/FieldUpdater.md)
