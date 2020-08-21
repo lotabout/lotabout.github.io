@@ -40,3 +40,4 @@
     - [Striped64](Source-Atomic/Striped64.md)
     - [Adder](Source-Atomic/Adder.md)
     - [FieldUpdater](Source-Atomic/FieldUpdater.md)
+    - [StampedReference](Source-Atomic/StampedReference.md)
