@@ -50,7 +50,7 @@ class Foo {
   private Helper helper = null;
   public synchronized Helper getHelper() {
     if (helper == null)             // ① 第一次检查
-      synchronized(helper) {        // ② 对 helper 加锁
+      synchronized(this) {        // ② 对 helper 加锁
         if (helper == null)         // ③ 同上个实现
             helper = new Helper();
       }
@@ -104,7 +104,7 @@ Helper::constructor(instance);         // 3. 调用构造函数初始化对象
 ```
 --------------- Thread A -------------------+--------------- Thread B --------------
 if (helper == null)                         |
-  synchronized(helper) {                    |
+  synchronized(this) {                      |
     if (helper == null) {                   |
       instance = Helper.class.newInstance();|
       helper = instance;                    |
