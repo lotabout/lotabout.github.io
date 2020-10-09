@@ -1,0 +1,63 @@
+- name: Install web app
+  block: # block 可以组合多个 task
+    - name: ensure path exists
+      file: dest={{install_path}} mode=0755 state=directory
+    - name: copy jar file
+      copy: src=webapp.jar dest={{install_path}}
+    - name: generate application properties
+      template: src=application.properties.j2 dest={{install_path}}/application.properties force=true
+  tags:
+    - install # 注意整个脚本的 task 打了几组不同的 tag 用于分组
+
+- name: check if webapp's port had already stopped
+  wait_for: # wait for 等待端口不可访问
+    port: "{{server_port}}"
+    state: stopped
+    timeout: "{{check_stop_timeout | default(3)}}"
+    msg: "Port {{server_port}} is accessible, {{role_name}} not stopped"
+  tags:
+    - start
+    - check-stop
+
+- name: start webapp
+  shell: # 执行 start
+    chdir: "{{install_path}}"
+    cmd: "nohup java -jar webapp.jar &> nohup.out &"
+  tags:
+    - start
+
+- name: check if port is accessible
+  wait_for: # 等待，直到端口可访问
+    port: "{{server_port}}"
+    state: started
+    timeout: "{{check_start_timeout | default(10000)}}"
+    msg: "Port {{server_port}} is not accessible, {{role_name}} not started"
+  tags:
+    - start
+    - check-start
+
+- name: check if port is accessible
+  wait_for: # 停止前确保端口可访问
+    port: "{{server_port}}"
+    state: started
+    timeout: "{{check_start_timeout | default(3)}}"
+    msg: "Port {{server_port}} is not accessible, {{role_name}} not started"
+  tags:
+    - stop
+
+- name: stop webapp
+  shell: # kill 进程
+    chdir: "{{install_path}}"
+    cmd: "ps aux|grep webapp.jar| grep -v grep| awk '{print $2}'|xargs kill"
+  tags:
+    - stop
+
+- name: check if webapp's port had already stopped
+  wait_for: # kill 后确认端口不可访问
+    port: "{{server_port}}"
+    state: stopped
+    timeout: "{{check_stop_timeout | default(300)}}"
+    msg: "Port {{server_port}} is accessible, {{role_name}} not stopped"
+  tags:
+    - stop
+    - check-stop

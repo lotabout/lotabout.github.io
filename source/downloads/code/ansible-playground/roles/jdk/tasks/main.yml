@@ -1,0 +1,6 @@
+- name: "Install JDK 1.8"
+  apt:
+    name: openjdk-8-jdk
+  tags:
+    - install
+  become: yes # apt 需要 sudo 权限
