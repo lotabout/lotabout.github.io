@@ -255,6 +255,18 @@ module](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/)
 └── webapp.yml              # playbook
 ```
 
+在编写 ansible 脚本时，通常会这么做：
+
+1. 编写 `hosts` 和 `vars.yaml`，存储机器信息和变量信息。环境变化时，一般只修改
+   这两个文件即可
+2. 将目标分解成多个角色，如例子中将 jdk 和 webapp 分开
+3. 为每个角色编写脚本，一般在 task 只会增加 tag 来分组，有些 task 可以共用
+4. 编写 playbook，包含一到多个角色，串连完成目标
+5. 将经常执行的命令写成脚本，这点在样例中没有体现
+
+当然 ansible 只提供机制，部署的脚本不只一种，这里描述的是博主的习惯。具体的文
+件内容如下：
+
 {% include_code lang:ini ansible-playground/hosts %}
 {% include_code ansible-playground/vars.yml %}
 {% include_code ansible-playground/webapp.yml %}
@@ -267,9 +279,10 @@ module](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/)
 
 ```sh
 # 安装, -K 在执行时会提示输入 sudo 密码，安装 JDK 时使用
+# 由于 playbook 中包含了 jdk 与 webapp，会先后执行 jdk 与 webapp 带 install tag 的任务
 ansible-playbook webapp.yml -i hosts --tags install -K
 
-# 启动
+# 启动，jdk 中没有启动步骤，只会执行 webapp 中带 start tag 的任务
 ansible-playbook webapp.yml -i hosts --tags start
 
 # 关闭
