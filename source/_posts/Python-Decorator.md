@@ -247,6 +247,73 @@ def foo(name='foo'):
 本身是一个函数，并且参数是函数，返回值是函数，于是确认 `decorator` 是一个 “装
 饰器”。于是上面这种“带参数的装饰器”的作用也就很直接了。
 
+## 我是谁？
+
+上面介绍的方法让我们能正确地写出一个装饰器，但是实际使用时还有一个问题：函数信
+息的丢失：我们可以通过 `.__name__` 来查看函数的名称，用 `help(func)` 来查看
+`func` 的 docstring：
+
+```
+>>> add.__name__
+wrapper
+>>> help(add)
+Help on function wraper in module __main__:
+
+wraper(*args, **kwargs)
+```
+
+可以看到被装饰的函数，名称变成了装饰器返回的函数名 `wraper`，这对于函数的使用
+者来说很不方便。于是我们需要修改装饰器，保留原函数的名称：
+
+```python
+def timer(func):
+    def wraper(*args, **kwargs):
+        before = time()
+        result = func(*args, **kwargs)
+        after = time()
+        print("elapsed: ", after - before)
+        return result
+    wraper.__name__ = func.__name__  # <- 保留原函数信息
+    wraper.__doc__ = func.__doc__    # <- 保留原函数信息
+    return wraper
+
+@timer
+def add(x, y=10):
+    """Add two numbers"""
+    return x + y
+```
+
+此时再查看函数的信息：
+
+```
+>>> add.__name__
+add
+>>> help(add)
+Help on function add in module __main__:
+
+add(*args, **kwargs)
+    Add two numbers
+```
+
+当然，函数的信息除了 `__name__` 与 `__doc__` 外，还有 `__module__`,
+`__qualname__` 等，每次都手写很浪费时间。Python 提供了内置的装饰器 `wraps` 来
+装饰返回的函数：
+
+```python
+from functools import wraps
+def timer(func):
+    @wraps(func) # <- 用于保留原函数信息
+    def wraper(*args, **kwargs):
+        before = time()
+        result = func(*args, **kwargs)
+        after = time()
+        print("elapsed: ", after - before)
+        return result
+    return wraper
+```
+
+这样一个完整的装饰器就新鲜出炉了。
+
 ## 类作为装饰器
 
 如果说 Python 里一切都是对象的话，那函数怎么表示成对象呢？其实只需要一个类实现
@@ -265,6 +332,7 @@ class Timer:
 
 @Timer
 def add(x, y=10):
+    """Add two numbers"""
     return x + y
 ```
 
