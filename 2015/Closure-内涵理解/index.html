@@ -1,0 +1,84 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;blockquote&gt;
+&lt;p&gt;某人学习了许久的闭包，认为自己已掌握了其中的精髓，于是问禅师：
+“禅师，闭包真心强大，相比对象：我觉得对象只能算是穷人的闭包！”
+禅师微微摇头，并不说话。这人怎么也想不通，只得回去苦心钻研。
+许久之后，这人再次找到禅师：
+“原来闭包只是穷人的对象”
+只见禅师轻轻一笑，点了点头。&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;闭包（closure）的概念，常出现在函数式编程的概念中。当今许多动态语言都包含了闭包的概念，如 python、Javascrip、Lisp 等。甚至静态语言（如 rust）也开始支持。那么这个神奇的闭包究竟是什么？又为什么会受到大家的热爱呢？本文将从闭包（closure）与对象（Object）的关系入手，通过实例来分析闭包背后的内涵。&lt;/p&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Closure 内涵理解 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/closure/" rel="tag">closure</a><a class="post-tag-link" href="/tags/python/" rel="tag">python</a></div><div class="post-time">2015-11-15</div></div></div><div class="container post-header"><h1>Closure 内涵理解</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#状态管理"><span class="toc-number">1.</span> <span class="toc-text">状态管理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#对象：状态与操作的包裹"><span class="toc-number">2.</span> <span class="toc-text">对象：状态与操作的包裹</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#闭包：放入状态的操作"><span class="toc-number">3.</span> <span class="toc-text">闭包：放入状态的操作</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#禅师之惑"><span class="toc-number">4.</span> <span class="toc-text">禅师之惑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#后记"><span class="toc-number">5.</span> <span class="toc-text">后记</span></a></li></ol></details></div><div class="container post-content"><blockquote>
+<p>某人学习了许久的闭包，认为自己已掌握了其中的精髓，于是问禅师：
+“禅师，闭包真心强大，相比对象：我觉得对象只能算是穷人的闭包！”
+禅师微微摇头，并不说话。这人怎么也想不通，只得回去苦心钻研。
+许久之后，这人再次找到禅师：
+“原来闭包只是穷人的对象”
+只见禅师轻轻一笑，点了点头。</p>
+</blockquote>
+<p>闭包（closure）的概念，常出现在函数式编程的概念中。当今许多动态语言都包含了闭包的概念，如 python、Javascrip、Lisp 等。甚至静态语言（如 rust）也开始支持。那么这个神奇的闭包究竟是什么？又为什么会受到大家的热爱呢？本文将从闭包（closure）与对象（Object）的关系入手，通过实例来分析闭包背后的内涵。</p>
+<a id="more"></a>
+<h2 id="状态管理"><a class="header-anchor" href="#状态管理"></a>状态管理</h2>
+<p>根本上，闭包与对象都是状态管理（state management）的一种形式。</p>
+<p>什么是状态？又为什么需要对其进行管理呢？这里不说大道理，我们且看一例。</p>
+<p>考虑编写这样一段程序，每次调用它都会增加 1 。我们需要它来自动生成 ID，使得生成的 ID 与现有的都不同。一段很简单的代码如下：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> current_id = <span class="number">0</span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">next_id</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    current_id += <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> current_id;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> *argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"%d\n"</span>, next_id());  <span class="comment">// =&gt; 1</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"%d\n"</span>, next_id());  <span class="comment">// =&gt; 2</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"%d\n"</span>, next_id());  <span class="comment">// =&gt; 3</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的程序用一个全局变量 <code>current_id</code> 来保存状态，即当前的 ID 号，并没有用到任何的闭包或是对象的概念。这是因为此时状态少、简单，所以不需要复杂的概念也可以容易地进行管理。</p>
+<p>上面的程序用 C 语言写是为了明确我们并不涉及闭包或是对象（面向对象）的概念，其中的逻辑用 python 重写如下，后面的文章主要用 python 完成。</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">current_id = <span class="number">0</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">next_id</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">global</span> current_id</span><br><span class="line">    current_id += <span class="number">1</span></span><br><span class="line">    <span class="keyword">return</span> current_id</span><br><span class="line"></span><br><span class="line">next_id() <span class="comment"># =&gt; 1</span></span><br><span class="line">next_id() <span class="comment"># =&gt; 2</span></span><br><span class="line">next_id() <span class="comment"># =&gt; 3</span></span><br></pre></td></tr></table></figure>
+<p>现在有了新的需求，我们需要多个 ID 生成器，用于生成不同的 ID，相互之间要求互不干扰，我们依旧可以用类似上述的方法来实现，只是现在我们额外需要一个“ID 生成器”的生成器。下面是一个尝试（代码不看也罢，没什么意义）：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">cached_id = &#123;<span class="number">0</span>:<span class="number">0</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">next_id</span><span class="params">(generator_id)</span>:</span></span><br><span class="line">    <span class="keyword">global</span> cached_id</span><br><span class="line">    cached_id[generator_id] += <span class="number">1</span></span><br><span class="line">    <span class="keyword">return</span> cached_id[generator_id]</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">generate_generator</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">global</span> cached_id</span><br><span class="line">    generator_id = next_id(<span class="number">0</span>)</span><br><span class="line">    cached_id[generator_id] = <span class="number">0</span></span><br><span class="line">    <span class="keyword">return</span> generator_id</span><br><span class="line"></span><br><span class="line">generator_1 = generate_generator()</span><br><span class="line">generator_2 = generate_generator()</span><br><span class="line"></span><br><span class="line">next_id(generator_1) <span class="comment"># =&gt; 1</span></span><br><span class="line">next_id(generator_1) <span class="comment"># =&gt; 2</span></span><br><span class="line"></span><br><span class="line">next_id(generator_2) <span class="comment"># =&gt; 1</span></span><br><span class="line">next_id(generator_2) <span class="comment"># =&gt; 2</span></span><br></pre></td></tr></table></figure>
+<p>第一个例子中，状态通过全局的 <code>current_id</code> 保存，第二个例子通过 <code>cached_id</code> 字典保存。随着这样的需求增长，管理这样的状态将更加困难。</p>
+<p>另外一点这些状态只能是全局的（即无法保存在函数内部）。这对于维护大量的状态十分困难。</p>
+<p>下面我们就来看看闭包与对象是如何处理状态的管理的。</p>
+<h2 id="对象：状态与操作的包裹"><a class="header-anchor" href="#对象：状态与操作的包裹"></a>对象：状态与操作的包裹</h2>
+<p>回顾第一节的例子，我们注意到程序涉及两个内容： <strong>程序的状态</strong> 与 **状态的操作
+** 。第一节的例子中，<code>current_id</code> 是状态，而 <code>next_id</code> 则是对状态的操作。</p>
+<p>更通俗地说，程序涉及 <strong>变量</strong> 与 <strong>函数</strong>。</p>
+<p>面象对象，就是试图将二者包裹在一起。在 C 语言中，<code>struct</code> 提供了将变量包裹在一起的方法，而 C++ 中进一步将函数包裹其中，从而形成了我们熟知的 <strong>类</strong>。即通过将需要管理的状态与将对状态进行处理的操作包裹在一起来对状态进行管理。</p>
+<p>于是，我们可以通过“类”来实现第一节中的例子：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">IDGenerator</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self)</span>:</span></span><br><span class="line">        self.current_id = <span class="number">0</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">next_id</span><span class="params">(self)</span>:</span></span><br><span class="line">        self.current_id += <span class="number">1</span></span><br><span class="line">        <span class="keyword">return</span> self.current_id</span><br><span class="line"></span><br><span class="line">generator_1 = IDGenerator()</span><br><span class="line">generator_2 = IDGenerator()</span><br><span class="line"></span><br><span class="line">generator_1.next_id() <span class="comment"># =&gt; 1</span></span><br><span class="line">generator_1.next_id() <span class="comment"># =&gt; 2</span></span><br><span class="line"></span><br><span class="line">generator_2.next_id() <span class="comment"># =&gt; 1</span></span><br><span class="line">generator_2.next_id() <span class="comment"># =&gt; 2</span></span><br></pre></td></tr></table></figure>
+<p>可以看到，通过类来对状态与操作进行包裹，可以让代码变得特别简洁。当系统变大时更是如此，我想，这也是近几十年编程语言几乎是面向对象的原因之一吧。</p>
+<h2 id="闭包：放入状态的操作"><a class="header-anchor" href="#闭包：放入状态的操作"></a>闭包：放入状态的操作</h2>
+<p>标题中依旧使用‘状态’与‘操作’的术语，但我们依旧可以理解为‘变量’与‘函数’。</p>
+<p>闭包不容易理解，也不容易讲解。主要是因为它的概念不如面向对象清晰。这里强调理解闭包的几个要点：</p>
+<ol>
+<li>闭包的本意是一种手段，用于通过 <a href="https://zh.wikipedia.org/wiki/%E5%A4%B4%E7%AD%89%E5%87%BD%E6%95%B0" target="_blank" rel="noopener">头等函数</a>
+（first class function）实现静态作用域（ <a href="https://en.wikipedia.org/wiki/Scope_%28computer_science%29#Lexical_scoping" target="_blank" rel="noopener">lexical
+scope</a> ）。但一般指的是与函数绑定的那个作用域。当然，一般说返回闭包，在代码上看是返回了一个函数，只是该函数绑定了某个作用域，因此也统称为返回闭包。</li>
+<li>一般而言（目前没见过反例），闭包要求函数是头等的。即函数可以作为别的函数的参数，函数的返回值，赋值组变量或存储在数据结构中。除了我们常见的动态语言如 python 外，C 语言其实也支持头等函数，通过函数指针。</li>
+</ol>
+<p>因此理解闭包的关键在于了解这样的事实：闭包的关键在于为函数绑定作用域，也就是“将状态放入操作”。而头等函数的作用在于我们可以为同一个操作绑定不同的作用域，从而将它们赋值给不同的变量。</p>
+<p>道理可以事后懂，我们先看看例子：即用闭包实现第一节中的例子。</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="comment"># use python 3</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">generate_generator</span><span class="params">()</span>:</span></span><br><span class="line">    current_id = <span class="number">0</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">next_id</span><span class="params">()</span>:</span></span><br><span class="line">        <span class="keyword">nonlocal</span> current_id</span><br><span class="line">        current_id += <span class="number">1</span></span><br><span class="line">        <span class="keyword">return</span> current_id</span><br><span class="line">    <span class="keyword">return</span> next_id</span><br><span class="line"></span><br><span class="line">generator_1 = generate_generator()</span><br><span class="line">generator_2 = generate_generator()</span><br><span class="line"></span><br><span class="line">generator_1()</span><br><span class="line">generator_1()</span><br><span class="line">generator_2()</span><br><span class="line">generator_2()</span><br></pre></td></tr></table></figure>
+<p>上述例子需要 python 3 运行，因为用到了 <code>nolocal</code> 关键字。</p>
+<p>上例中，<code>generate_generator</code> 返回了函数 <code>next_id</code>，而 <code>next_id</code> 虽然代码相同，但它访问了外部（<code>generate_generator</code> 内）的变量 <code>current_id</code>，python 会为它创建并绑定额外的作用域，因此当 <code>next_id</code> 返回并赋值给了 <code>generator_1</code> 时，它依旧可以访问 <strong>自己的</strong> <code>current_id</code>。</p>
+<p>也就是，每次 <code>generate_generator</code> 被调用时，它都会创建一个新的作用域，其中包含了 <code>current_id</code>。<code>generate_generator</code>将该作用域与 <code>next_id</code> 绑定在一起返回。这就是我们通常所说的闭包。</p>
+<p>通过解释闭包，我们也看到，它与对象相同之处在于同样包含了状态和操作。不同之处是对于对象，从外部看，状态和操作都不见了，看到的是一个新的物体，称为对象；而对于闭包，从外部看，它就是一个头等函数，状态被隐藏到了操作中。</p>
+<p>对象看着是对象，闭包看着像函数。</p>
+<h2 id="禅师之惑"><a class="header-anchor" href="#禅师之惑"></a>禅师之惑</h2>
+<p>文章开头引用的禅师的故事是很早之前看到的，现在已经找不到出处了。当时没有多想，现在也无法真正地理解，这是 <a href="http://stackoverflow.com/questions/2497801/closures-are-poor-mans-objects-and-vice-versa-what-does-this-mean" target="_blank" rel="noopener">Stackoverflow 上的一个解答</a>。这里说说我自己的看法。</p>
+<p>从上面的讨论中我们应该可以看出，对象与闭包并无根本的区别。它们都是对状态的管理，只是使用的方法不同。</p>
+<p>我理解提问者的看法“对象是穷人的闭包”，因为闭包提供的绑定作用域的功能是很强大的，配合上头等函数可以实现很多的功能。例如，通过闭包可以实现面向对象的很多功能。而面向对象通常是语言本身提供的支持，没有语言支持的话实现不了闭包。因此提问者认为 <code>对象 &lt; 闭包</code>。</p>
+<p>而禅师认为的 <code>对象 &gt; 闭包</code>。我的理解是，这里的对象是广义的对象，就是状态与操作的总称，因此闭包只是实现它的一种方式，所以才说“闭包是穷人的对象”。</p>
+<h2 id="后记"><a class="header-anchor" href="#后记"></a>后记</h2>
+<p>文章里用 python 是因为它同时支持对象和闭包，但个人认为 python 对闭包的支持并不好，所以本来是想用 Javscript 写的，只是它并没有类的功能，没法做对比。</p>
+<p>另，真的不要纠结于工具，用它们解决问题才是最关键的。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2015/Closure-内涵理解/';
+var disqus_title = 'Closure 内涵理解';
+var disqus_url = 'https://lotabout.me/2015/Closure-%E5%86%85%E6%B6%B5%E7%90%86%E8%A7%A3/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

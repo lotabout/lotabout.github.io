@@ -1,0 +1,112 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="二叉索引树(Binary Indexed Tree) 也称为 &lt;a href=&quot;https://en.wikipedia.org/wiki/Fenwick_tree&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Fenwick
+tree&lt;/a&gt;，中文也称树状数组。它可以在
+O(log n) 的时间内得到数组的前缀和(A[1] + A[2] + … + A[i])，且在 O(log n) 时间内支持动态修改数组的值。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>二叉索引树 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Data-Structure/" rel="tag">Data Structure</a></div><div class="post-time">2018-01-29</div></div></div><div class="container post-header"><h1>二叉索引树</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#使用场景"><span class="toc-number">1.</span> <span class="toc-text">使用场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#二叉索引树"><span class="toc-number">2.</span> <span class="toc-text">二叉索引树</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#lowbit"><span class="toc-number">2.1.</span> <span class="toc-text">Lowbit</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#建立索引"><span class="toc-number">2.2.</span> <span class="toc-text">建立索引</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#sum"><span class="toc-number">2.3.</span> <span class="toc-text">Sum</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#更新节点"><span class="toc-number">2.4.</span> <span class="toc-text">更新节点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#初始化"><span class="toc-number">2.5.</span> <span class="toc-text">初始化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文章"><span class="toc-number">3.</span> <span class="toc-text">参考文章</span></a></li></ol></details></div><div class="container post-content"><p>二叉索引树(Binary Indexed Tree) 也称为 <a href="https://en.wikipedia.org/wiki/Fenwick_tree" target="_blank" rel="noopener">Fenwick
+tree</a>，中文也称树状数组。它可以在
+O(log n) 的时间内得到数组的前缀和(A[1] + A[2] + … + A[i])，且在 O(log n) 时间内支持动态修改数组的值。</p>
+<h2 id="使用场景"><a class="header-anchor" href="#使用场景"></a>使用场景</h2>
+<p>首先我们考虑一个数组 A，想求 $A_i, A_{i+1}, …, A_j$ 的和，如果只求一次，很自然地把这些数相加即可，时间复杂度为 $O(n)$。但现在如果我们经常要求 A 中第
+<code>i</code> 到第 <code>j</code> 个元素的和，则最好事先做个索引。</p>
+<p>做法也简单，我们新建一个数组 C，数组 C 中的元素 $C_i = A_0 + A_1 + … +
+A_i$。于是如果我们要求 $A_i$ 到 $A_j$ 的和，则有 $Q(i, j) = A_i + … + A_j =
+C_j - C_{i-1}$。即通过访问数组 C，我们只需要 $O(1)$ 的时间即可。</p>
+<p>但如果 A 中的元素 $A_i$ 的值有变化呢？这时，我们需要更新 $C_i$ 之后的所有数据，需要 $O(n)$ 的时间。</p>
+<p>于是索引 C 需要空间 $O(n)$，访问 $O(1)$，修改 $O(n)$。</p>
+<h2 id="二叉索引树"><a class="header-anchor" href="#二叉索引树"></a>二叉索引树</h2>
+<p>有时我们需要平衡索引的访问和修改时间，二叉索引数 (binary indexed tree) 可以让我们用 $O(\log n)$ 的时间复杂度进行访问，用 $O(\log n)$
+完成修改。虽然称为&quot;树&quot;，但其实是用数组实现的。</p>
+<h3 id="lowbit"><a class="header-anchor" href="#lowbit"></a>Lowbit</h3>
+<p>首先，我们来看一个完全二叉树：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">                                   lowbit</span><br><span class="line"></span><br><span class="line">                o                ├ 1000 &#x3D; 8</span><br><span class="line">        ┌───────┴───────┐        │</span><br><span class="line">        o               o        ├ 100  &#x3D; 4</span><br><span class="line">    ┌───┴───┐       ┌───┴───┐    │</span><br><span class="line">    o       o       o       o    ├ 10   &#x3D; 2</span><br><span class="line">  ┌─┴─┐   ┌─┴─┐   ┌─┴─┐   ┌─┴─┐  │</span><br><span class="line">  o   o   o   o   o   o   o   o  ├ 1    &#x3D; 1</span><br><span class="line">0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5  │</span><br></pre></td></tr></table></figure>
+<p>我们看到二叉树不同层数二叉结尾是有规律的。例如第一层：1, 3, 5, 7, …，这些数的二进制分别是 <code>1</code>, <code>11</code>, <code>101</code>, <code>111</code>, …，最后一位都是 <code>1</code>。同理，第二层的数都以 <code>10</code> 结尾。现在我们定义一个新的函数 <code>lowbit(n)</code>，它的作用是在 <code>n</code> 的二进制上从右往左数，数到第一个 1 为止。例如数字 6 的二进制是 <code>110</code>，向右数到第一个 1，得到 <code>10</code>，得到 <code>lowbit(6) = b10 = 2</code>，同理 <code>lowbit(12) = 4</code>。</p>
+<p>那么 <code>lowbit</code> 有什么用呢？如果当前节点是父节点的右子树，则 <code>n - lowbit(n)</code>
+正好是父节点。再例如 <code>12</code>，<code>12 - lowbit(12) = 12 - 4 = 8</code> 正好是 <code>12</code>
+的父节点 <code>8</code>。而如果当前节点是父节点的左子树，则 <code>n - lowbit(n)</code>
+代表了它的第一个&quot;左祖父节点&quot;，例如节点 <code>10</code>，<code>10 - lowbit(10) = 10 - 2 = 8</code>，是 10 的左祖父节点。</p>
+<p>同理， <code>n + lowbit(n)</code> 是“右”祖父节点。例如 <code>4</code>，<code>4 + lowbit(4) = 4 + 4 = 8</code>
+是 <code>4</code> 的父节点；而 <code>6 + lowbit(6) = 6 + 2 = 8</code> 则对应于 6 的右祖父节点。</p>
+<p>同时可以看到 <code>n - lowbit(n) + 1</code> 在完全二叉数上对应的节点，就是从数字 n
+对应的节点开始，不断取节点的左子节点直到第一层的那个节点。例如 <code>12</code>
+所在的结点，不断取左子节点，最终得到的是 <code>9</code>，而 <code>9 = 12 - 4 + 1 = 12 - lowbit(12) + 1</code>。</p>
+<p>有了 <code>lowbit</code>，我们就能在完全二叉树里快速地定位：</p>
+<ul>
+<li><code>n - lowbit(bit)</code> 为左祖父/父节点</li>
+<li><code>n + lowbit(bit)</code> 为右祖父/父节点</li>
+<li><code>n - lowbit(bit) + 1</code> 为左子树的底层节点</li>
+</ul>
+<p>从编程的角度上， <code>lowbit</code> 可以由位运算完成 (C++)：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">lowbit</span><span class="params">(<span class="keyword">int</span> x)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> x&amp;(-x);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="建立索引"><a class="header-anchor" href="#建立索引"></a>建立索引</h3>
+<p>我们知道，索引的本质就是预先存储一些信息，现在我们来看如何从原数组 A 来构建我们的二叉索引数 BIT 。我们定义：</p>
+<p>$$
+BIT_i = \sum_{j = i - lowbit(i) + 1}^{i} A_j
+$$</p>
+<p>看公式好像很复杂，我们拆解一下。看到下标 <code>i - lowbit(i) + 1</code>，我们知道代表了
+<code>i</code> 所在节点左子树的底层节点。我们用图来说明如何计算 <code>BIT[12]</code> (图中标 <code>x</code>)</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">                o</span><br><span class="line">        ┌───────┴───────┐</span><br><span class="line">        o               x</span><br><span class="line">    ┌───┴───┐       ┌───┴───┐</span><br><span class="line">    o       o       x       o</span><br><span class="line">  ┌─┴─┐   ┌─┴─┐   ┌─┴─┐   ┌─┴─┐</span><br><span class="line">  o   o   o   o   x   x   o   o</span><br><span class="line">0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5</span><br><span class="line">A:                2 1 3 1</span><br><span class="line">BIT:                   (7)</span><br></pre></td></tr></table></figure>
+<p>可以看到 <code>12 - lowbit(12) + 1 = 12-4+1=9</code>，因此 <code>BIT[12] = A[9] + A[10] + A[11] + A[12]</code>。同理，如果要计算 <code>BIT[8]</code>，则需要计算 <code>A[1] + ... + A[8]</code>，因为 <code>8 - lowbit(8) + 1 = 1</code>。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">                x</span><br><span class="line">        ┌───────┴───────┐</span><br><span class="line">        x               o</span><br><span class="line">    ┌───┴───┐       ┌───┴───┐</span><br><span class="line">    x       x       o       o</span><br><span class="line">  ┌─┴─┐   ┌─┴─┐   ┌─┴─┐   ┌─┴─┐</span><br><span class="line">  x   x   x   x   o   o   o   o</span><br><span class="line">0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5</span><br></pre></td></tr></table></figure>
+<p>具体如何构建二叉索引树我们下面再说。</p>
+<h3 id="sum"><a class="header-anchor" href="#sum"></a>Sum</h3>
+<p>我们定义二叉查找树的查找操作为 <code>sum(k) = A[1] + ... + A[k]</code>，有了 BIT
+之后，就可以这么求：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sum</span><span class="params">(<span class="keyword">int</span> k)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> ans = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = k; i &gt; <span class="number">0</span>; i = i-lowbit(i))</span><br><span class="line">        ans += BIT[i];</span><br><span class="line">    <span class="keyword">return</span> ans;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>还记得 <code>n - lowbit(n)</code> 代表什么吗？代表的是 n 节点的左祖父/父节点。因此为了求
+<code>sum(k)</code> 我们只需要将 <code>k</code> 及 <code>k</code> 的所有左祖父/父节点相加即可。因此复杂度是
+$O(\log n)$。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">                                   lowbit</span><br><span class="line"></span><br><span class="line">                o                ├ 1000 &#x3D; 8</span><br><span class="line">        ┌───────┴───────┐        │</span><br><span class="line">        o               o        ├ 100  &#x3D; 4</span><br><span class="line">    ┌───┴───┐       ┌───┴───┐    │</span><br><span class="line">    o       o       o       o    ├ 10   &#x3D; 2</span><br><span class="line">  ┌─┴─┐   ┌─┴─┐   ┌─┴─┐   ┌─┴─┐  │</span><br><span class="line">  o   o   o   o   o   o   o   o  ├ 1    &#x3D; 1</span><br><span class="line">0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5  │</span><br></pre></td></tr></table></figure>
+<p>我们以 <code>6</code> 为例，<code>BIT[6]</code> 相当于 <code>A[5] + A[6]</code>，但我们要计算 <code>A[1] + ... + A[6]</code>，因此还要计算 <code>A[1] + ... + A[4]</code>，而在 BIT 中，这正好对应于 <code>BIT[4]</code>。再以 <code>14</code> 为例，<code>BIT[14] = A[13] + a[14]</code>，还差 <code>A[1] + ... + A[12]</code>，于是找到
+<code>14 - lowbit(14) = 14 - 2 = 12</code>，而由于 <code>BIT[12] = BIT[9] + ... + BIT[12]</code>，因此还差 <code>A[1] + ... + A[8]</code>，正好对应于 <code>BIT[8]</code>，而又有 <code>12 - lowbit(12) = 12 - 4 = 8</code> 。</p>
+<p>所以说 <code>sum(k)</code> 操作就是求节点 <code>k</code> 及它的父节点的和。</p>
+<h3 id="更新节点"><a class="header-anchor" href="#更新节点"></a>更新节点</h3>
+<p>如果 <code>A[k]</code> 的值发生变化了怎么办？从 BIT 的定义可知，<code>A[k]</code> 的值会影响 <code>k</code> 的所有右祖父/父节点。而这可以通过 <code>k + lowbit(k)</code> 来得到。例如 <code>A[9]</code>
+发生了变化，根据定义，我们需要更新 <code>BIT[9], BIT[10], BIT[12]</code>。代码如下：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">edit</span><span class="params">(<span class="keyword">int</span> i, <span class="keyword">int</span> delta)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> j = i; j &lt;= MAX_N; j = j+lowbit(j))</span><br><span class="line">        BIT[j] += delta;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，和 <code>sum</code> 类似，也是不断寻找祖父/父节点的过程，因此也是 $O(\log n)$。</p>
+<h3 id="初始化"><a class="header-anchor" href="#初始化"></a>初始化</h3>
+<p>可以有多种方式初始化，每种的复杂度不同。</p>
+<p>先假设初始数组 A 全为 0，之后调用节点更新函数 <code>edit</code> 来更新数组中的每个元素，复杂度为 $O(n \log n)$。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">build</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">1</span>;i&lt;=MAX_N;i++)</span><br><span class="line">    &#123;</span><br><span class="line">        edit(i, A[i])</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当然初始化操作是可以达到 $O(n)$ 的。方法是像开头说的，先创建一个累加数组，于是只需要用 $O(1)$ 时间即可求得 <code>A[j] - A[i]</code>。</p>
+<p>但这么做意义不是特别大。因为当我们采用 BIT 时，其实就意味着我们想利用它更新时间为 $O(\log n)$ 的特性，这意味着更新操作不会少。于是可以大胆猜测会有 $O(n)$
+个更新操作，这样整体的算法复杂度就要大于 $O(n \log n)$，那么强行用 $O(n)$ 来初始化 BIT 也没有太大的意义。</p>
+<h2 id="参考文章"><a class="header-anchor" href="#参考文章"></a>参考文章</h2>
+<ul>
+<li><a href="https://zh.wikipedia.org/wiki/%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84" target="_blank" rel="noopener">https://zh.wikipedia.org/wiki/树状数组</a></li>
+<li><a href="http://www.cnblogs.com/pengzhen/p/4373491.html" target="_blank" rel="noopener">http://www.cnblogs.com/pengzhen/p/4373491.html</a></li>
+<li><a href="http://novoland.github.io/%E7%AE%97%E6%B3%95/2014/07/26/%E4%BA%8C%E8%BF%9B%E5%88%B6%E7%B4%A2%E5%BC%95%E6%A0%91(%E6%A0%91%E7%8A%B6%E6%95%B0%E7%BB%84).html" target="_blank" rel="noopener">http://novoland.github.io/算法/2014/07/26/二进制索引树(树状数组).html</a></li>
+</ul></div></div><script type="text/x-mathjax-config">
+   MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    }); 
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/binary-indexed-tree/';
+var disqus_title = '二叉索引树';
+var disqus_url = 'https://lotabout.me/2018/binary-indexed-tree/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

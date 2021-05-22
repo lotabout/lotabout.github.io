@@ -1,0 +1,172 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="当 Java 程序有性能问题时，尤其是响应时间有突然变化时，最好第一时间查看 GC 的状态。一般用 &lt;code&gt;jstat -gcutil &amp;lt;pid&amp;gt; 1s&lt;/code&gt; 来查看，那么它的输出又是什么含义呢？"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>QQA: jstat gcutil 的输出是什么意思 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/JVM/" rel="tag">JVM</a><a class="post-tag-link" href="/tags/QQA/" rel="tag">QQA</a><a class="post-tag-link" href="/tags/java/" rel="tag">java</a></div><div class="post-time">2018-11-11</div></div></div><div class="container post-header"><h1>QQA: jstat gcutil 的输出是什么意思</h1></div><div class="container post-content"><p>当 Java 程序有性能问题时，尤其是响应时间有突然变化时，最好第一时间查看 GC 的状态。一般用 <code>jstat -gcutil &lt;pid&gt; 1s</code> 来查看，那么它的输出又是什么含义呢？</p>
+<h2 id="输出样例"><a class="header-anchor" href="#输出样例"></a>输出样例</h2>
+<p>一般会用两种方式调用 <code>jstat</code>，一种看百分比，一种看具体数值(KB)。</p>
+<p>例如 <code>jstat -gcutil &lt;pid&gt; 1s</code> 会每隔一秒输出内存相关信息，示例输出如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">S0     S1     E      O      M     CCS    YGC     YGCT    FGC    FGCT     GCT</span><br><span class="line">0.00   0.00  34.47  44.29  93.05  83.49     10    0.036     2    0.117    0.153</span><br><span class="line">0.00   0.00  45.70  44.29  93.05  83.49     10    0.036     2    0.117    0.153</span><br><span class="line">0.00   0.00  58.12  44.29  93.05  83.49     10    0.036     2    0.117    0.153</span><br></pre></td></tr></table></figure>
+<p>而 <code>jstat -gc &lt;pid&gt; 1s</code> 会输出具体占用的数值，如下（比较长）：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">S0C    S1C    S0U    S1U      EC       EU        OC         OU       MC     MU      YGC     YGCT    FGC    FGCT     GCT</span><br><span class="line">4608.0 6656.0  0.0    0.0   62464.0  48011.4   30720.0    13605.8   35456.0 32991.3 10    0.036   2      0.117    0.153</span><br><span class="line">4608.0 6656.0  0.0    0.0   62464.0  49261.5   30720.0    13605.8   35456.0 32991.3 10    0.036   2      0.117    0.153</span><br><span class="line">4608.0 6656.0  0.0    0.0   62464.0  49261.5   30720.0    13605.8   35456.0 32991.3 10    0.036   2      0.117    0.153</span><br></pre></td></tr></table></figure>
+<p>要理解上面输出的具体含义，需要了解 Java 的内存与 GC 的过程。</p>
+<h2 id="gc-过程简要梳理"><a class="header-anchor" href="#gc-过程简要梳理"></a>GC 过程简要梳理</h2>
+<p>下图是 GC 过程的概要（图片来源 <a href="http://plumbr.io" target="_blank" rel="noopener">plumbr.io</a>）：</p>
+<p><img src="https://plumbr.io/wp-content/uploads/2015/05/how-java-garbage-collection-works.png" alt="how-java-garbage-collection-works"></p>
+<p>如上图，JVM 中的内存中的各个区域和作用如下（这里只是概述，细节麻烦查阅相关材料）：</p>
+<ul>
+<li><code>Eden</code>（伊甸园）：创建新对象时会从中分配内存。内存不足时，触发 Young
+GC。不再被引用的对象将被抛弃，还被引用的对象会被复制到 Survivor 区。</li>
+<li><code>Survivor</code>（幸存者）：有两个 Survivor 区，GC 时会来回地把内存从其中一个区复制到另一个，交替进行。这里存储的是一些“年轻”的对象，多次 GC （默认 15 次）后这些对象还停留在 Survivor 区，则认为它们会被长期引用，Survivor 空间不足时会将它们移动到“老生代”中。来回复制的过程中除了释放内存，还起到整理内存碎片的作用。</li>
+<li><code>Tenured</code>（终生代）、也称 <code>Old Generation</code>（老生代）：保留那些“长期”被引用的对象。因此该区域只在 Full GC 的时候才会被整理。</li>
+<li><code>PermGen</code>/<code>MetaSpace</code>，Java 8 前是 PermGen，Java 8 后改成 MetaSpace。用来存储诸如加载的类、字符串常量等元信息，与 GC 无关。</li>
+</ul>
+<p>另外：<code>Eden</code> 与 <code>Survivor</code> 统称“年轻代”，它们引发的 GC 也称 “Young GC”。Young
+GC 通常比 Full GC 快很多，如果系统有卡顿，一般需要关注 Full GC。</p>
+<h2 id="jstat-输出含义"><a class="header-anchor" href="#jstat-输出含义"></a>jstat 输出含义</h2>
+<p>了解了 GC 的过程，其实 <code>jstat</code> 的输出通过查文档 <code>man jstat</code> 就可以找到。这里权且作个翻译：</p>
+<p><code>-gcutil</code> 的输出如下</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S0</td>
+<td>第 0 个 survivor（幸存区）使用的百分比</td>
+</tr>
+<tr>
+<td>S1</td>
+<td>第 1 个 survivor（幸存区）使用的百分比</td>
+</tr>
+<tr>
+<td>E</td>
+<td><code>Eden</code> 区使用内存的百分比</td>
+</tr>
+<tr>
+<td>O</td>
+<td>老生代内存使用的百分比</td>
+</tr>
+<tr>
+<td>P/M</td>
+<td><code>PermGen</code>/<code>MetaSpace</code> 的内存使用百分比</td>
+</tr>
+<tr>
+<td>YGC</td>
+<td>程序启动以来 Young GC 发生的次数</td>
+</tr>
+<tr>
+<td>YGCT</td>
+<td>程序启动以来 Young GC 共消耗的时间(s)</td>
+</tr>
+<tr>
+<td>FGC</td>
+<td>程序启动以来 Full GC 发生的次数</td>
+</tr>
+<tr>
+<td>FGCT</td>
+<td>程序启动以来 Full GC 共消耗的时间(s)</td>
+</tr>
+<tr>
+<td>GCT</td>
+<td>程序启动以来 GC 的总用时(s)</td>
+</tr>
+</tbody>
+</table>
+<p><code>-gc</code> 的输出如下</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SOC</td>
+<td>第 0 个 Survivor 区的总空间 (KB).</td>
+</tr>
+<tr>
+<td>S1C</td>
+<td>第 1 个 Survivor 区的总空间 (KB).</td>
+</tr>
+<tr>
+<td>S0U</td>
+<td>第 0 个 Survivor 区已使用的空间 (KB).</td>
+</tr>
+<tr>
+<td>S1U</td>
+<td>第 1 个 Survivor 区已使用的空间 (KB).</td>
+</tr>
+<tr>
+<td>EC</td>
+<td>Eden 区的总空间 (KB).</td>
+</tr>
+<tr>
+<td>EU</td>
+<td>Eden 区已使用的空间 (KB).</td>
+</tr>
+<tr>
+<td>OC</td>
+<td>OldGen 的总空间 (KB).</td>
+</tr>
+<tr>
+<td>OU</td>
+<td>OldGen 已使用的空间 (KB).</td>
+</tr>
+<tr>
+<td>PC/MC</td>
+<td><code>PermGen</code>/<code>MetaSpace</code> 的总空间 (KB).</td>
+</tr>
+<tr>
+<td>PU/MU</td>
+<td><code>PermGen</code>/<code>MetaSpace</code> 使用的空间 (KB).</td>
+</tr>
+<tr>
+<td>YGC</td>
+<td>程序启动以来 Young GC 发生的次数</td>
+</tr>
+<tr>
+<td>YGCT</td>
+<td>程序启动以来 Young GC 共消耗的时间(s)</td>
+</tr>
+<tr>
+<td>FGC</td>
+<td>程序启动以来 Full GC 发生的次数</td>
+</tr>
+<tr>
+<td>FGCT</td>
+<td>程序启动以来 Full GC 共消耗的时间(s)</td>
+</tr>
+<tr>
+<td>GCT</td>
+<td>程序启动以来 GC 的总用时(s)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://plumbr.io/handbook/garbage-collection-in-java" target="_blank" rel="noopener">Garbage Collection in Java</a> Plumbr 的 GC 教程，深入浅出。</li>
+<li><a href="https://docs.oracle.com/javase/8/docs/technotes/guides/vm/gctuning/index.html" target="_blank" rel="noopener">Java Platform, Standard Edition HotSpot Virtual Machine Garbage Collection Tuning Guide</a> 官方 GC 教程，据说你需要知道的都在里面。</li>
+</ul>
+<p>最后是一张 GC 流程图（来源：<a href="https://blog.csdn.net/u012102536/article/details/58587090" target="_blank" rel="noopener">https://blog.csdn.net/u012102536/article/details/58587090</a> ）</p>
+<p><img src="https://img-blog.csdn.net/20170228112452691" alt="GC 流程"></p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/QQA-Understanding-jstat-gc-output/';
+var disqus_title = 'QQA: jstat gcutil 的输出是什么意思';
+var disqus_url = 'https://lotabout.me/2018/QQA-Understanding-jstat-gc-output/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

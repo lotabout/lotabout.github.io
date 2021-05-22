@@ -1,0 +1,36 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="命令行工具经常要处理从 &lt;code&gt;stdin&lt;/code&gt; 或文件读取输入，&lt;code&gt;fileinput&lt;/code&gt; 模块让我们很轻松就能实现。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Python fileinput 模块：命令行工具利器 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/fileinput/" rel="tag">fileinput</a><a class="post-tag-link" href="/tags/python/" rel="tag">python</a></div><div class="post-time">2020-03-27</div></div></div><div class="container post-header"><h1>Python fileinput 模块：命令行工具利器</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#示例需求"><span class="toc-number">1.</span> <span class="toc-text">示例需求</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#示例实现"><span class="toc-number">2.</span> <span class="toc-text">示例实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#更多特性"><span class="toc-number">3.</span> <span class="toc-text">更多特性</span></a></li></ol></details></div><div class="container post-content"><p>命令行工具经常要处理从 <code>stdin</code> 或文件读取输入，<code>fileinput</code> 模块让我们很轻松就能实现。</p>
+<h2 id="示例需求"><a class="header-anchor" href="#示例需求"></a>示例需求</h2>
+<p>在 <code>tail -f</code> 看日志的时候，如果在某一行卡了很长时间，往往我们想看到底花了多长时间。因此希望有一个工具，能在每行日志前加上接收时的时间戳。例如：</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">$ tail -f xxx.log</span><br><span class="line">some good thing happend</span><br><span class="line">some good thing happend</span><br><span class="line">some bad thing happend</span><br></pre></td></tr></table></figure>
+<p>需要一个工具，如 <code>timed.py</code>:</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">$ tail -f xxx.log | timed.py</span><br><span class="line">[2020-03-27 10:41:13.514709] some good thing happend</span><br><span class="line">[2020-03-27 10:41:13.525803] some good thing happend</span><br><span class="line">[2020-03-27 10:41:13.630232] some bad thing happend</span><br></pre></td></tr></table></figure>
+<p>这样就能知道花了多长时间。</p>
+<h2 id="示例实现"><a class="header-anchor" href="#示例实现"></a>示例实现</h2>
+<p>有了 <code>fileinput</code> 处理标准输入，只需要 4 行：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> datetime <span class="keyword">import</span> datetime</span><br><span class="line"><span class="keyword">import</span> fileinput</span><br><span class="line"><span class="keyword">for</span> line <span class="keyword">in</span> fileinput.input():</span><br><span class="line">    print(<span class="string">f'[<span class="subst">&#123;datetime.now()&#125;</span>] <span class="subst">&#123;line&#125;</span>'</span>, end=<span class="string">''</span>)</span><br></pre></td></tr></table></figure>
+<h2 id="更多特性"><a class="header-anchor" href="#更多特性"></a>更多特性</h2>
+<p>其实如果只是从标准输入读取，也不麻烦，上面的例子可以写成：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="keyword">from</span> datetime <span class="keyword">import</span> datetime</span><br><span class="line"><span class="keyword">import</span> sys</span><br><span class="line"><span class="keyword">for</span> line <span class="keyword">in</span> sys.stdin:</span><br><span class="line">    print(<span class="string">f'[<span class="subst">&#123;datetime.now()&#125;</span>] <span class="subst">&#123;line&#125;</span>'</span>, end=<span class="string">''</span>)</span><br></pre></td></tr></table></figure>
+<p><code>fileinput</code> 同时还能处理参数(<code>sys.args</code>)中的文件：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ timed.py &lt;file1&gt; &lt;file2&gt;</span><br><span class="line">$ timed.py &lt;file1&gt; - # 读取文件 file1 后等待标准输入</span><br></pre></td></tr></table></figure>
+<p>对于传统的行处理程序来说，十分便利</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2020/python-fileinput-module/';
+var disqus_title = 'Python fileinput 模块：命令行工具利器';
+var disqus_url = 'https://lotabout.me/2020/python-fileinput-module/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

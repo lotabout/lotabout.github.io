@@ -1,0 +1,111 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;p&gt;一个人爬楼梯，每爬一层前先抛个硬币，如果是正面则继续向上，如果是反面则停下结束，问平均能爬到的最高层数是多少（期望）？&lt;/p&gt;
+&lt;p&gt;这个问题是不是太简单了？那么考虑 N 个人各自爬楼梯，都依照上面的规则，只统计它们中爬得最高的楼层，问楼层数的期望是多少？&lt;/p&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>最高楼层问题 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Data-Structure/" rel="tag">Data Structure</a><a class="post-tag-link" href="/tags/skip-list/" rel="tag">skip list</a></div><div class="post-time">2018-10-04</div></div></div><div class="container post-header"><h1>最高楼层问题</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#单人问题"><span class="toc-number">1.</span> <span class="toc-text">单人问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#多人问题"><span class="toc-number">2.</span> <span class="toc-text">多人问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#期望上界的证明"><span class="toc-number">3.</span> <span class="toc-text">期望上界的证明</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#证明-l-是合适的"><span class="toc-number">3.1.</span> <span class="toc-text">证明 L 是合适的</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#with-high-probability"><span class="toc-number">4.</span> <span class="toc-text">With High Probability</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">5.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>一个人爬楼梯，每爬一层前先抛个硬币，如果是正面则继续向上，如果是反面则停下结束，问平均能爬到的最高层数是多少（期望）？</p>
+<p>这个问题是不是太简单了？那么考虑 N 个人各自爬楼梯，都依照上面的规则，只统计它们中爬得最高的楼层，问楼层数的期望是多少？</p>
+<a id="more"></a>
+<h2 id="单人问题"><a class="header-anchor" href="#单人问题"></a>单人问题</h2>
+<p>单人的问题可以套用统计学中的 <a href="https://zh.wikipedia.org/wiki/%E5%87%A0%E4%BD%95%E5%88%86%E5%B8%83" target="_blank" rel="noopener">几何分布</a>，得到期望为 $\frac{1}{1-p} - 1$，在抛硬币的情况下就是平均 $1$ 层。自己算的话如下式：</p>
+<p>$$
+\begin{align}
+E(x) &amp;= 0p^0(1-p) + 1p^1(1-p) + 2p^2(1-p) + \dots \\
+&amp;= (1-p)(p + 2p^2 + 3p^3 \dots) \\
+&amp;= (1-p)\frac{p}{(1-p)^2} = \frac{p}{1-p} = \frac{1}{1-p} - 1
+\end{align}
+$$</p>
+<p>和几何分布的结果是一致的。不过要提醒的是几何分布关心的是成功概率和次数，而我们关心的是失败的。</p>
+<h2 id="多人问题"><a class="header-anchor" href="#多人问题"></a>多人问题</h2>
+<p>很直接地，我们想一开始有 $n$ 个人，它们中有 50% 的人会掷到正面，因此第 1 层会有 $\frac{n}{2}$ 个人，第 2 层有 $\frac{n}{4}$ 个人。进一步，第 $k$ 层有
+$\frac{n}{2^k}$ 人。所以当最后一层只剩一个人的时候，即 $\frac{n}{2^k} = 1$ 时，即到了最高层，于是最高能到的层数为 $k = \log_2n$。</p>
+<p>上面的分析好像没什么大问题，那么如果问 <code>1024</code> 个人最高能爬到多少层，你回答层数的期望是 <code>10</code> 层，对不对呢？不知道，也算不出来，但很可能是错的。事实上满足几何分布的独立同分布变量，它们的最大值的期望并没有一个良好的解析式可以表示（数学好的话可以看看<a href="https://math.stackexchange.com/a/26214/538993" target="_blank" rel="noopener">这个答案</a>）。</p>
+<p>但是当 n 足够大的时候，我们能确定它“大概”就是 $\log_2n$ 层。下面是一些证明，不感兴趣的就跳过吧。</p>
+<h2 id="期望上界的证明"><a class="header-anchor" href="#期望上界的证明"></a>期望上界的证明</h2>
+<p>其实这个问题是计算数据结构跳表 (skiplist) 的高度的另一种说法。这里这里跟据 <a href="http://web.cs.ucdavis.edu/~amenta/w04/maxlevel.pdf" target="_blank" rel="noopener">一个讲义</a> 讲解一下如何推导得到期望的上界（建议看看原文）。</p>
+<p>我们知道，一个人爬到至少第 $k$ 层的概率是 $p^k$，$n$ 个人中 <strong>至少有一个人</strong>
+达到 $k$ 层及以上的概率不太于 $np^k$（即所有人都到达 $k$ 层及以上的概率）。设 $M$ 为任意一人达到的最高层数，则 $M \ge k$ 的概率 $Pr[M \ge k] \le np^k$。现在我们要求 $M$ 的期望 $E[M]$ 的上界，我们把期望的计算拆成两部分：</p>
+<p>$$
+E[M] \le \sum_{k=0}^{L-1}{kPr[M=k]} + \sum_{k=L}^{\infty}{kPr[M=k]}
+$$</p>
+<p>拆成两部分的原因是我们知道随着 $k$ 的增长，后面的部分增长会越来越慢，这样我们选取适当的 $L$ 并对 $k$ 比较大的部分应用缩放，然后再单独处理 $k$ 小的部分，就可以得到一个小的上界。为此，我们要找到一个 $L$，满足：</p>
+<p>$$
+knp^k = O(1/k^2), \forall k \ge L
+$$</p>
+<p>为什么要选 $1/k^2$ 呢？因为我们知道下面这个和（<a href="https://zh.wikipedia.org/wiki/%E5%B7%B4%E5%A1%9E%E5%B0%94%E9%97%AE%E9%A2%98" target="_blank" rel="noopener">巴塞尔问题</a>）：</p>
+<p>$$
+\sum_{i=0}^{\infty}{ \frac{1}{i^2} } = \frac{\pi^2}{2} \le 2
+$$</p>
+<p>那么就有：</p>
+<p>$$
+\sum_{k=L}^{\infty}{ knp^k } \le \sum_{k=L}^{\infty}{ O(\frac{1}{k^2}) } = O(1)
+$$</p>
+<p>现在的问题是 $L$ 到底是多少呢？我们希望当 $n$ 足够大时，$L$ 满足：$Lnp^L \le
+L^2 $，换言之，我们希望得到 $L^3 n p^L = O(1/n)$。这东西不是人能解出来的，但我们只需要找到一个合适的值就行了。我们选的值是：</p>
+<p>$$
+L = 2\log_{1/p}{n}
+$$</p>
+<p>下一小节我们会验证这个值的正确性，这里我们先考虑式子剩余的部分：</p>
+<p>$$
+\sum_{k=0}^{L-1}{kPr[M=k]} \le \sum_{k=0}^{L-1}{LPr[M=k]} = L \sum_{k=0}^{L-1}{Pr[M=k]} = L Pr[M &lt; L] \le L
+$$</p>
+<p>于是，我们的期望的上界为：</p>
+<p>$$
+E[M] \le \sum_{k=0}^{L-1}{kPr[M=k]} + \sum_{k=L}^{\infty}{kPr[M=k]} \le L + 0 = O (\log n)
+$$</p>
+<h3 id="证明-l-是合适的"><a class="header-anchor" href="#证明-l-是合适的"></a>证明 L 是合适的</h3>
+<p>即我们要证明当 $n$ 足够大时，$L = 2\log_{1/p}{n}$ 满足 $Lnp^L \le 1/L^2$，亦即
+$L^{3} np^L \le 1$。</p>
+<p>代入 $L = 2\log_{1/p}{n}$ 的值：</p>
+<p>$$
+f(n) = L^{3} np^L = \frac{8\log_{1/p}(n)^3}{n}
+$$</p>
+<p>上面的式子在 $n \to \infty$ 时趋近于 0 （参考<a href="http://www.math.uconn.edu/~kconrad/blurbs/analysis/growth.pdf" target="_blank" rel="noopener">Orders Of Growth Corollary 2.2</a>），得证。</p>
+<h2 id="with-high-probability"><a class="header-anchor" href="#with-high-probability"></a>With High Probability</h2>
+<p><a href="https://en.wikipedia.org/wiki/With_high_probability" target="_blank" rel="noopener">With High Probability</a>
+是另一种说明可能性的方式。它表示如果某个依赖参数 $n$ 的事件，发生的概率是
+$p_n$ 且 $\lim_{n \to \infty} p_n = 1$，则说这个事件是“大概率”发生的。</p>
+<p>我们说多人爬楼梯的最高层数“大概率”是 $O(\log n)$ 的。考虑 $c \log_{1/p} n$ 层，上文提到，最高层数大于等于 $k$ 的概率为：</p>
+<p>$$
+Pr[M \ge k] \le np^k = n p^{c \log_{1/p} n} = n \frac{1}{n^c} = \frac{1}{n^{c-1} }
+$$</p>
+<p>那么 $M &lt; k$ 的概率为 $1 - \frac{1}{n^{c-1} }$，当 $n \to \infty$ 时，概率趋近于 $1$。那么“大概率”告诉我们什么信息呢？它告诉我们，当 $n$ 很大时，最高层数几乎不可能大于 $c \log_{1/p} n$ （因为概率太小了）。并且根据常数 $c$ 的不同，我们能预测它的概率。</p>
+<p>“大概率”与上面证明的最大区别是“大概率”并不能保证没有反例出现，而严格的上界证明可以。不过对于一些概率算法来说，“大概率”就已经足够保证算法的性能了。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="http://web.cs.ucdavis.edu/~amenta/w04/maxlevel.pdf" target="_blank" rel="noopener">Maximum Level in a Skip List</a> 本文证明的主要参考资料</li>
+<li><a href="http://www.math.uconn.edu/~kconrad/blurbs/analysis/growth.pdf" target="_blank" rel="noopener">Order of Growth</a> 讲解各类函数的增长速度</li>
+<li><a href="https://courses.csail.mit.edu/6.046/spring04/handouts/skiplists.pdf" target="_blank" rel="noopener">https://courses.csail.mit.edu/6.046/spring04/handouts/skiplists.pdf</a> MIT 关于
+skip list 的讲义，包含了 With High Probability 的一些说明。</li>
+</ul></div></div><script type="text/x-mathjax-config">
+   MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    }); 
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/max-level-of-skiplist/';
+var disqus_title = '最高楼层问题';
+var disqus_url = 'https://lotabout.me/2018/max-level-of-skiplist/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

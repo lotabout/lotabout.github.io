@@ -1,0 +1,39 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="提高性能最怕是没有方向，没有头绪的时候不妨试试三件套：并行、异步、加缓存。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>性能优化三件套 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-time">2018-03-05</div></div></div><div class="container post-header"><h1>性能优化三件套</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#并行"><span class="toc-number">1.</span> <span class="toc-text">并行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#异步"><span class="toc-number">2.</span> <span class="toc-text">异步</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#加缓存"><span class="toc-number">3.</span> <span class="toc-text">加缓存</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">4.</span> <span class="toc-text">小结</span></a></li></ol></details></div><div class="container post-content"><p>提高性能最怕是没有方向，没有头绪的时候不妨试试三件套：并行、异步、加缓存。</p>
+<h2 id="并行"><a class="header-anchor" href="#并行"></a>并行</h2>
+<p>并行比较容易理解，一个人做不完的事，多喊几个人一起做。从算法的角度，“并行”相当于“分治”。</p>
+<p>早期 CPU 是单核的，后来单核性能提高不了，就采用多核；早期单进程、单线程，后期用多进程、多线程；早期单台机器，后来多机分布式。这些可以说都是“并行”的思想。所以如果某个逻辑实在难以提高的时候，可以考虑“并行”来处理。</p>
+<p>当然，并行也会引入新的问题，最常见的就是同步问题，不论是单机上的多线程，还是多机之间的数据同步，都是程序员很头疼的问题。还有就是数据之间的拷贝和汇总，也都需要额外的开销。因此引入并行的得与失，需要具体问题具体分析（其实任何策略都需要）。</p>
+<h2 id="异步"><a class="header-anchor" href="#异步"></a>异步</h2>
+<p>“异步”和“缓存”都可以看作是 2/8 定理的延伸。也就是说 20% 的内容，虽然占少数，却是最重要的，而剩余的 80% ，虽然占多数，却是次要的。那么“异步”就是说当前有更重要的事要做，其它的不那么重要的可以在后台慢慢做，做完了我再处理。</p>
+<p>例如现在几乎所有的网站都用 AJAX 来异步加载资源。换句话说，当用户打开一个网页时，它想要看到“主页面”的内容，因此这些内容是最重要的。而另外一些内容，例如对话框的内容和样式，在用户做一些操作之前，都是用不到的。因此我们可以异步加载对话框需要的资源，而把主要的精力放在加载和渲染“主页面”。</p>
+<p>而在后端也有类似的场景。例如写数据库，一般情况下我们可能并不急着用写入的结果，那么“等待写入完成”就是一个次要的事情，因此可以异步执行写入操作，而先执行一些更重要的操作。</p>
+<p>在现实生活中其实也类似，例如烧水，我们不急着喝就不需要等着它，可以先做一些其它的事，等用空时再查看水烧开没有。</p>
+<p>当然，异步在某种程度上要求“并行”，需要异步进行的操作一般不能占用计算资源，例如或 IO 操作。或者需要指定其它的计算资源，例如用其它的机器执行计算。</p>
+<p>异步也会极大增加编程的难度，想必不需要我多说吧。如果你觉得还行，那么考虑下异步加上并行吧。</p>
+<h2 id="加缓存"><a class="header-anchor" href="#加缓存"></a>加缓存</h2>
+<p>“异步”可以认为是 2/8 定理在“计算”上的应用，那么缓存就是 2/8 定理在“数据”上的应用。即数据的重要程度是不同的，总有一些数据会被频繁地访问，而另一些数据则基本无人问津。</p>
+<p>缓存已经被大量应用。在计算机的组成中，就有一级缓存、二级缓存、内存到硬盘这样的层级存储结构，一级缓存速度最快但容量小，硬盘容量大但速度慢；在代码中我们也会用
+HashMap 来自己做一些缓存；在高并发的压力之下，人们也发明了像 redis 等的快速缓存。</p>
+<p>因此，如果发现数据访问速度是瓶颈时，可以考虑加缓存。当然，缓存的管理也会很复杂，管理方式的不同也会从各种角度影响到缓存的效果。因此，用与不用，就是另一个故事了。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>架构嘛，都是 trade-off。这“三件套”更多是方法论角度上的指导。真实使用时如何权衡各种方法的利弊，就需要具体问题具体分析了。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/performance-optimization/';
+var disqus_title = '性能优化三件套';
+var disqus_url = 'https://lotabout.me/2018/performance-optimization/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

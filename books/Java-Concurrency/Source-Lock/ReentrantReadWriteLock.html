@@ -1,0 +1,508 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>ReentrantReadWriteLock - Java 并发知识</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+        <link rel="stylesheet" href="../css/lotabout.css">
+        
+
+        
+        <!-- MathJax -->
+        <script async type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Java 并发知识</a></li><li class="chapter-item expanded affix "><li class="part-title">理解线程安全</li><li class="chapter-item expanded "><a href="../Ideal-World/index.html"><strong aria-hidden="true">1.</strong> 理想的并发世界</a></li><li class="chapter-item expanded "><a href="../Cruel-World/index.html"><strong aria-hidden="true">2.</strong> 残酷的现实</a></li><li class="chapter-item expanded "><a href="../Happens-Before/index.html"><strong aria-hidden="true">3.</strong> Happens Before</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/index.html"><strong aria-hidden="true">4.</strong> 常见线程安全问题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/TOCTOU.html"><strong aria-hidden="true">4.1.</strong> TOCTOU</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Double-Checked-Locking.html"><strong aria-hidden="true">4.2.</strong> Double Checked Locking</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Compound-Actions.html"><strong aria-hidden="true">4.3.</strong> 复合操作</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Summary.html"><strong aria-hidden="true">4.4.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Best-Practice/index.html"><strong aria-hidden="true">5.</strong> 良好的并发编程习惯</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Best-Practice/Confinement.html"><strong aria-hidden="true">5.1.</strong> 封闭</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Immutability.html"><strong aria-hidden="true">5.2.</strong> 不可变</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Threadsafe-Data-Types.html"><strong aria-hidden="true">5.3.</strong> 利用线程安全类</a></li></ol></li><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/index.html"><strong aria-hidden="true">6.</strong> 思考题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/Spring-Bean-Initialization.html"><strong aria-hidden="true">6.1.</strong> Spring Bean 初始化如何线程安全</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">线程与线程池</li><li class="chapter-item expanded "><a href="../Amdahl-Law/index.html"><strong aria-hidden="true">7.</strong> Amdahl 定律</a></li><li class="chapter-item expanded "><a href="../Cost-of-Thread/index.html"><strong aria-hidden="true">8.</strong> 线程的代价</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/index.html"><strong aria-hidden="true">9.</strong> 线程池</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Pool/Concepts.html"><strong aria-hidden="true">9.1.</strong> 线程池相关概念</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Predefined.html"><strong aria-hidden="true">9.2.</strong> 预定义的线程池</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Usage.html"><strong aria-hidden="true">9.3.</strong> 线程池使用</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Interrupt.html"><strong aria-hidden="true">9.4.</strong> 线程的中断</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Shutdown.html"><strong aria-hidden="true">9.5.</strong> 如何优雅退出</a></li></ol></li><li class="chapter-item expanded "><strong aria-hidden="true">10.</strong> 线程调度</li><li class="chapter-item expanded affix "><li class="part-title">源码分析</li><li class="chapter-item expanded "><a href="../Source-Unsafe/index.html"><strong aria-hidden="true">11.</strong> Unsafe</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/index.html"><strong aria-hidden="true">12.</strong> Atomic</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicInteger.html"><strong aria-hidden="true">12.1.</strong> AtomicInteger</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicIntegerArray.html"><strong aria-hidden="true">12.2.</strong> AtomicIntegerArray</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Striped64.html"><strong aria-hidden="true">12.3.</strong> Striped64</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Adder.html"><strong aria-hidden="true">12.4.</strong> Adder</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/FieldUpdater.html"><strong aria-hidden="true">12.5.</strong> FieldUpdater</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/StampedReference.html"><strong aria-hidden="true">12.6.</strong> StampedReference</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-AQS/AQS.html"><strong aria-hidden="true">13.</strong> AbstractQueuedSynchronizer</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-AQS/blocking-exclusive.html"><strong aria-hidden="true">13.1.</strong> 互斥锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/blocking-shared.html"><strong aria-hidden="true">13.2.</strong> 共享锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/timeout.html"><strong aria-hidden="true">13.3.</strong> 超时</a></li><li class="chapter-item expanded "><a href="../Source-AQS/interrupt.html"><strong aria-hidden="true">13.4.</strong> 中断</a></li><li class="chapter-item expanded "><a href="../Source-AQS/cancellation.html"><strong aria-hidden="true">13.5.</strong> 取消</a></li><li class="chapter-item expanded "><a href="../Source-AQS/condition.html"><strong aria-hidden="true">13.6.</strong> 条件变量</a></li><li class="chapter-item expanded "><a href="../Source-AQS/Summary.html"><strong aria-hidden="true">13.7.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-Lock/Lock.html"><strong aria-hidden="true">14.</strong> Lock</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantLock.html"><strong aria-hidden="true">14.1.</strong> ReentrantLock</a></li><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantReadWriteLock.html" class="active"><strong aria-hidden="true">14.2.</strong> ReentrantReadWriteLock</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Java 并发知识</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#reentrantreadwritelock" id="reentrantreadwritelock">ReentrantReadWriteLock</a></h1>
+<p><code>ReentrantReadWriteLock</code> 与 <code>ReentrantLock</code> 一样都是可重入锁，不同的是
+<code>ReentrantReadWriteLock</code> 其实是两个锁：读锁是共享锁，写锁是独占锁，也因此常在读的吞吐高于写时使用。与 <code>ReentrantLock</code> 类似，<code>ReentrantReadWriteLock</code> 也是先实现了自己的 <code>Sync</code>，再衍生出公平锁与非公平锁。</p>
+<h2><a class="header" href="#sync" id="sync">Sync</a></h2>
+<p>我们知道 AQS 的 <code>state</code> 是 <code>int</code> 型，<code>ReentrantReadWriteLock</code> 中的 <code>Sync</code> 用低位 16 位表示写锁，高位 16 位表示读锁，代码中定义了一些掩码用于快速计算：</p>
+<pre><code class="language-java">abstract static class Sync extends AbstractQueuedSynchronizer {
+    private static final long serialVersionUID = 6317671515068378041L;
+
+    static final int SHARED_SHIFT   = 16;
+    static final int SHARED_UNIT    = (1 &lt;&lt; SHARED_SHIFT);
+    static final int MAX_COUNT      = (1 &lt;&lt; SHARED_SHIFT) - 1;
+    static final int EXCLUSIVE_MASK = (1 &lt;&lt; SHARED_SHIFT) - 1;
+
+    // 持有读锁的数量，取高位 16 位
+    static int sharedCount(int c)    { return c &gt;&gt;&gt; SHARED_SHIFT; }
+    // 持有写锁的数量，取低位 16 位
+    static int exclusiveCount(int c) { return c &amp; EXCLUSIVE_MASK; }
+
+    // ...
+}
+</code></pre>
+<p>同时由于有多个线程可获取读锁，且每个线程都是可重入的，因此需要为每个线程记录获取读锁的个数，如下：</p>
+<pre><code class="language-java">abstract static class Sync extends AbstractQueuedSynchronizer {
+    // ...
+
+    // 用于记录哪个线程占了多少个读锁
+    static final class HoldCounter {
+        int count;          // initially 0
+        // Use id, not reference, to avoid garbage retention
+        final long tid = LockSupport.getThreadId(Thread.currentThread());
+    }
+
+    static final class ThreadLocalHoldCounter
+        extends ThreadLocal&lt;HoldCounter&gt; {
+        public HoldCounter initialValue() {
+            return new HoldCounter();
+        }
+    }
+
+    // 使用 ThreadLocal 来分线程记录持有多少读锁
+    private transient ThreadLocalHoldCounter readHolds;
+    // 优化：保存上一个获取读锁的线程的 HoldCounter
+    private transient HoldCounter cachedHoldCounter;
+    // ...
+}
+</code></pre>
+<h3><a class="header" href="#tryacquire" id="tryacquire">tryAcquire</a></h3>
+<p><code>tryAcquire</code> 用于获取写锁，源码的注释比较清晰：</p>
+<pre><code class="language-java">@ReservedStackAccess
+protected final boolean tryAcquire(int acquires) {
+
+     // 流程如下：
+     // 1. 如果读锁不为 0 或写锁不为零且持锁线程不是当前线程，失败
+     // 2. 如果计数器饱和了，失败
+     // 3. 否则通过 writerShouldBlock 检测公平性，看情况获取锁
+
+    Thread current = Thread.currentThread();
+    int c = getState();
+    int w = exclusiveCount(c);
+    if (c != 0) {
+        // 说明有线程持有锁（读锁还是写锁不确定）
+
+        // 注意如果 c != 0 且 w == 0，则读锁 != 0
+        if (w == 0 || current != getExclusiveOwnerThread())
+            return false;
+
+        // 计数器饱和
+        if (w + exclusiveCount(acquires) &gt; MAX_COUNT)
+            throw new Error(&quot;Maximum lock count exceeded&quot;);
+
+        // 可重入抢锁
+        setState(c + acquires);
+        return true;
+    }
+    if (writerShouldBlock() ||        // 公平性检测
+        !compareAndSetState(c, c + acquires))
+        return false;
+    setExclusiveOwnerThread(current); // 和 ReentrantLock 一样，设置持锁线程
+    return true;
+}
+</code></pre>
+<h3><a class="header" href="#tryrelease" id="tryrelease">tryRelease</a></h3>
+<p><code>tryRelease</code> 用来释放写锁，与 <code>ReentrantLock</code> 中的释放锁操作几乎一样：</p>
+<pre><code class="language-java">@ReservedStackAccess
+protected final boolean tryRelease(int releases) {
+    if (!isHeldExclusively())
+        throw new IllegalMonitorStateException();
+    int nextc = getState() - releases;
+    boolean free = exclusiveCount(nextc) == 0;
+    if (free)
+        setExclusiveOwnerThread(null);
+    setState(nextc);
+    return free;
+}
+</code></pre>
+<h3><a class="header" href="#tryacquireshared" id="tryacquireshared">tryAcquireShared</a></h3>
+<p><code>tryAcquireShared</code> 用于获取读锁，可以获取读锁的条件有：</p>
+<ol>
+<li>没有线程持有锁</li>
+<li>当前线程或其它线程持有读锁</li>
+<li>当前线程持有写锁</li>
+</ol>
+<pre><code class="language-java">@ReservedStackAccess
+protected final int tryAcquireShared(int unused) {
+    // 流程如下：
+    // 1. 如果有其它线程持有写锁，失败
+    // 2. 否则检测公平性并尝试抢锁
+    // 3. 抢锁失败，使用 fullTryAcquireShared 更全面地尝试
+
+    Thread current = Thread.currentThread();
+    int c = getState();
+    if (exclusiveCount(c) != 0 &amp;&amp;                  // 有线程持有写锁
+        getExclusiveOwnerThread() != current)      // 且不是当前线程
+        return -1;
+    int r = sharedCount(c);
+    if (!readerShouldBlock() &amp;&amp;                    // 公平性检测
+        r &lt; MAX_COUNT &amp;&amp;
+        compareAndSetState(c, c + SHARED_UNIT)) {  // 尝试抢锁
+        if (r == 0) { // 当前线程是第一个抢锁的线程，做记录
+            firstReader = current;
+            firstReaderHoldCount = 1;
+        } else if (firstReader == current) {
+            firstReaderHoldCount++;
+        } else { // 更新线程读锁数量，过程中优先使用缓存
+            HoldCounter rh = cachedHoldCounter;
+            if (rh == null ||
+                rh.tid != LockSupport.getThreadId(current))
+                cachedHoldCounter = rh = readHolds.get();
+            else if (rh.count == 0)
+                readHolds.set(rh);
+            rh.count++;
+        }
+        return 1;
+    }
+    // 抢锁失败，使用完整版抢锁逻辑
+    return fullTryAcquireShared(current);
+}
+</code></pre>
+<h3><a class="header" href="#fulltryacquireshared" id="fulltryacquireshared">fullTryAcquireShared</a></h3>
+<p><code>fullTryAcquireShared</code> 看起来很冗长，它与 <code>tryAcquireShared</code> 的逻辑几乎没啥区别，只是一个自旋版本。</p>
+<pre><code class="language-java">final int fullTryAcquireShared(Thread current) {
+    HoldCounter rh = null;
+    for (;;) {
+        int c = getState();
+
+        // 先检测是否有资格抢锁
+        if (exclusiveCount(c) != 0) {
+            if (getExclusiveOwnerThread() != current)
+                return -1;
+            // 否则当前线程持有写锁，有资格抢写锁
+        } else if (readerShouldBlock()) { // 公平性原因要求当前线程阻塞，说明当前线程需要进入队列等待
+            // 只有当前抢锁操作为可重入操作，才认为抢锁失败
+            // 换句话说，可重入优先于公平性，否则容易造成死锁
+            if (firstReader == current) {
+                // assert firstReaderHoldCount &gt; 0;
+            } else {
+                if (rh == null) {
+                    rh = cachedHoldCounter;
+                    if (rh == null ||
+                        rh.tid != LockSupport.getThreadId(current)) {
+                        rh = readHolds.get();
+                        if (rh.count == 0)
+                            readHolds.remove();
+                    }
+                }
+                if (rh.count == 0)
+                    return -1;
+            }
+        }
+        if (sharedCount(c) == MAX_COUNT) // 计数器饱和
+            throw new Error(&quot;Maximum lock count exceeded&quot;);
+        if (compareAndSetState(c, c + SHARED_UNIT)) { // 抢锁成功则更新状态
+            if (sharedCount(c) == 0) {
+                firstReader = current;
+                firstReaderHoldCount = 1;
+            } else if (firstReader == current) {
+                firstReaderHoldCount++;
+            } else {
+                if (rh == null)
+                    rh = cachedHoldCounter;
+                if (rh == null ||
+                    rh.tid != LockSupport.getThreadId(current))
+                    rh = readHolds.get();
+                else if (rh.count == 0)
+                    readHolds.set(rh);
+                rh.count++;
+                cachedHoldCounter = rh; // cache for release
+            }
+            return 1;
+        }
+    }
+}
+</code></pre>
+<h3><a class="header" href="#tryreleaseshared" id="tryreleaseshared">tryReleaseShared</a></h3>
+<p><code>tryReleaseShared</code> 用于释放读锁，主要功能是修改线程的读锁计数，完成后需要自旋调用 CAS 完成对 <code>state</code> 的修改：</p>
+<pre><code class="language-java">@ReservedStackAccess
+protected final boolean tryReleaseShared(int unused) {
+    Thread current = Thread.currentThread();
+    if (firstReader == current) {
+        // assert firstReaderHoldCount &gt; 0;
+        if (firstReaderHoldCount == 1)
+            firstReader = null;
+        else
+            firstReaderHoldCount--;
+    } else {
+        HoldCounter rh = cachedHoldCounter;
+        if (rh == null ||
+            rh.tid != LockSupport.getThreadId(current))
+            rh = readHolds.get();
+        int count = rh.count;
+        if (count &lt;= 1) {
+            readHolds.remove();
+            if (count &lt;= 0) // 释放了过多的锁，属于代码逻辑错误
+                throw unmatchedUnlockException();
+        }
+        --rh.count;
+    }
+    for (;;) {
+        int c = getState();
+        int nextc = c - SHARED_UNIT;
+        if (compareAndSetState(c, nextc))
+            // Releasing the read lock has no effect on readers,
+            // but it may allow waiting writers to proceed if
+            // both read and write locks are now free.
+            return nextc == 0;
+    }
+}
+</code></pre>
+<h2><a class="header" href="#非公平锁nonfairsync" id="非公平锁nonfairsync">非公平锁：NonfairSync</a></h2>
+<p>对于非公平锁来说，写锁永远都不需要阻塞（因为不公平，不需要等待）。理论上读锁也一样，但是为了防止大最线程抢读锁，导致写锁饥饿死锁，于是使用保护机制：如果等待队列的队首在等待写锁，则当前抢读锁的线程选择退让。实现如下：</p>
+<pre><code class="language-java">static final class NonfairSync extends Sync {
+    final boolean writerShouldBlock() {
+        return false; // writers can always barge
+    }
+    final boolean readerShouldBlock() {
+        return apparentlyFirstQueuedIsExclusive();
+    }
+}
+</code></pre>
+<p><code>apparentlyFirstQueuedIsExclusive</code> 实现如下：</p>
+<pre><code class="language-java">final boolean apparentlyFirstQueuedIsExclusive() {
+    Node h, s;
+    return (h = head) != null &amp;&amp;
+        (s = h.next)  != null &amp;&amp;
+        !s.isShared()         &amp;&amp;
+        s.thread != null;
+}
+</code></pre>
+<h2><a class="header" href="#公平锁fairsync" id="公平锁fairsync">公平锁：FairSync</a></h2>
+<p>抢锁时需要先检查是否有其它线程等待，与 <code>ReentrantLock</code> 一样使用
+<code>hasQueuedPredecessors</code> 判断：</p>
+<pre><code class="language-java">static final class FairSync extends Sync {
+    final boolean writerShouldBlock() {
+        return hasQueuedPredecessors();
+    }
+    final boolean readerShouldBlock() {
+        return hasQueuedPredecessors();
+    }
+}
+</code></pre>
+<h2><a class="header" href="#小结" id="小结">小结</a></h2>
+<p><code>ReentrantReadWriteLock</code> 是 JUC 中最复杂的锁实现，好在有 AQS 的帮助，整体的逻辑不复杂。</p>
+<p>代码中的亮点有：</p>
+<ul>
+<li>使用 int 的高低位分别表示读写锁，变向帮助了锁降级功能的实现</li>
+<li>一些性能的优化，如 <code>firstReader</code>, <code>cachedHoldCounter</code>，低并发度时能减少很多访问次数</li>
+<li>避免写锁饿死，采取的启发式的“公平”逻辑</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../Source-Lock/ReentrantLock.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../Source-Lock/ReentrantLock.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+        <!-- Google Analytics Tag -->
+        <script type="text/javascript">
+            var localAddrs = ["localhost", "127.0.0.1", ""];
+
+            // make sure we don't activate google analytics if the developer is
+            // inspecting the book locally...
+            if (localAddrs.indexOf(document.location.hostname) === -1) {
+                (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+                ga('create', 'UA-39956831-2', 'auto');
+                ga('send', 'pageview');
+            }
+        </script>
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

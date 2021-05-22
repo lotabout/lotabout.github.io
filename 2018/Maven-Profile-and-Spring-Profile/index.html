@@ -1,0 +1,88 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="一般开发团队会有多个部署环境，如 dev 环境用于开发自测，QA 环境让测试团队测试，
+Production 环境作为线上环境。通常不同环境的配置不同，我们希望打包时的人力消耗最少。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Maven Profile 与 Spring Profile 管理多环境打包 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/java/" rel="tag">java</a><a class="post-tag-link" href="/tags/maven/" rel="tag">maven</a><a class="post-tag-link" href="/tags/spring/" rel="tag">spring</a></div><div class="post-time">2018-09-28</div></div></div><div class="container post-header"><h1>Maven Profile 与 Spring Profile 管理多环境打包</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#spring-boot-profile"><span class="toc-number">1.</span> <span class="toc-text">Spring Boot Profile</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#maven-profile"><span class="toc-number">2.</span> <span class="toc-text">Maven Profile</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#多环境打包的具体步骤"><span class="toc-number">3.</span> <span class="toc-text">多环境打包的具体步骤</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#在-pom-xml-中定义-profile"><span class="toc-number">3.1.</span> <span class="toc-text">在 pom.xml 中定义 Profile</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#在-pom-xml-中定义资源过滤"><span class="toc-number">3.2.</span> <span class="toc-text">在 pom.xml 中定义资源过滤</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#用-maven-变量指定-spring-profile"><span class="toc-number">3.3.</span> <span class="toc-text">用 Maven 变量指定 Spring Profile</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#构建不同的包"><span class="toc-number">3.4.</span> <span class="toc-text">构建不同的包</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#与-intellij-idea-集成"><span class="toc-number">3.5.</span> <span class="toc-text">与 Intellij IDEA 集成</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">4.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">5.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>一般开发团队会有多个部署环境，如 dev 环境用于开发自测，QA 环境让测试团队测试，
+Production 环境作为线上环境。通常不同环境的配置不同，我们希望打包时的人力消耗最少。</p>
+<h2 id="spring-boot-profile"><a class="header-anchor" href="#spring-boot-profile"></a>Spring Boot Profile</h2>
+<p>Spring Boot Profile 有许多的功能，这里只说管理配置的内容。Spring 加载配置的<a href="https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html" target="_blank" rel="noopener">顺序</a>如下:</p>
+<ol>
+<li>Jar 包外的 <code>application-{profile}.properties</code></li>
+<li>Jar 包内的 <code>application-{profile}.properties</code></li>
+<li>Jar 包外的 <code>application.properties</code></li>
+<li>Jar 包内的 <code>application.properties</code></li>
+</ol>
+<p>例如，如果我们在 <code>application.properties</code> 中指定</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">spring.profiles.active &#x3D; dev</span><br></pre></td></tr></table></figure>
+<p>则 spring 会使用 <code>application-dev.properties</code> 文件中的配置来覆盖
+<code>application.properties</code> 文件中的相应配置。</p>
+<h2 id="maven-profile"><a class="header-anchor" href="#maven-profile"></a>Maven Profile</h2>
+<p>如果用的不是 Spring 要怎么管理多个 Profile 呢？可以从构建工具 Maven 下手。</p>
+<p>Maven 也提供了 Profile 支持，它允许我们在 <code>pom.xml</code> 中定义多个 Profile ，每个
+profile 可以指定自己的一些配置、依赖、触发条件等。例如：</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">profiles</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">profile</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">id</span>&gt;</span>dev<span class="tag">&lt;/<span class="name">id</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">activation</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">activeByDefault</span>&gt;</span>true<span class="tag">&lt;/<span class="name">activeByDefault</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">activation</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">properties</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">profile.active</span>&gt;</span>dev<span class="tag">&lt;/<span class="name">profile.active</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">properties</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">profile</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">profile</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">id</span>&gt;</span>prod<span class="tag">&lt;/<span class="name">id</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">properties</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">profile.active</span>&gt;</span>prod<span class="tag">&lt;/<span class="name">profile.active</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">properties</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">profile</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">profiles</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>上面指定了两个 profile: <code>dev</code> 和 <code>prod</code>，其中 <code>dev</code> 是默认启用的，当profile 被启用时，它定义的的属性、依赖等内容就会起效。这里我们定义了<code>profile.active</code> 属性，之后会用到。</p>
+<p>在编译时指定 <code>mvn clean install -Pprod</code> 就能切换成 <code>prod</code> profile。</p>
+<h2 id="多环境打包的具体步骤"><a class="header-anchor" href="#多环境打包的具体步骤"></a>多环境打包的具体步骤</h2>
+<p>Maven 与 Spring Profile 的功能是有重合的，只使用一种其实就能实现多环境多配置。但它们各有千秋：</p>
+<ul>
+<li>Spring profile 除了指定配置，还有一些其它作用（如为不同的 profile 生成不同的
+bean），但每次打包前都需要手工指定启用哪个 profile</li>
+<li>Maven Profile 可以通过命令行指定使用的 profile，但缺少了 spring profile 的一些特定功能。</li>
+</ul>
+<p>因此我们希望融合二者，取长补短。步骤如下：</p>
+<h3 id="在-pom-xml-中定义-profile"><a class="header-anchor" href="#在-pom-xml-中定义-profile"></a>在 pom.xml 中定义 Profile</h3>
+<p>这里跟上面介绍的一样，定义两个/多个 profile 并为各个 profile 指定自己的属性：</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">profiles</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">profile</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">id</span>&gt;</span>dev<span class="tag">&lt;/<span class="name">id</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">activation</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">activeByDefault</span>&gt;</span>true<span class="tag">&lt;/<span class="name">activeByDefault</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">activation</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">properties</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">profile.active</span>&gt;</span>dev<span class="tag">&lt;/<span class="name">profile.active</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">properties</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">profile</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">profile</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">id</span>&gt;</span>prod<span class="tag">&lt;/<span class="name">id</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">properties</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">profile.active</span>&gt;</span>prod<span class="tag">&lt;/<span class="name">profile.active</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">properties</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">profile</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">profiles</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<h3 id="在-pom-xml-中定义资源过滤"><a class="header-anchor" href="#在-pom-xml-中定义资源过滤"></a>在 pom.xml 中定义资源过滤</h3>
+<p>目的是为了让 maven 在构建时用 profile 中指定的属性来替换
+<code>application.properties</code> 中的内容。</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">resources</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">resource</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">directory</span>&gt;</span>src/main/resources<span class="tag">&lt;/<span class="name">directory</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!--①--&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">excludes</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">exclude</span>&gt;</span>application*.properties<span class="tag">&lt;/<span class="name">exclude</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">excludes</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">resource</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">resource</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">directory</span>&gt;</span>src/main/resources<span class="tag">&lt;/<span class="name">directory</span>&gt;</span></span><br><span class="line">        <span class="comment">&lt;!--②--&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">filtering</span>&gt;</span>true<span class="tag">&lt;/<span class="name">filtering</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">includes</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">include</span>&gt;</span>application.properties<span class="tag">&lt;/<span class="name">include</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">include</span>&gt;</span>application-$&#123;profile.active&#125;.properties<span class="tag">&lt;/<span class="name">include</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">includes</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">resource</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">resources</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>①中，我们通过 <code>excludes</code> 来将所有的 <code>application*.properties</code> 排除在外，这样
+maven 在打包时就不会复制这些文件。毕竟我们不希望把
+<code>application-dev.properties</code> 也包含在 prod 的 jar 包里。</p>
+<p>②中，通过开启 <code>filtering</code>，maven 会将文件中的 <code>@XX@</code> 替换 profile 中定义的
+<code>XX</code> 变量/属性。另外，我们还通过 <code>includes</code> 来告诉 maven 根据profile 来复制对应的 <code>properties</code> 文件。</p>
+<h3 id="用-maven-变量指定-spring-profile"><a class="header-anchor" href="#用-maven-变量指定-spring-profile"></a>用 Maven 变量指定 Spring Profile</h3>
+<p>在 <code>application.properties</code> 文件中加入下面这行：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">spring.profiles.active &#x3D; @profile.active@</span><br></pre></td></tr></table></figure>
+<p>这里 <code>profile.active</code> 是在 maven profile 中的 <code>properties</code> 定义的，而 <code>@XX@</code>
+的语法则是上节提到的 maven filtering 替换变量的语法。</p>
+<h3 id="构建不同的包"><a class="header-anchor" href="#构建不同的包"></a>构建不同的包</h3>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">mvn clean package -P&lt;profile_name&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="与-intellij-idea-集成"><a class="header-anchor" href="#与-intellij-idea-集成"></a>与 Intellij IDEA 集成</h3>
+<p>IDEA 在 Build 时并不会处理 Maven Profile 的 filtering 设置，在 Run 的时候会直接复制 <code>application.properties</code> 文件到 <code>target/class</code> 目录下，而由于文件中包含
+<code>@profile.active@</code>（没有被 maven 替换）且 <code>@</code> 是非法字符，因此没有办法运行。</p>
+<p>解决方法是让 IDEA Run 之前执行 <code>mvn resources:resouces</code>，如下图：</p>
+<img src="/2018/Maven-Profile-and-Spring-Profile/idea-config.png" class="" title="IDEA config for mvn resources:resources">
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>Maven profile 与 Spring profile 有自的优点，结合起来的步骤如下：</p>
+<ol>
+<li>在 <code>pom.xml</code> 中定义多个 profile 及自己的属性</li>
+<li>在 <code>pom.xml</code> 中定义 resource filtering，一方面控制 jar 中包含的资源文件，一方面允许 <code>@XX@</code> 的变量替换</li>
+<li>在 <code>application.properties</code> 中指定 <code>spring.profiles.active</code>，值为 maven
+profile 中定义的属性。</li>
+<li>构建时使用 <code>mvm clean package -P&lt;profile&gt;</code> 来指定 profile。</li>
+</ol>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://segmentfault.com/a/1190000011770028" target="_blank" rel="noopener">Maven管理SpringBoot Profile</a></li>
+<li><a href="https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html" target="_blank" rel="noopener">Spring 外化配置文件</a></li>
+</ul></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/Maven-Profile-and-Spring-Profile/';
+var disqus_title = 'Maven Profile 与 Spring Profile 管理多环境打包';
+var disqus_url = 'https://lotabout.me/2018/Maven-Profile-and-Spring-Profile/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

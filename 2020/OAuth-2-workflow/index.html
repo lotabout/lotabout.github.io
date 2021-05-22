@@ -1,0 +1,79 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="OAuth 2.0 标准的 RFC 比较难读懂，本文尽量把认证流程说明白。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>理解 OAuth 2.0 认证流程 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/OAuth/" rel="tag">OAuth</a></div><div class="post-time">2020-02-16</div></div></div><div class="container post-header"><h1>理解 OAuth 2.0 认证流程</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#认证方式"><span class="toc-number">1.</span> <span class="toc-text">认证方式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#authorization-code"><span class="toc-number">2.</span> <span class="toc-text">Authorization Code</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#implicit"><span class="toc-number">3.</span> <span class="toc-text">Implicit</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">4.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">5.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>OAuth 2.0 标准的 RFC 比较难读懂，本文尽量把认证流程说明白。</p>
+<h2 id="认证方式"><a class="header-anchor" href="#认证方式"></a>认证方式</h2>
+<p>OAuth 2.0 共有 4 种访问模式<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>：</p>
+<ul>
+<li>授权码模式(Authorization Code)，适用于一般服务器端应用</li>
+<li>简化模式(Implicit)，适用于纯网页端应用，不过现在推荐使用
+<a href="https://auth0.com/docs/flows/concepts/auth-code-pkce" target="_blank" rel="noopener">PKCE</a> 作为替代</li>
+<li>密码模式(Resource owner password credentials)，不介绍</li>
+<li>客户端模式(Client credentials)，不介绍</li>
+</ul>
+<p>另外注意 OAuth 服务本身必须是 HTTPS 的，而三方应用可以是 HTTP 的。</p>
+<h2 id="authorization-code"><a class="header-anchor" href="#authorization-code"></a>Authorization Code</h2>
+<p>假设我们的网站有一个功能是同步用户在 Github 的所有仓库。对接 OAuth 流程大致分为 5 个步骤：</p>
+<ol>
+<li>在 Github 的 OAuth 页面上注册网站信息。在网站发布前就要做好</li>
+<li>用户点击网站上的“同步 Github 仓库”按钮，开始 OAuth 认证流程</li>
+<li>浏览器弹出 Github 认证窗口，询问“是否允许网站 XXX 的访问”，用户点击“允许”</li>
+<li>Github 得知用户点了“允许”后，生成授权码(Authorization Code)，并将用户重定向到我们的网站里，网站后台收到授权码后，向 Github 请求ACCESS_TOKEN</li>
+<li>网站后台从 Github 收到 ACCESS_TOKEN，接着向 Github 拉取该用户所有的仓库</li>
+</ol>
+<p>具体流程如下图：</p>
+<img src="/2020/OAuth-2-workflow/oauth-authorization-code.svg" class="" title="OAuth 2 Authorization">
+<p>在授权码方式下，ACCESS_TOKEN 只会存在我们网站的服务器里，用户端从始至终都获取不到这个信息，我们不必害怕用户的电脑中毒了而导致 ACCESS_TOKEN 泄露。</p>
+<p>（更多安全相关的考虑参考最后的参考文章）</p>
+<h2 id="implicit"><a class="header-anchor" href="#implicit"></a>Implicit</h2>
+<p>Implicit 是为纯网页应用设计的，与 Authorization Code 模式相比：</p>
+<ul>
+<li>Implicit 模式认证过程中，不使用 <code>CLIENT_SECRET</code></li>
+<li>用户认证后直接拿到 ACCESS_TOKEN 不再需要通过 Authorization Code 进行中转（下图的步骤 ⑥）</li>
+</ul>
+<p>整体流程如下图：</p>
+<img src="/2020/OAuth-2-workflow/oauth-implicit.svg" class="" title="OAuth 2 Implicit">
+<p>Implicit 设计之初，由于浏览器的同源策略，不允许跨站请求，因此 Authorization
+Code 不可行<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>。现在由于浏览器普遍支持
+<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS" target="_blank" rel="noopener">CORS</a>，且 Implicit 本身也在安全风险，目前建议使用 PKCE<sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup>。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>OAuth 2.0 是广泛使用的授权标准，设计的本身也有许多安全性的考量。本文浅尝辄止，只介绍 Authorization Code 与 Implicit 模式的授权过程，而这些流程背后想要解决的问题，需要另选学习。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://tools.ietf.org/html/rfc6749" target="_blank" rel="noopener">OAuth 2.0 RFC</a> 比较难读懂</li>
+<li><a href="https://aaronparecki.com/oauth-2-simplified/" target="_blank" rel="noopener">OAuth 2 Simplified</a> 讲解了
+Authorization Code 和 PKCE 流程，强烈推荐阅读</li>
+<li><a href="https://medium.com/@darutk/diagrams-and-movies-of-all-the-oauth-2-0-flows-194f3c3ade85" target="_blank" rel="noopener">Diagrams And Movies Of All The OAuth 2.0 Flows</a> OAuth 2.0 流程图</li>
+<li><a href="https://www.chrisyue.com/security-issue-about-oauth-2-0-you-should-know.html" target="_blank" rel="noopener">关于 OAuth2.0 安全性你应该要知道的一些事</a> 一些影响 OAuth 2.0 安全的约定细节</li>
+<li><a href="https://developer.okta.com/blog/2019/08/22/okta-authjs-pkce" target="_blank" rel="noopener">Implement the OAuth 2.0 Authorization Code with PKCE Flow</a> 有讲解为什么不要再用 Implicit 模式</li>
+<li><a href="https://tools.ietf.org/html/draft-ietf-oauth-security-topics-09" target="_blank" rel="noopener">draft-ietf-oauth-security-topics-09</a> OAuth 2.0 关于安全的最佳实践：用 PKCE</li>
+<li><a href="https://wooyun.js.org/drops/OAuth%202.0%E5%AE%89%E5%85%A8%E6%A1%88%E4%BE%8B%E5%9B%9E%E9%A1%BE.html" target="_blank" rel="noopener">乌云关于 OAuth 的安全案例回顾</a></li>
+</ul>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p><a href="https://auth0.com/docs/api-auth/which-oauth-flow-to-use" target="_blank" rel="noopener">https://auth0.com/docs/api-auth/which-oauth-flow-to-use</a> <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p><a href="https://espressocoder.com/2019/10/28/secure-your-spa-with-authorization-code-flow-with-pkce/" target="_blank" rel="noopener">Secure Your SPA with Authorization Code Flow with PKCE</a> <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn3" class="footnote-item"><p><a href="https://tools.ietf.org/html/draft-ietf-oauth-security-topics-09" target="_blank" rel="noopener">OAuth 2.0 Security Best Current Practice draft-ietf-oauth-security-topics-09</a> <a href="#fnref3" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2020/OAuth-2-workflow/';
+var disqus_title = '理解 OAuth 2.0 认证流程';
+var disqus_url = 'https://lotabout.me/2020/OAuth-2-workflow/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

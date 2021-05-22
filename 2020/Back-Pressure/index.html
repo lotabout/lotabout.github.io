@@ -1,0 +1,86 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="春节期间，高速上动不动就堵车，这是一种“背压”的现象。背压(back pressure)，也叫“反压”，指的是下游系统处理过慢，导致上游系统阻塞的现象。我们来聊聊背压后面的流控吧。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>背压(Back Pressure)与流量控制 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Back-Pressure/" rel="tag">Back Pressure</a><a class="post-tag-link" href="/tags/Flow-Control/" rel="tag">Flow Control</a><a class="post-tag-link" href="/tags/async/" rel="tag">async</a></div><div class="post-time">2020-01-21</div></div></div><div class="container post-header"><h1>背压(Back Pressure)与流量控制</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#流控策略"><span class="toc-number">1.</span> <span class="toc-text">流控策略</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#无限缓冲不可行"><span class="toc-number">2.</span> <span class="toc-text">无限缓冲不可行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何实现背压"><span class="toc-number">3.</span> <span class="toc-text">如何实现背压</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#无处不在的流量控制"><span class="toc-number">4.</span> <span class="toc-text">无处不在的流量控制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#背压与-async"><span class="toc-number">5.</span> <span class="toc-text">背压与 async</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">6.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">7.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>春节期间，高速上动不动就堵车，这是一种“背压”的现象。背压(back pressure)，也叫“反压”，指的是下游系统处理过慢，导致上游系统阻塞的现象。我们来聊聊背压后面的流控吧。</p>
+<h2 id="流控策略"><a class="header-anchor" href="#流控策略"></a>流控策略</h2>
+<p>如上图，系统中存在三方：生产者(Producer)产生数据，通过管道(Pipeline)传输给消费者(Consumer)。</p>
+<img src="/2020/Back-Pressure/Producer-Consumer.svg" class="" title="Producer Consumer">
+<p>此时生产的速率(100/s)大于消费的速率(75/s)，多余的流量无处可去。于是自然地衍生出三种策略：</p>
+<ol>
+<li>控制(Control)。降低生产速率，从源头减少流量</li>
+<li>缓冲(Buffer)。管道将多余的流量存储起来</li>
+<li>丢弃(Drop)。消费者将无暇处理的流量丢弃</li>
+</ol>
+<p>由于“控制”策略需要将消费者的压力反馈给生产者，从而降低生产速率，与“背压”现象很类似，因此在资料中背压也常常代指“控制”策略。</p>
+<h2 id="无限缓冲不可行"><a class="header-anchor" href="#无限缓冲不可行"></a>无限缓冲不可行</h2>
+<p>缓冲不应该是无限的(unbounded)。一方面如果生产者的速率<strong>长期</strong>大于消费者的速率，那么多余的流量将无限增加，即使流量可以用某种方式存储，这些流量预期被消费的时间也无限增加，满足不了业务需求。另一方面事实上无法实现真正的“无限”缓冲，它们最终都将受限于物理资源（内存、硬盘等），资源耗尽时，就不仅仅是流量丢失的问题了。</p>
+<p>如果是有限的缓冲，则当缓冲满了以后，又回到了背压和丢弃策略了。而丢弃可不可行通常得看业务需求，于是早晚我们又得实现背压策略。</p>
+<h2 id="如何实现背压"><a class="header-anchor" href="#如何实现背压"></a>如何实现背压</h2>
+<p>我把它分成隐式背压（如 Callstack blocking）和显式背压（如 pull 模式）。</p>
+<p>Callstack blocking 是指阻塞整条调用链，例如提交任务到线程池，拒绝策略是阻塞，则线程池满了以后，整个线程会阻塞在提交的动作上，它隐式地阻塞了同一个线程上游的生产者。如果处理流程不在同一个线程上则难以实现，如任务在多个线程上运行或跨越多个微服务。</p>
+<p>显式背压是指在业务逻辑中显式地实现生产者和消费者间的沟通达到流量控制的目的。例如 TCP 协议中通过交换当前接收窗口的大小来完成流量控制。</p>
+<p>其中拉取(pull)模式则是比较通用且重要的一种，即任务的趋动是由消费者发起的，而不是生产者。例如 Reactive Stream 里的 API 规定是由订阅者（消费者）调用
+<code>request(n)</code> 方法向生产者请求 n 个消息，生产者再调用 <code>onNext()</code> 将 n 个消息提供给消费者。消费者可以按需要获取，生产者也可以按需生产，从而实现背压。</p>
+<h2 id="无处不在的流量控制"><a class="header-anchor" href="#无处不在的流量控制"></a>无处不在的流量控制</h2>
+<p>只在系统存在不止一方，就有流量产生，就需要流量控制。</p>
+<p>TCP 是最经典的示例了，协议本身提供背压，内核会保存一个有限(bounded)大小的发送缓冲，当缓冲满的时候，会阻塞 <code>send</code> 方法，即 callstack blocking 实现背压。这样接收方的压力就可以传导到发送方的 <code>send</code> 方法了。</p>
+<p>消息队列(如 Kafka)相当于提供了一个巨大（接近无限）的缓冲，这样它的上下游之间就不需要有压力的传导了，多余的流量全在队列上。</p>
+<p>在微服务架构中，通常有一个断路器(Circuit Breaker)的角色，在某个服务压力过大或系统不可用时，不再请求而直接返回默认值，可以认为是一种丢弃策略。</p>
+<p>但有时候，我们无法控制流量的生产者，例如用户的点击等，这时缓冲和丢弃策略就显得很重要了。</p>
+<h2 id="背压与-async"><a class="header-anchor" href="#背压与-async"></a>背压与 async</h2>
+<p>最先是在学习 webflux 的时候接触背压的概念，当时还不太理解。后来看到讨论背压和
+async 的文章，才认识到流控需求的普遍性和背压的重要性。</p>
+<p>近几年异步编程又火了起来：Go/Rust 的协程、Python 的 asyncio、反应式编程
+(Reactive Programming) 等。异步的作用是释放阻塞的线程，用来处理其它的任务，等阻塞的资源准备就绪后再处理。这样能提高系统的吞吐，因为等待的时间减少了。</p>
+<p>但是这相当于隐式地使用了“无限”的缓冲，用来存储处于等待状态的任务。由此带来的问题就是：队列满了（资源用完了）怎么办？或者即使队列未满但等待时间过长了怎么办？</p>
+<p>对于一些 cold 的内容<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>，一些框架通过采用 poll 模式可以尽量实现背压：如 NodeJs 里的 Stream、Rust 的 Tokio 框架、Project Reactor 及 RxJava 中的许多 operator 等等。</p>
+<p>而对于一些 hot 的内容，如 web 服务接收了过多的请求则无法有效控制。（了解有限，欢迎评论）</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>背压虽好，难实现；缓冲无限有危险；要用丢弃得看脸。</p>
+<p>要意识到流量控制的必要性，对我自己而言，两点最佳实践：</p>
+<ol>
+<li>不要用无限的缓冲</li>
+<li>优先考虑 pull 模式</li>
+</ol>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://medium.com/@jayphelps/backpressure-explained-the-flow-of-data-through-software-2350b3e77ce7" target="_blank" rel="noopener">Backpressure explained</a>
+多示例解释了背压的概念</li>
+<li><a href="https://ferd.ca/handling-overload.html" target="_blank" rel="noopener">Handling Overload</a> Erlang 决定不支持无限的 MailBox，对背压的一系列讨论，非常值得阅读</li>
+<li><a href="https://lucumr.pocoo.org/2020/1/1/async-pressure/" target="_blank" rel="noopener">I’m not feeling the async pressure</a> 讲述了 async/await 缺少背压的现状和忧虑</li>
+<li><a href="https://news.ycombinator.com/item?id=21927427" target="_blank" rel="noopener">Hacker News: I’m not feeling the async pressure</a>
+有许多关于 <code>.Net</code> 和缓冲相关的讨论</li>
+<li><a href="https://vorpus.org/blog/some-thoughts-on-asynchronous-api-design-in-a-post-asyncawait-world/" target="_blank" rel="noopener">Some thoughts on asynchronous API design in a post-async/await
+world</a>
+async/await 下 API 设计的一些问题</li>
+<li><a href="https://nodejs.org/es/docs/guides/backpressuring-in-streams/" target="_blank" rel="noopener">Backpressuring in Streams</a>
+NodeJs Stream 里的背压支持</li>
+<li><a href="https://github.com/ReactiveX/RxJava/wiki/Backpressure" target="_blank" rel="noopener">RxJava Backpressure</a> Rxjava 如何实现背压</li>
+<li><a href="https://tokio.rs/docs/overview/#backpressure" target="_blank" rel="noopener">Tokio Backpressure</a> Tokio 背压相关说明</li>
+<li><a href="https://docs.confluent.io/current/streams/architecture.html#backpressure" target="_blank" rel="noopener">Kafka Backpressure</a>
+Kafka Stream 不需要处理背压</li>
+</ul>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>一般 cold 指的是生产内容已经存在，如系统文件，而 hot 指的是动态生成的，如用户的点击。换言之 cold 内容的生产速率是可以控制的，而 hot 则无法控制。 <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2020/Back-Pressure/';
+var disqus_title = '背压(Back Pressure)与流量控制';
+var disqus_url = 'https://lotabout.me/2020/Back-Pressure/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;p&gt;&lt;a href=&quot;https://github.com/lotabout/rargs&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;rargs&lt;/a&gt; 是一个 rust 实现的命令行工具，它解决的是 &lt;code&gt;xargs&lt;/code&gt; 或 &lt;code&gt;parallel&lt;/code&gt; 等批量处理工具中无法自由引用输入的痛点。&lt;code&gt;rargs&lt;/code&gt;
+支持用正则表达式来匹配输入中的任意内容。例如，我们想恢复一些以 &lt;code&gt;.bak&lt;/code&gt; 结尾的备份文件，用 &lt;code&gt;rargs&lt;/code&gt; 可以这么做：&lt;/p&gt;
+&lt;figure class=&quot;highlight sh&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;code&quot;&gt;&lt;pre&gt;&lt;span class=&quot;line&quot;&gt;ls *.bak | rargs -p &lt;span class=&quot;string&quot;&gt;'(.*)\.bak'&lt;/span&gt; mv &amp;#123;0&amp;#125; &amp;#123;1&amp;#125;&lt;/span&gt;&lt;br&gt;&lt;/pre&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/figure&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>分享创造 rargs | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/rargs/" rel="tag">rargs</a><a class="post-tag-link" href="/tags/xargs/" rel="tag">xargs</a></div><div class="post-time">2018-04-14</div></div></div><div class="container post-header"><h1>分享创造 rargs</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#批量重命名文件"><span class="toc-number">1.</span> <span class="toc-text">批量重命名文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#批量下载"><span class="toc-number">2.</span> <span class="toc-text">批量下载</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#替代-awk"><span class="toc-number">3.</span> <span class="toc-text">替代 AWK</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#多线程"><span class="toc-number">4.</span> <span class="toc-text">多线程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#最后"><span class="toc-number">5.</span> <span class="toc-text">最后</span></a></li></ol></details></div><div class="container post-content"><p><a href="https://github.com/lotabout/rargs" target="_blank" rel="noopener">rargs</a> 是一个 rust 实现的命令行工具，它解决的是 <code>xargs</code> 或 <code>parallel</code> 等批量处理工具中无法自由引用输入的痛点。<code>rargs</code>
+支持用正则表达式来匹配输入中的任意内容。例如，我们想恢复一些以 <code>.bak</code> 结尾的备份文件，用 <code>rargs</code> 可以这么做：</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">ls *.bak | rargs -p <span class="string">'(.*)\.bak'</span> mv &#123;0&#125; &#123;1&#125;</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+<h2 id="批量重命名文件"><a class="header-anchor" href="#批量重命名文件"></a>批量重命名文件</h2>
+<p>我们先创建一些文件：</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">$ touch &#123;1..10&#125;.txt  <span class="comment"># &#123;&#125; 是 bash/zsh 的语法</span></span><br><span class="line">$ ls</span><br><span class="line">1.txt  2.txt  3.txt  4.txt  5.txt  6.txt  7.txt  8.txt  9.txt  10.txt</span><br></pre></td></tr></table></figure>
+<p>现在我们把这些文件添上 <code>.bak</code> 后缀来备份。</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">$ ls | xargs -I&#123;&#125; mv &#123;&#125; &#123;&#125;.bak</span><br><span class="line">$ ls</span><br><span class="line">1.txt.bak  2.txt.bak  3.txt.bak  4.txt.bak  5.txt.bak  6.txt.bak  7.txt.bak  8.txt.bak  9.txt.bak  10.txt.bak</span><br></pre></td></tr></table></figure>
+<p>可以看到 <code>xargs</code> 允许我们通过 <code>-I</code> 来指定占位符(placeholder)，代表输入行（具体化的使用方法麻烦查阅手册 <code>man xargs</code>），可以方便地实现批量处理。</p>
+<p>那么如何批量地把这些文件还原呢？使用 <code>rargs</code> 就可以轻易地实现：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ ls | rargs -p &#39;(.*).bak&#39; mv &#123;0&#125; &#123;1&#125;</span><br><span class="line">$ ls</span><br><span class="line">1.txt  2.txt  3.txt  4.txt  5.txt  6.txt  7.txt  8.txt  9.txt  10.txt</span><br></pre></td></tr></table></figure>
+<p><code>rargs</code> 会用正则表达式 <code>(.*).bak</code> 匹配输入内容，然后会记录 <code>(...)</code> 中的内容（与正则表达式的语法一致），之后可以通过 <code>{1}</code> 来引用。</p>
+<h2 id="批量下载"><a class="header-anchor" href="#批量下载"></a>批量下载</h2>
+<p>例如我们有一个 CSV 文件，存放着要下载文件的 URL 和文件名，存放格式如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">URL1,filename1</span><br><span class="line">URL2,filename2</span><br></pre></td></tr></table></figure>
+<p>我们想用 <code>wget</code> 下载 URL 并保存成对应的文件名。用 <code>rargs</code> 可以这样实现：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">cat download-list.csv | rargs -p &#39;(?P&lt;url&gt;.*),(?P&lt;filename&gt;.*)&#39; wget &#123;url&#125; -O &#123;filename&#125;</span><br></pre></td></tr></table></figure>
+<p>这里我们用了正则表达式中的 <code>(?P&lt;grou_name&gt;...)</code> 的语法，<code>rargs</code> 会保存
+group_name 和匹配到的内容，之后可以通过 <code>{group_name}</code> 引用 。</p>
+<h2 id="替代-awk"><a class="header-anchor" href="#替代-awk"></a>替代 AWK</h2>
+<p>上面的例子用正则表达式来匹配 CSV 文件，如果字段多还是比较麻烦的。<code>rargs</code> 针对这种情况提供了 <code>-d ...</code> 来指定分隔符，之后可以像 AWK 一样通过 <code>{n}</code> 来引用第
+<code>n</code> 个字段。</p>
+<p>不仅如此，我们经常会需要引用一些连续的字段，<code>rargs</code> 提供 <code>{start...end}</code> 的语法来引用 。</p>
+<p>例如我们有一些 xSV 文件，如 <code>/etc/passwd</code>:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">nobody:*:-2:-2:Unprivileged User:&#x2F;var&#x2F;empty:&#x2F;usr&#x2F;bin&#x2F;false</span><br><span class="line">root:*:0:0:System Administrator:&#x2F;var&#x2F;root:&#x2F;bin&#x2F;sh</span><br><span class="line">daemon:*:1:1:System Services:&#x2F;var&#x2F;root:&#x2F;usr&#x2F;bin&#x2F;false</span><br></pre></td></tr></table></figure>
+<p>我们可以用 <code>rargs</code> 来处理其中的字段：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ cat &#x2F;etc&#x2F;passwd | rargs -d: echo -e &#39;id: &quot;&#123;1&#125;&quot;\t name: &quot;&#123;5&#125;&quot;\t rest: &quot;&#123;6..::&#125;&quot;&#39;</span><br><span class="line">id: &quot;nobody&quot;     name: &quot;Unprivileged User&quot;       rest: &quot;&#x2F;var&#x2F;empty:&#x2F;usr&#x2F;bin&#x2F;false&quot;</span><br><span class="line">id: &quot;root&quot;       name: &quot;System Administrator&quot;    rest: &quot;&#x2F;var&#x2F;root:&#x2F;bin&#x2F;sh&quot;</span><br><span class="line">id: &quot;daemon&quot;     name: &quot;System Services&quot;         rest: &quot;&#x2F;var&#x2F;root:&#x2F;usr&#x2F;bin&#x2F;false&quot;</span><br></pre></td></tr></table></figure>
+<p><code>-d:</code> 指定了 <code>:</code> 为分隔符。<code>{6..}</code> 指定了第 6 及之后的字段。<code>{...:sep}</code> 语法可以指定 <code>sep</code>作为多个字段输出时使用的分隔符。</p>
+<h2 id="多线程"><a class="header-anchor" href="#多线程"></a>多线程</h2>
+<p><code>rargs</code> 默认是顺序执行命令，如果需要多线程，可以通过</p>
+<ul>
+<li><code>-w &lt;num&gt;</code> 指定使用的线程数量</li>
+<li><code>-w 0</code> 指定与 CPU 数量相同的线程数。</li>
+</ul>
+<h2 id="最后"><a class="header-anchor" href="#最后"></a>最后</h2>
+<p><code>rargs</code> 是一个简单的小工具，希望它能给你带来一些方便。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/rargs/';
+var disqus_title = '分享创造 rargs';
+var disqus_url = 'https://lotabout.me/2018/rargs/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

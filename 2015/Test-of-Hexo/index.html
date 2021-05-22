@@ -1,0 +1,117 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="折腾许久的博客工具，反而没有实际写多少内容。遂决定“尽量”不折腾了，而是专心写些东西。最终用 &lt;a href=&quot;hexo.io&quot;&gt;Hexo&lt;/a&gt; 搭的博客，选
+&lt;a href=&quot;https://github.com/tufu9441/maupassant-hexo/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Maupassant&lt;/a&gt; 作主题，几乎没有额外的配置，准备就此开工。第一篇文章就用作测试 Hexo 的 Markdown 语法吧。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Test of Hexo | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/test/" rel="tag">test</a></div><div class="post-time">2015-11-03</div></div></div><div class="container post-header"><h1>Test of Hexo</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#"><span class="toc-number">1.</span> <span class="toc-text">本博的一些设置</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#"><span class="toc-number">2.</span> <span class="toc-text">Markdown 测试主要参照 这篇文章</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#标题"><span class="toc-number">2.1.</span> <span class="toc-text">标题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#行内元素"><span class="toc-number">2.2.</span> <span class="toc-text">行内元素</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#引用"><span class="toc-number">2.3.</span> <span class="toc-text">引用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#列表"><span class="toc-number">2.4.</span> <span class="toc-text">列表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#分割线"><span class="toc-number">2.5.</span> <span class="toc-text">分割线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#链接"><span class="toc-number">2.6.</span> <span class="toc-text">链接</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#代码"><span class="toc-number">2.7.</span> <span class="toc-text">代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#公式"><span class="toc-number">2.8.</span> <span class="toc-text">公式</span></a></li></ol></li></ol></details></div><div class="container post-content"><p>折腾许久的博客工具，反而没有实际写多少内容。遂决定“尽量”不折腾了，而是专心写些东西。最终用 <a href="hexo.io">Hexo</a> 搭的博客，选
+<a href="https://github.com/tufu9441/maupassant-hexo/" target="_blank" rel="noopener">Maupassant</a> 作主题，几乎没有额外的配置，准备就此开工。第一篇文章就用作测试 Hexo 的 Markdown 语法吧。</p>
+<h1>本博的一些设置</h1>
+<p>只有一点值得一提，代码习惯，不太喜欢一行写太长。习惯上一行保留 80/100/120 字符。只是这个习惯在写文章时会引起一些问题：</p>
+<ol>
+<li>Markdown 解析连续行时会添加额外空格，使中文文章中多出额外空格。</li>
+<li>Maupassant 主题自动截取摘要时只认第一个换行</li>
+</ol>
+<p>以下是解决方法：</p>
+<ol>
+<li>
+<p>使用插件：<a href="https://github.com/lotabout/hexo-filter-fix-cjk-spacing" target="_blank" rel="noopener">hexo-filter-fix-cjk-spacing</a></p>
+</li>
+<li>
+<p>修改 Maupassant 主题的 <code>layout/index.jade</code> 文件，替换原有行：</p>
+ <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">- var br &#x3D; post.content.indexOf(&#39;\n&#39;)  &#x2F;&#x2F; 替换为</span><br><span class="line">- var br &#x3D; post.content.indexOf(&#39;&lt;&#x2F;p&gt;&#39;)</span><br><span class="line"></span><br><span class="line">!&#x3D; post.content.substring(0, br)       &#x2F;&#x2F; 替换为</span><br><span class="line">!&#x3D; post.content.substring(0, br + 4)</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<h1>Markdown 测试主要参照 <a href="http://hp256.com/2014/12/23/post-1/" target="_blank" rel="noopener">这篇文章</a></h1>
+<h2 id="标题"><a class="header-anchor" href="#标题"></a>标题</h2>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># 大标题</span><br><span class="line">## 二标题</span><br><span class="line">### 三标题</span><br><span class="line">#### 四标题</span><br><span class="line">##### 五标题</span><br><span class="line">###### 六标题</span><br></pre></td></tr></table></figure>
+<h2 id="行内元素"><a class="header-anchor" href="#行内元素"></a>行内元素</h2>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">* 或 - 均可，一个表斜体，两个表粗体</span><br><span class="line"></span><br><span class="line">*斜体* _斜体_</span><br><span class="line">**粗体** __粗体__</span><br></pre></td></tr></table></figure>
+<p><em>斜体</em> <em>斜体</em>
+<strong>粗体</strong> <strong>粗体</strong></p>
+<h2 id="引用"><a class="header-anchor" href="#引用"></a>引用</h2>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&gt; blockquote</span><br><span class="line">&gt;&gt; nested blockquote</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>blockquote</p>
+<blockquote>
+<p>nested blockquote</p>
+</blockquote>
+</blockquote>
+<h2 id="列表"><a class="header-anchor" href="#列表"></a>列表</h2>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">- Unordered Level 1</span><br><span class="line">- Unordered Level 2</span><br><span class="line">  1. ordered 1</span><br><span class="line">     - sub list 1</span><br><span class="line">     - sub list 2</span><br><span class="line">  2. ordered 2</span><br><span class="line">  2. ordered 3</span><br><span class="line">- Unordered Level 3</span><br><span class="line">  - sub unordered 1</span><br><span class="line">  - sub unordered 2</span><br><span class="line">    - subsub unordered 1</span><br><span class="line">    - subsub unordered 2</span><br><span class="line">      continue line</span><br><span class="line">      </span><br><span class="line">      multiple paragraph of unordered 2 with the same indent</span><br></pre></td></tr></table></figure>
+<ul>
+<li>Unordered Level 1</li>
+<li>Unordered Level 2
+<ol>
+<li>ordered 1
+<ul>
+<li>sub list 1</li>
+<li>sub list 2</li>
+</ul>
+</li>
+<li>ordered 2</li>
+<li>ordered 3</li>
+</ol>
+</li>
+<li>Unordered Level 3
+<ul>
+<li>sub unordered 1</li>
+<li>sub unordered 2
+<ul>
+<li>
+<p>subsub unordered 1</p>
+</li>
+<li>
+<p>subsub unordered 2
+continue line</p>
+<p>multiple paragraph of unordered 2 with the same indent</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="分割线"><a class="header-anchor" href="#分割线"></a>分割线</h2>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">---</span><br></pre></td></tr></table></figure>
+<hr>
+<h2 id="链接"><a class="header-anchor" href="#链接"></a>链接</h2>
+<p>链接中的 URL 可以是本地路径。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">文字链接：[文字](url) 或 [文字](url tooltip)</span><br><span class="line"></span><br><span class="line">[知乎](http:&#x2F;&#x2F;www.zhihu.com) </span><br><span class="line">[知乎](http:&#x2F;&#x2F;www.zhihu.com LaLaLa)</span><br><span class="line"></span><br><span class="line">引用类型：</span><br><span class="line">[知乎][1]</span><br><span class="line"></span><br><span class="line">[1]: http:&#x2F;&#x2F;www.zhihu.com</span><br></pre></td></tr></table></figure>
+<p><a href="http://www.zhihu.com" target="_blank" rel="noopener">知乎</a></p>
+<p><a href="http://www.zhihu.com" target="_blank" rel="noopener">知乎</a></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">图片链接：![文字](url)</span><br><span class="line"></span><br><span class="line">![Hexo](http:&#x2F;&#x2F;wwwhere.io&#x2F;img&#x2F;thumbs&#x2F;hexo.jpg)</span><br><span class="line"></span><br><span class="line">引用类型：</span><br><span class="line">![Hexo][2]</span><br><span class="line">[2]:http:&#x2F;&#x2F;wwwhere.io&#x2F;img&#x2F;thumbs&#x2F;hexo.jpg</span><br></pre></td></tr></table></figure>
+<p><img src="http://wwwhere.io/img/thumbs/hexo.jpg" alt="Hexo">
+<img src="http://wwwhere.io/img/thumbs/hexo.jpg" alt="Hexo"></p>
+<h2 id="代码"><a class="header-anchor" href="#代码"></a>代码</h2>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> http = <span class="built_in">require</span>(<span class="string">'http'</span>);</span><br><span class="line">http.createServer(<span class="function"><span class="keyword">function</span> (<span class="params">req, res</span>) </span>&#123;</span><br><span class="line">  res.writeHead(<span class="number">200</span>, &#123;<span class="string">'Content-Type'</span>: <span class="string">'text/plain'</span>&#125;);</span><br><span class="line">  res.end(<span class="string">'Hello World\n'</span>);</span><br><span class="line">&#125;).listen(<span class="number">1337</span>, <span class="string">'127.0.0.1'</span>);</span><br><span class="line"><span class="built_in">console</span>.log(<span class="string">'Server running at http://127.0.0.1:1337/'</span>);</span><br></pre></td></tr></table></figure>
+<p>Code Block:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;% codeblock Javascript Array Syntax lang:js http:&#x2F;&#x2F;j.mp&#x2F;pPUUmW MDN Documentation %&#125;</span><br><span class="line">var arr1 &#x3D; new Array(arrayLength);</span><br><span class="line">var arr2 &#x3D; new Array(element0, element1, ..., elementN);</span><br><span class="line">&#123;% endcodeblock %&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight js"><figcaption><span>Javascript Array Syntax</span><a href="http://j.mp/pPUUmW" target="_blank" rel="noopener">MDN Documentation</a></figcaption><table><tr><td class="code"><pre><span class="line"><span class="keyword">var</span> arr1 = <span class="keyword">new</span> <span class="built_in">Array</span>(arrayLength);</span><br><span class="line"><span class="keyword">var</span> arr2 = <span class="keyword">new</span> <span class="built_in">Array</span>(element0, element1, ..., elementN);</span><br></pre></td></tr></table></figure>
+<p>Gist Tag</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;% gist 996818 %&#125;</span><br></pre></td></tr></table></figure>
+<script src="//gist.github.com/996818.js"></script>
+<p>jsFiddle:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;% jsfiddle ccWP7 %&#125;</span><br></pre></td></tr></table></figure>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/ccWP7/embedded/js,resources,html,css,result/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<h2 id="公式"><a class="header-anchor" href="#公式"></a>公式</h2>
+<p>该主题暂不支持</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$$E&#x3D;mc^2$$</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">The *Gamma function* satisfying $\Gamma(n) &#x3D; (n-1)!\quad\forall n\in\mathbb N$</span><br><span class="line">is via the Euler integral</span><br><span class="line">$$\Gamma(z) &#x3D; \int_0^\infty t^&#123;z-1&#125;e^&#123;-t&#125;dt\,.$$</span><br></pre></td></tr></table></figure>
+<p>$$E=mc^2$$</p>
+<p>The <em>Gamma function</em> satisfying $\Gamma(n) = (n-1)!\quad\forall n\in\mathbb N$
+is via the Euler integral
+$$\Gamma(z) = \int_0^\infty t<sup>{z-1}e</sup>{-t}dt,.$$</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2015/Test-of-Hexo/';
+var disqus_title = 'Test of Hexo';
+var disqus_url = 'https://lotabout.me/2015/Test-of-Hexo/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

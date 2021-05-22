@@ -1,0 +1,58 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;p&gt;元编程就像核弹，自己梦寐以求，却不希望别人拥有。&lt;/p&gt;
+&lt;p&gt;一般说元编程分为两类，一类是宏，在编译时期生成代码；另一类是运行时修改代码的行为。而不论是哪一类，我的建议是在决定使用之前要慎重考虑。元编程能让我们扩展语言本身，是十足的黑魔法；但用好不易，容易造成团队/社区在意见是实现上的分裂。（另外这篇文章里主要是对元编程的一些吐糟，并不包含基础知识的介绍。）&lt;/p&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>不要轻易使用元编程 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/macro/" rel="tag">macro</a><a class="post-tag-link" href="/tags/meta-programming/" rel="tag">meta-programming</a></div><div class="post-time">2018-01-07</div></div></div><div class="container post-header"><h1>不要轻易使用元编程</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#光明与黑暗"><span class="toc-number">1.</span> <span class="toc-text">光明与黑暗</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#照进现实"><span class="toc-number">2.</span> <span class="toc-text">照进现实</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#写在最后"><span class="toc-number">3.</span> <span class="toc-text">写在最后</span></a></li></ol></details></div><div class="container post-content"><p>元编程就像核弹，自己梦寐以求，却不希望别人拥有。</p>
+<p>一般说元编程分为两类，一类是宏，在编译时期生成代码；另一类是运行时修改代码的行为。而不论是哪一类，我的建议是在决定使用之前要慎重考虑。元编程能让我们扩展语言本身，是十足的黑魔法；但用好不易，容易造成团队/社区在意见是实现上的分裂。（另外这篇文章里主要是对元编程的一些吐糟，并不包含基础知识的介绍。）</p>
+<a id="more"></a>
+<h2 id="光明与黑暗"><a class="header-anchor" href="#光明与黑暗"></a>光明与黑暗</h2>
+<p>一上来，我们先看 Common Lisp 里的 <code>loop</code> 宏就。一方面，它体现了宏的强大；另一方面，它展现了宏能给我们带来的复杂。</p>
+<p>熟悉 C/Java 语言都知道循环是语言本身提供的关键字，一般是 <code>for</code>。但 Lisp 语言特别精简，它认为循环只是递归的一个特殊形式，语言本身也不包含任何的循环关键字。于是有人用宏实现了 <code>loop</code> ，它让我们能以近乎英语的方式在 Lisp 里写循环语句，这里从 <a href="http://www.ai.sri.com/pkarp/loop.html" target="_blank" rel="noopener">这里</a> 摘抄一个例子：</p>
+<figure class="highlight lisp"><table><tr><td class="code"><pre><span class="line">(<span class="name">loop</span> for x in '(a b c d e)</span><br><span class="line">      for y from <span class="number">1</span></span><br><span class="line"></span><br><span class="line">      if (<span class="name">&gt;</span> y <span class="number">1</span>)</span><br><span class="line">      do (<span class="name">format</span> <span class="literal">t</span> <span class="string">", ~A"</span> x)</span><br><span class="line">      else do (<span class="name">format</span> <span class="literal">t</span> <span class="string">"~A"</span> x)</span><br><span class="line">      )</span><br></pre></td></tr></table></figure>
+<p>你不需要了解这段代码的含义，重要的是了解像 <code>for .. in ..</code>, <code>if ... do ... else ... do</code> 这样的语法并不是 Lisp 提供的，而是 loop 宏实现的，这些语法离开了
+<code>loop</code> 也就不再合法。</p>
+<p>我们看到 loop 宏让我们能在 Lisp 语言不支持的情况下享受到近乎现代语言中才包含的
+<code>for ... in ...</code> 语法。要知道在 Java 中有两种 for 语句：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i &lt; array.length; i++) &#123;</span><br><span class="line">    System.out.println(<span class="string">"Element: "</span> + array[i]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (String element : array) &#123;</span><br><span class="line">    System.out.println(<span class="string">"Element: "</span> + element);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>而第二种直到 JDK 1.5 才加入。在这之前，广大的 Java 程序员即使已经认识到了第二种写法的优越性，却也只能无奈等到语言支持才行。而 Lisp 程序员很快就能通过宏来实现自己理想中的语法。</p>
+<p>然而光明与黑暗共生，宏给我们带来极大自由的同时，也意味着分裂。每个程序员心中理想的语法各不相同，这就意味着一千个程序员会有一千种语法。在 Lisp 中宏是非常容易编写的（不代表容易正确编写），意味着真的会存在一千种语法，大家谁也不服谁，因此造成分裂；但在 C/Java 中，没有宏的支持，虽然有一千种想法，但大家都写不出编译器，于是只能集中讨论，统一语法了，再靠大牛们实现了。</p>
+<p>而现实就是如此，Common Lisp 尝试标准化 Lisp，但依旧有人不认同这种理念，例如
+Scheme，Common Lisp 标准化的 <code>loop</code> 宏在 Scheme 中就被抛弃了。</p>
+<h2 id="照进现实"><a class="header-anchor" href="#照进现实"></a>照进现实</h2>
+<p>前车之鉴，后事之师。Lisp 强大的功能，反面导致了语言的分裂，最终使 Lisp 也慢慢退出历史舞台（主流地位），这也被称为 <a href="http://www.winestockwebdesign.com/Essays/Lisp_Curse.html" target="_blank" rel="noopener">The Lisp
+Curse</a>。而现实中我们也常常会被元编程的强大和便捷诱惑，我认为使用元编程之前最好考虑会不会造成更多的分裂。最基本的就是不应该自己造语法（DSL）。</p>
+<p>当然，我的出发点是多人团队，较大的项目，考虑的是整体的发展。如果是个人学习，或者小团队等，元编程或许能成为你出众的秘密武器。但大的项目讲求的是合作，DSL 造成的分裂实在是得不偿失，尤其是作者离开后，维护的工作经常后继无人。</p>
+<p>近两年接触到的 rust 也是提供了宏的支持，虽然不像 Lisp 宏一样容易编写，但从功能的角度上依旧特别强大，而且模板宏写起来也很容易，于是有人想写一个类似 Python 的
+<a href="https://gist.github.com/waynenilsen/0c7a9e42fbc8581592c2" target="_blank" rel="noopener">dict 语法</a>：</p>
+<figure class="highlight rust"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> x = dict!(</span><br><span class="line">    <span class="string">"hello"</span> =&gt; <span class="string">"world"</span></span><br><span class="line">    ,<span class="string">"hello2"</span> =&gt; <span class="string">"world2"</span></span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>但我个人并不喜欢这种语法，我认为 Clojure 似的语法更简洁 <code>dict!(&quot;hello&quot;: &quot;world&quot;)</code>。那在团队里引入这两个宏就会引起代码的分裂，后来人在看代码时就会很困惑。不利于团队的建设。</p>
+<p>最后分享在 <a href="https://www.zhihu.com/question/19875500/answer/120828859" target="_blank" rel="noopener">知乎</a> 上看到的引用：</p>
+<blockquote><p>Hygienic Macros and Compile-Time Evaluation: A first-class macro system, or
+support for compile-time code execution in general, is something we may
+consider in future releases. We don’t want the existence of a macro system to
+be a workaround that reduces the incentive for making the core language great.</p><footer><strong>https://github.com/apple/swift-evolution/tree/104cdde1c374a95a7eaf4768960578db3b9971b7</strong></footer></blockquote>
+<p>Swift 表示不希望用宏来解决语言本身的缺陷。</p>
+<p>而我的理解是当我们希望用宏（或其它元编程手段）时，很可能是我们使用的语言缺少了某些特性，例如 Java 的 lombok 提供的 <code>@Getter/@Setter</code> 等注解，就是因为 Java
+没有相应的语言层面的支持，看看 Kotlin 的支持你就会明白的。</p>
+<p>但即便有了宏（或元编程）的支持，你有信心能做出让整个团队都信服的设计吗？如果没有，最好还是慎重为之。</p>
+<h2 id="写在最后"><a class="header-anchor" href="#写在最后"></a>写在最后</h2>
+<p>虽然是吐糟，但这篇之间重写了三次。想表达的内容很多，最终还是把其它的东西删去，
+Lisp curse 还是我想真正表达的东西吧，其它的基础知识，有缘人自然会从其它地方学会。</p>
+<p>年轻人容易崇拜力量，我们也别忘了阳光还有影子。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/think-twice-before-utilizing-meta-programming/';
+var disqus_title = '不要轻易使用元编程';
+var disqus_url = 'https://lotabout.me/2018/think-twice-before-utilizing-meta-programming/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

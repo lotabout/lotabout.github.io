@@ -1,0 +1,32 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="Zookeeper 集群由多个节点构成，写入数据时只要多数节点确认就算成功，那些没有确认的节点此时存放的就是老数据。Zookeeper 的“单一视图(single system image)”保证说的是客户端如果读到了新数据，则再也不会读到老数据。如果重新连接连上了老的节点，怎么能保证不会读到老的数据？"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>QQA: Zookeeper 如何保证单一视图 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/zookeeper/" rel="tag">zookeeper</a></div><div class="post-time">2019-07-20</div></div></div><div class="container post-header"><h1>QQA: Zookeeper 如何保证单一视图</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#zxid"><span class="toc-number">1.</span> <span class="toc-text">zxid</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">2.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>Zookeeper 集群由多个节点构成，写入数据时只要多数节点确认就算成功，那些没有确认的节点此时存放的就是老数据。Zookeeper 的“单一视图(single system image)”保证说的是客户端如果读到了新数据，则再也不会读到老数据。如果重新连接连上了老的节点，怎么能保证不会读到老的数据？</p>
+<p><a href="https://github.com/apache/zookeeper/pull/931#issuecomment-489963241" target="_blank" rel="noopener">真相</a>很直接很残酷：老的节点会拒绝新客户端的连接。</p>
+<h2 id="zxid"><a class="header-anchor" href="#zxid"></a>zxid</h2>
+<p>Zookeeper 会为每个消息打上递增的 <code>zxid</code>(zookeeper transactioin id)，客户端会维护一个 <code>lastZxid</code>，存放最后一次读取数据对应的 <code>zxid</code>，当客户端连接时，节点会判断 <code>lastZxid</code> 是不是比自己的 <code>zxid</code> 更大，如果是，说明节点的数据比客户端老，拒绝连接。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="http://zookeeper-user.578899.n2.nabble.com/Consistency-in-zookeeper-td7578531.html" target="_blank" rel="noopener">http://zookeeper-user.578899.n2.nabble.com/Consistency-in-zookeeper-td7578531.html</a>
+zookeeper consistency 的讨论，开始了解到单一视图概念的地方</li>
+<li><a href="https://github.com/apache/zookeeper/pull/931#issuecomment-489963241" target="_blank" rel="noopener">https://github.com/apache/zookeeper/pull/931#issuecomment-489963241</a> Github
+的 MR，里面的 comment 回答了单一视图的概念是实现方式</li>
+<li><a href="https://www.cnblogs.com/ucarinc/p/8068409.html" target="_blank" rel="noopener">https://www.cnblogs.com/ucarinc/p/8068409.html</a> 大佬的源码分析，代码层面印证上面说的机制</li>
+</ul></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2019/QQA-What-is-Single-System-Image/';
+var disqus_title = 'QQA: Zookeeper 如何保证单一视图';
+var disqus_url = 'https://lotabout.me/2019/QQA-What-is-Single-System-Image/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

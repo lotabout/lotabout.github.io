@@ -1,0 +1,108 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="使用 &lt;a href=&quot;http://hexo.io/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Hexo&lt;/a&gt; 写博客是十分惬意的事。唯一有点不爽的，就是每次修改后都要重新生成并部署到 Github 上，这也是所有静态博客生成工具的通病。那么本文我们就利用 &lt;a href=&quot;https://travis-ci.org/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Travis CI&lt;/a&gt; 来完成自动部署，解决心中最后一处搔痒。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Hexo 自动部署到 Github | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Github/" rel="tag">Github</a><a class="post-tag-link" href="/tags/Hexo/" rel="tag">Hexo</a><a class="post-tag-link" href="/tags/Travis-CI/" rel="tag">Travis CI</a></div><div class="post-time">2016-01-14</div></div></div><div class="container post-header"><h1>Hexo 自动部署到 Github</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是-travis-ci"><span class="toc-number">1.</span> <span class="toc-text">什么是 Travis CI</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#配置-travis-用于自动生成"><span class="toc-number">2.</span> <span class="toc-text">配置 Travis 用于自动生成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#使用-travis-自动部署"><span class="toc-number">3.</span> <span class="toc-text">使用 Travis 自动部署</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#github-oauth"><span class="toc-number">4.</span> <span class="toc-text">Github OAuth</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#travis-加密-token"><span class="toc-number">5.</span> <span class="toc-text">Travis 加密 token</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#启用-travis-ci"><span class="toc-number">6.</span> <span class="toc-text">启用 Travis CI</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#最后"><span class="toc-number">7.</span> <span class="toc-text">最后</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-number">8.</span> <span class="toc-text">参考资料</span></a></li></ol></details></div><div class="container post-content"><p>使用 <a href="http://hexo.io/" target="_blank" rel="noopener">Hexo</a> 写博客是十分惬意的事。唯一有点不爽的，就是每次修改后都要重新生成并部署到 Github 上，这也是所有静态博客生成工具的通病。那么本文我们就利用 <a href="https://travis-ci.org/" target="_blank" rel="noopener">Travis CI</a> 来完成自动部署，解决心中最后一处搔痒。</p>
+<p>本文假设你知道如何使用 Hexo 来生成和部署你的网站，并知道如何使用 git 命令和
+Github 。其实不明白也没什么，只是明白了更容易理解文章里说了什么。</p>
+<h2 id="什么是-travis-ci"><a class="header-anchor" href="#什么是-travis-ci"></a>什么是 Travis CI</h2>
+<p>Continuous Integration(CI) 是持续集成的意思。</p>
+<blockquote>
+<p>从技术层面上来讲，&quot;持续集成&quot;的含义是指开发团队中的每个成员都尽量频繁地把他们
+所做的工作更改合入到源码库中，并且还要验证新合入的变化没有造成任何破坏</p>
+</blockquote>
+<p>那到底什么是持续集成呢？开发软件时，不同人负责不同的模块，之后每天或是每月将它们的工作合并，并构建一个可运行的版本，这就是集成。而持续集成就是缩短集成的间隔，通过自动化的方式，尽量为每一个提交（commit）都生成一个可运行的版本。</p>
+<p>当然以上只是我个人简单的观点。好处坏处什么的就不说了。</p>
+<p>那么 <a href="https://travis-ci.org/" target="_blank" rel="noopener">Travis CI</a> 就是用来做这个用的。可以这样理解：当你提交一个 commit 到 Github 时，Travis CI 会检测到你的提交，并根据你的配置文件，为你自动运行一些命令，通常这些命令用于测试，构建等等。</p>
+<p>那么在我们的需求下，就可以用它运行一些 <code>hexo deploy -g</code> 之类的命令用来自动生成、部署我们的网站。</p>
+<ul>
+<li><a href="https://www.ibm.com/developerworks/cn/java/j-build/" target="_blank" rel="noopener">敏捷软件开发基础: 持续集成环境的构建</a></li>
+<li><a href="http://www.cnblogs.com/helloIT/p/4923492.html" target="_blank" rel="noopener">持续集成初探</a></li>
+</ul>
+<h2 id="配置-travis-用于自动生成"><a class="header-anchor" href="#配置-travis-用于自动生成"></a>配置 Travis 用于自动生成</h2>
+<p>Travis 的 <a href="https://docs.travis-ci.com/user/customizing-the-build/#The-Build-Lifecycle" target="_blank" rel="noopener">构建周期</a>
+分为两步：</p>
+<ol>
+<li><code>install</code> 用于安装构建所需要的一些依赖</li>
+<li><code>script</code> 运行构建脚本</li>
+</ol>
+<p>我们可以自定义这两个步骤，如在运行之前做一些配置，如果成功做一些动作，失败做一些动作等。具体支持的步骤如下：</p>
+<ol>
+<li><code>before_install</code></li>
+<li><code>install</code></li>
+<li><code>before_script</code></li>
+<li><code>script</code></li>
+<li><code>after_success</code> or <code>after_failure</code></li>
+<li><code>before_deploy</code>，可选</li>
+<li><code>deploy</code>，可选</li>
+<li><code>after_deploy</code>，可选</li>
+<li><code>after_script</code></li>
+</ol>
+<p>所以我们的配置如下：</p>
+<figure class="highlight yaml"><figcaption><span>.travis.yml</span></figcaption><table><tr><td class="code"><pre><span class="line"><span class="attr">language:</span> <span class="string">node_js</span></span><br><span class="line"></span><br><span class="line"><span class="attr">node_js:</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">'6.0.0'</span></span><br><span class="line"></span><br><span class="line"><span class="attr">branches:</span></span><br><span class="line">  <span class="attr">only:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">source</span>                <span class="comment"># 只监测 source 分支上的 commit</span></span><br><span class="line"></span><br><span class="line"><span class="attr">before_install:</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">npm</span> <span class="string">install</span> <span class="string">-g</span> <span class="string">hexo-cli</span> <span class="comment"># 安装 hexo</span></span><br><span class="line"></span><br><span class="line"><span class="attr">install:</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">npm</span> <span class="string">install</span>             <span class="comment"># 安装额外的插件</span></span><br><span class="line"></span><br><span class="line"><span class="attr">script:</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">git</span> <span class="string">submodule</span> <span class="string">init</span>      <span class="comment"># 用于更新主题</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">git</span> <span class="string">submodule</span> <span class="string">update</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">hexo</span> <span class="string">generate</span></span><br></pre></td></tr></table></figure>
+<p>上面的例子中 <code>npm install</code> 安装 hexo 需要的插件，这要求 <code>package.json</code> 已经设置好。例如，我们要使用 <code>hexo-deployer-git</code> 插件来部署，所以我们需要事先运行下面命令：</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">npm install --save hexo-deployer-git</span><br></pre></td></tr></table></figure>
+<p>上述命令的作用之一是在 <code>package.json</code> 中添加相应的项。</p>
+<h2 id="使用-travis-自动部署"><a class="header-anchor" href="#使用-travis-自动部署"></a>使用 Travis 自动部署</h2>
+<p>首先，我们需要对 <code>_config.yml</code> 进行配置，以执行 <code>hexo deploy</code> 进行部署：</p>
+<figure class="highlight yaml"><figcaption><span>_config.yml</span></figcaption><table><tr><td class="code"><pre><span class="line"><span class="comment">## Docs: http://hexo.io/docs/deployment.html</span></span><br><span class="line"><span class="attr">deploy:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">git</span></span><br><span class="line">  <span class="attr">repo:</span> <span class="string">https://github.com/lotabout/lotabout.github.io</span></span><br><span class="line">  <span class="attr">branch:</span> <span class="string">master</span></span><br></pre></td></tr></table></figure>
+<p>然后我们可以在 <code>.travis.yml</code> 添加生成成功后的动作：</p>
+<figure class="highlight yaml"><figcaption><span>.travis.yml</span></figcaption><table><tr><td class="code"><pre><span class="line"><span class="attr">after_success:</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">git</span> <span class="string">config</span> <span class="string">--global</span> <span class="string">user.name</span> <span class="string">"Your Name"</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">git</span> <span class="string">config</span> <span class="string">--global</span> <span class="string">user.email</span> <span class="string">"Your Email"</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">hexo</span> <span class="string">deploy</span></span><br></pre></td></tr></table></figure>
+<p>然而在 <code>hexo deploy</code> 时，我们需要输入 Github 的用户名和密码，但这又要如何自动化呢？</p>
+<h2 id="github-oauth"><a class="header-anchor" href="#github-oauth"></a>Github OAuth</h2>
+<p><a href="https://github.com/blog/1270-easier-builds-and-deployments-using-git-over-https-and-oauth" target="_blank" rel="noopener">Github
+OAuth</a>
+支持一种特殊的 URL 来执行 push/pull 等等操作，而不需要输入用户名密码。但这需要事先在 Github 上创建一个 token：</p>
+
+<ol>
+<li>打开 <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">Personal Access Tokens</a></li>
+<li>点击 <code>Create new token</code></li>
+<li>token 的权限保持默认即可</li>
+</ol>
+<p>有了这个 token 后，原先用</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">https:&#x2F;&#x2F;github.com&#x2F;username&#x2F;repo.git</span><br></pre></td></tr></table></figure>
+<p>进行访问，现在换成：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">https:&#x2F;&#x2F;&lt;token&gt;@github.com&#x2F;owner&#x2F;repo.git</span><br></pre></td></tr></table></figure>
+<p>即可。切记，这个 token 的权限很大，不要把原文提交到 Github 上。</p>
+<h2 id="travis-加密-token"><a class="header-anchor" href="#travis-加密-token"></a>Travis 加密 token</h2>
+<p>上面我们说了，要保护好你的 github token。所以我们在写入 travis 配置时要先对这个 token 进行加密。</p>
+<p>首先安装 travis 命令行工具：</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">gem install travis</span><br><span class="line">travis login</span><br></pre></td></tr></table></figure>
+<p>之后通过如下命令在 <code>.travis.yml</code> 添加额外的配置：</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">travis encrypt <span class="string">'GH_TOKEN=&lt;TOKEN&gt;'</span> --add</span><br></pre></td></tr></table></figure>
+<p>上面命令会在 <code>.travis.yml</code> 添加如下内容：</p>
+<figure class="highlight yaml"><figcaption><span>.travis.yml</span></figcaption><table><tr><td class="code"><pre><span class="line"><span class="attr">env:</span></span><br><span class="line">  <span class="attr">global:</span></span><br><span class="line">    <span class="attr">secure:</span> <span class="string">QAH+/EIDC/Jg...</span></span><br></pre></td></tr></table></figure>
+<p>上面的一长串字符串就是加密后的环境变量。之后，在 Travis 执行脚本时，我们就可能访问环境变量 <code>GH_TOKEN</code> 来获取 github token 了。</p>
+<p>最后，我们用 <code>sed</code> 命令动态地修改 github 的 URL，加入 token 信息：</p>
+<figure class="highlight yaml"><figcaption><span>.travis.yml</span></figcaption><table><tr><td class="code"><pre><span class="line"><span class="attr">after_success:</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">git</span> <span class="string">config</span> <span class="string">--global</span> <span class="string">user.name</span> <span class="string">"Mark Wallace"</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">git</span> <span class="string">config</span> <span class="string">--global</span> <span class="string">user.email</span> <span class="string">"lotabout@gmail.com"</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">sed</span> <span class="string">-i''</span> <span class="string">"/^ *repo/s~github\.com~$&#123;GH_TOKEN&#125;@github.com~"</span> <span class="string">_config.yml</span></span><br><span class="line"><span class="bullet">-</span> <span class="string">hexo</span> <span class="string">deploy</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li><a href="https://docs.travis-ci.com/user/encryption-keys/" target="_blank" rel="noopener">Travis Encryption Keys</a></li>
+</ul>
+<h2 id="启用-travis-ci"><a class="header-anchor" href="#启用-travis-ci"></a>启用 Travis CI</h2>
+<p>最后一步，就是启用 Travis CI，连接 Github 后，它会列出你的所有 repo，勾上相应的 repo 即可：</p>
+<img src="/2016/Hexo-Auto-Deploy-to-Github/2016-01-14-travis.png" class="" title="Travis tick repo">
+<h2 id="最后"><a class="header-anchor" href="#最后"></a>最后</h2>
+<p>最后就是好好写博客，提交就可以了。</p>
+<h2 id="参考资料"><a class="header-anchor" href="#参考资料"></a>参考资料</h2>
+<ul>
+<li><a href="http://www.jianshu.com/p/e7413116e9d4" target="_blank" rel="noopener">Hexo 搭建 Wiki</a></li>
+<li><a href="https://sazzer.github.io/blog/2015/05/04/Deploying-Hexo-to-Github-Pages-with-Travis/" target="_blank" rel="noopener">Deploying Hexo to Github</a></li>
+<li><a href="https://xuanwo.org/2015/02/07/Travis-CI-Hexo-Autodeploy/" target="_blank" rel="noopener">使用 Travis CI 自动部署 Hexo</a></li>
+<li><a href="https://github.com/lotabout/lotabout.github.io/tree/source" target="_blank" rel="noopener">本站实际使用的配置</a></li>
+</ul></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2016/Hexo-Auto-Deploy-to-Github/';
+var disqus_title = 'Hexo 自动部署到 Github';
+var disqus_url = 'https://lotabout.me/2016/Hexo-Auto-Deploy-to-Github/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;p&gt;在调用外部接口时通过 &lt;code&gt;CompletableFuture.supplyAsync&lt;/code&gt; 异步调用，该方法默认将任务提交到全局唯一的 ForkJoinPool，而它的并行度可以受
+&lt;code&gt;java.util.concurrent.ForkJoinPool.common.parallelism&lt;/code&gt; 影响。&lt;/p&gt;
+&lt;p&gt;本实验的目的是探究在异步请求快响应(~= 1ms)时，并行度对整体性能的影响。&lt;/p&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>实验：ForkJoinPool 并行度 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/ForkJoinPool/" rel="tag">ForkJoinPool</a><a class="post-tag-link" href="/tags/benchmark/" rel="tag">benchmark</a><a class="post-tag-link" href="/tags/java/" rel="tag">java</a></div><div class="post-time">2020-04-01</div></div></div><div class="container post-header"><h1>实验：ForkJoinPool 并行度</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#实验设置"><span class="toc-number">1.</span> <span class="toc-text">实验设置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实验环境"><span class="toc-number">2.</span> <span class="toc-text">实验环境</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#实验结果"><span class="toc-number">3.</span> <span class="toc-text">实验结果</span></a></li></ol></details></div><div class="container post-content"><p>在调用外部接口时通过 <code>CompletableFuture.supplyAsync</code> 异步调用，该方法默认将任务提交到全局唯一的 ForkJoinPool，而它的并行度可以受
+<code>java.util.concurrent.ForkJoinPool.common.parallelism</code> 影响。</p>
+<p>本实验的目的是探究在异步请求快响应(~= 1ms)时，并行度对整体性能的影响。</p>
+<a id="more"></a>
+<h2 id="实验设置"><a class="header-anchor" href="#实验设置"></a>实验设置</h2>
+<p>真实场景：</p>
+<ul>
+<li>每次请求约调用接口 200 次</li>
+<li>每次接口请求约 1ms 完成</li>
+</ul>
+<p>当然由于接受并发请求，同时会接收多个请求，暂不纳入考虑。bench 代码如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">List&lt;Future&gt; futures = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;N; i++) &#123;</span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">int</span> x = i;</span><br><span class="line">    futures.add(CompletableFuture.supplyAsync(() -&gt; &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            Thread.sleep(<span class="number">1</span>);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">        bh.consume(x);</span><br><span class="line">        <span class="keyword">return</span> x;</span><br><span class="line">    &#125;));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (Future future: futures) &#123;</span><br><span class="line">    future.get();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="实验环境"><a class="header-anchor" href="#实验环境"></a>实验环境</h2>
+<ul>
+<li>OS: Mac, 8C, 16G</li>
+<li>Java version: JDK 11.0.2, OpenJDK 64-Bit Server VM, 11.0.2+9</li>
+<li>Bench 框架：JMH</li>
+<li>JMH 调用参数：<code>java -jar target/benchmarks.jar -i 5 -bs 50 -f 3</code></li>
+</ul>
+<h2 id="实验结果"><a class="header-anchor" href="#实验结果"></a>实验结果</h2>
+<p>实验结果如下图：</p>
+<img src="/2020/Benchmark-ForkJoinPool/result.svg" class="" title="Benchmark Result">
+<ul>
+<li>图中的并行度分别为 1, 2, 4, 8, 16, 32, 64, 128, 256</li>
+<li>图中的 x 轴间隔是 log 过后的结果，可以看到两点的 x 轴距离相等</li>
+<li>最左边的点 <code>parallelism = 1</code> 时，ForkJoinPool 会为每个提交的任务创建一个线程</li>
+<li>第二个点代表 <code>parallelism = 2</code>，此时最多运行两个线程，预期的时间为
+<code>1 * 200 50 / 2 = 5000ms</code> 实际开销 <code>6610</code>，多出的猜测是线程创建和切换</li>
+<li>并行度翻倍后，平均时间大概减少一半，但随着并行度的增大(&gt;8)，减少的时间慢慢就小于一半了。</li>
+<li>最后即使 <code>parallelism &gt; 200</code>，也没办法达到完全并行(1ms)的状态。</li>
+</ul>
+<p>大致结论：并行度越大效果越好，但 overhead 也会越来越大。</p>
+<p>详细实验结果参见：<a href="https://gist.github.com/lotabout/430f96f0829cc586c773643a9883d1ec" target="_blank" rel="noopener">Gist: CompletableFuture.supplyAsync profile</a></p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2020/Benchmark-ForkJoinPool/';
+var disqus_title = '实验：ForkJoinPool 并行度';
+var disqus_url = 'https://lotabout.me/2020/Benchmark-ForkJoinPool/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

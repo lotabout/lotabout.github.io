@@ -1,0 +1,53 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;p&gt;有时候，你会需要为你的类实现 &lt;code&gt;__str__&lt;/code&gt; 或 &lt;code&gt;__repr__&lt;/code&gt; 方法，你知道它们的作用是什么吗？它们有什么区别吗？这个问题的答案一搜就能找到，如果恰巧这是你第一次看到这个问题，不妨看看吧。&lt;/p&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>QQA: Python 中的 str 与 repr | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/QQA/" rel="tag">QQA</a><a class="post-tag-link" href="/tags/python/" rel="tag">python</a><a class="post-tag-link" href="/tags/repr/" rel="tag">repr</a><a class="post-tag-link" href="/tags/str/" rel="tag">str</a></div><div class="post-time">2018-04-04</div></div></div><div class="container post-header"><h1>QQA: Python 中的 str 与 repr</h1></div><div class="container post-content"><p>有时候，你会需要为你的类实现 <code>__str__</code> 或 <code>__repr__</code> 方法，你知道它们的作用是什么吗？它们有什么区别吗？这个问题的答案一搜就能找到，如果恰巧这是你第一次看到这个问题，不妨看看吧。</p>
+<a id="more"></a>
+<ul>
+<li><code>__repr__</code> 用于生成<strong>正式</strong>的表示。可以认为是将对象序列化的方法，原则上要能反序列化回对象。</li>
+<li><code>__str__</code> 用于生成<strong>非正式</strong>的表示。<code>format</code> 或 <code>print</code> 会调用它来为用户生成“友好的”显示。</li>
+<li>如果你需要自己实现，一般实现 <code>__str__</code> 即可。</li>
+</ul>
+<h2 id="python-中一切皆对象"><a class="header-anchor" href="#python-中一切皆对象"></a>Python 中一切皆对象</h2>
+<p><a href="https://docs.python.org/3/reference/datamodel.html" target="_blank" rel="noopener">Python Data Model</a> 中指出，Python 中的所有数据都是“对象”(Object)。Python 中几乎所有（不确定有没有反例）的操作都可以对应到对象的某个特殊方法。因此可以通过手工实现它们来覆盖默认的逻辑。</p>
+<p>比如说迭代器(iterator)取长度操作 <code>len(iter)</code> 对应 <code>obj.__len__</code>；加法操作 <code>a + b</code>
+对应<code>a.__add__(b)</code>；函数调用 <code>func(...)</code> 对应 <code>func.__cal__(...)</code>。当然也包括我们要介绍的 <code>__repr__</code> 和 <code>__str__</code>。</p>
+<h2 id="repr-用于-debug"><a class="header-anchor" href="#repr-用于-debug"></a>repr 用于 Debug</h2>
+<p>Python 中执行 <code>repr(obj)</code> 可以获取 <code>obj</code> 的字符串表示，而这个操作相当于调用了
+<a href="https://docs.python.org/3/reference/datamodel.html#object.__repr__" target="_blank" rel="noopener">obj.__repr__()</a>
+。而这个字符串表示“原则上”需要能反序列化回 <code>obj</code> 本身。看下面代码：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">x = [<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>]</span><br><span class="line">repr(x)</span><br><span class="line"><span class="comment">#&gt; '[1, 2, 3]'</span></span><br><span class="line">eval(<span class="string">'[1, 2, 3]'</span>)</span><br><span class="line"><span class="comment">#&gt; [1, 2, 3]</span></span><br><span class="line">eval(repr(x)) == x</span><br><span class="line"><span class="comment">#&gt; True</span></span><br></pre></td></tr></table></figure>
+<p>我们看到 <code>'[1, 2, 3]'</code> (注意到逗号后面带了空格) 是数据 <code>[1,2,3]</code> 的字符串表示，用 <code>eval</code> 来反序列化可以得到原数据。那么如果变量是自定义的类又如何呢？</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyClass</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, arg)</span>:</span></span><br><span class="line">        self.arg = arg</span><br><span class="line"></span><br><span class="line">x = MyClass(<span class="number">10</span>)</span><br><span class="line">repr(x)</span><br><span class="line"><span class="comment">#&gt; '&lt;__main__.MyClass object at 0x10a40ef98&gt;'</span></span><br></pre></td></tr></table></figure>
+<p>可以看到，<code>repr(x)</code> 给出了对象的类型及对象的 ID (内存地址)。但如果我们用
+<code>eval(repr(x))</code> 尝试反序列化时，会失败。所以能反序列化其实是一个约定而非强制。我们尝试覆盖默认的实现：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyClass</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self, arg)</span>:</span></span><br><span class="line">        self.arg = arg</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__repr__</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="keyword">return</span> <span class="string">'MyClass(&#123;&#125;)'</span>.format(self.arg)</span><br><span class="line"></span><br><span class="line">x = MyClass(<span class="number">10</span>)</span><br><span class="line">repr(x)</span><br><span class="line"><span class="comment">#&gt; 'MyClass(10)'</span></span><br><span class="line">eval(repr(x))</span><br><span class="line"><span class="comment">#&gt; MyClass(10)</span></span><br></pre></td></tr></table></figure>
+<p>可以看到对 <code>__repr__</code> 的覆盖起了效果，也可以正常反序列化了。</p>
+<p>上面这几个例子都是为了说明 <code>repr</code> 生成的字符串到底有什么用。</p>
+<ul>
+<li><code>repr</code> 并<strong>不强制</strong>生成的字符串可以反序列化</li>
+<li><code>repr</code> 生成的字符串一般用于 debug，所以一般生成的字符串一般要包含尽可能多的信息，信息要尽可能明确(如默认实现里用 ID 区分开两个不同的对象)。</li>
+<li>不要使用 <code>repr</code> 和 <code>eval</code> 来做序列化/反序列化，用 <a href="https://docs.python.org/3/library/pickle.html" target="_blank" rel="noopener">pickle</a> 或 <a href="https://docs.python.org/3/library/pickle.html" target="_blank" rel="noopener">json</a>。</li>
+</ul>
+<h2 id="str-用于显示"><a class="header-anchor" href="#str-用于显示"></a>str 用于显示</h2>
+<p><a href="https://docs.python.org/3/reference/datamodel.html#object.__str__" target="_blank" rel="noopener">obj.__str__()</a>
+方法会在 <code>print(obj)</code> 或 <code>'{}'.format(obj)</code> 时被调用，一般是为了给用户提供&quot;友好的&quot;显示，所以 <code>__str__</code> 不像 <code>__repr__</code> 那样原则上对返回值有约定，想怎么搞都行。</p>
+<p>另外，<code>__str__</code> 的默认实现是直接调用了 <code>__repr__</code> 方法。因此如果覆盖了
+<code>__repr__</code> 方法，<code>__str__</code> 的结果也会随之改变。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/QQA-Python-str-vs-repr/';
+var disqus_title = 'QQA: Python 中的 str 与 repr';
+var disqus_url = 'https://lotabout.me/2018/QQA-Python-str-vs-repr/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

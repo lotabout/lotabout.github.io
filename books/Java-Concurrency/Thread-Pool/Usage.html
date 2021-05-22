@@ -1,0 +1,357 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>线程池使用 - Java 并发知识</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+        <link rel="stylesheet" href="../css/lotabout.css">
+        
+
+        
+        <!-- MathJax -->
+        <script async type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Java 并发知识</a></li><li class="chapter-item expanded affix "><li class="part-title">理解线程安全</li><li class="chapter-item expanded "><a href="../Ideal-World/index.html"><strong aria-hidden="true">1.</strong> 理想的并发世界</a></li><li class="chapter-item expanded "><a href="../Cruel-World/index.html"><strong aria-hidden="true">2.</strong> 残酷的现实</a></li><li class="chapter-item expanded "><a href="../Happens-Before/index.html"><strong aria-hidden="true">3.</strong> Happens Before</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/index.html"><strong aria-hidden="true">4.</strong> 常见线程安全问题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/TOCTOU.html"><strong aria-hidden="true">4.1.</strong> TOCTOU</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Double-Checked-Locking.html"><strong aria-hidden="true">4.2.</strong> Double Checked Locking</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Compound-Actions.html"><strong aria-hidden="true">4.3.</strong> 复合操作</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Summary.html"><strong aria-hidden="true">4.4.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Best-Practice/index.html"><strong aria-hidden="true">5.</strong> 良好的并发编程习惯</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Best-Practice/Confinement.html"><strong aria-hidden="true">5.1.</strong> 封闭</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Immutability.html"><strong aria-hidden="true">5.2.</strong> 不可变</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Threadsafe-Data-Types.html"><strong aria-hidden="true">5.3.</strong> 利用线程安全类</a></li></ol></li><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/index.html"><strong aria-hidden="true">6.</strong> 思考题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/Spring-Bean-Initialization.html"><strong aria-hidden="true">6.1.</strong> Spring Bean 初始化如何线程安全</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">线程与线程池</li><li class="chapter-item expanded "><a href="../Amdahl-Law/index.html"><strong aria-hidden="true">7.</strong> Amdahl 定律</a></li><li class="chapter-item expanded "><a href="../Cost-of-Thread/index.html"><strong aria-hidden="true">8.</strong> 线程的代价</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/index.html"><strong aria-hidden="true">9.</strong> 线程池</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Pool/Concepts.html"><strong aria-hidden="true">9.1.</strong> 线程池相关概念</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Predefined.html"><strong aria-hidden="true">9.2.</strong> 预定义的线程池</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Usage.html" class="active"><strong aria-hidden="true">9.3.</strong> 线程池使用</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Interrupt.html"><strong aria-hidden="true">9.4.</strong> 线程的中断</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Shutdown.html"><strong aria-hidden="true">9.5.</strong> 如何优雅退出</a></li></ol></li><li class="chapter-item expanded "><strong aria-hidden="true">10.</strong> 线程调度</li><li class="chapter-item expanded affix "><li class="part-title">源码分析</li><li class="chapter-item expanded "><a href="../Source-Unsafe/index.html"><strong aria-hidden="true">11.</strong> Unsafe</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/index.html"><strong aria-hidden="true">12.</strong> Atomic</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicInteger.html"><strong aria-hidden="true">12.1.</strong> AtomicInteger</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicIntegerArray.html"><strong aria-hidden="true">12.2.</strong> AtomicIntegerArray</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Striped64.html"><strong aria-hidden="true">12.3.</strong> Striped64</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Adder.html"><strong aria-hidden="true">12.4.</strong> Adder</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/FieldUpdater.html"><strong aria-hidden="true">12.5.</strong> FieldUpdater</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/StampedReference.html"><strong aria-hidden="true">12.6.</strong> StampedReference</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-AQS/AQS.html"><strong aria-hidden="true">13.</strong> AbstractQueuedSynchronizer</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-AQS/blocking-exclusive.html"><strong aria-hidden="true">13.1.</strong> 互斥锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/blocking-shared.html"><strong aria-hidden="true">13.2.</strong> 共享锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/timeout.html"><strong aria-hidden="true">13.3.</strong> 超时</a></li><li class="chapter-item expanded "><a href="../Source-AQS/interrupt.html"><strong aria-hidden="true">13.4.</strong> 中断</a></li><li class="chapter-item expanded "><a href="../Source-AQS/cancellation.html"><strong aria-hidden="true">13.5.</strong> 取消</a></li><li class="chapter-item expanded "><a href="../Source-AQS/condition.html"><strong aria-hidden="true">13.6.</strong> 条件变量</a></li><li class="chapter-item expanded "><a href="../Source-AQS/Summary.html"><strong aria-hidden="true">13.7.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-Lock/Lock.html"><strong aria-hidden="true">14.</strong> Lock</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantLock.html"><strong aria-hidden="true">14.1.</strong> ReentrantLock</a></li><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantReadWriteLock.html"><strong aria-hidden="true">14.2.</strong> ReentrantReadWriteLock</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Java 并发知识</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#线程池使用" id="线程池使用">线程池使用</a></h1>
+<p>上节中我们了解了线程池的一些基本概念，线程池在使用上还有一些需要注意的地方。</p>
+<h2><a class="header" href="#线程池大小" id="线程池大小">线程池大小</a></h2>
+<p>先上结论：没有标准方法能完美决定线程池的大小，需要测试，具体问题具体分析。</p>
+<p>这里摘抄文章<a href="https://tech.meituan.com/2020/04/02/java-pooling-pratice-in-meituan.html">Java线程池实现原理及其在美团业务中的实践</a>中的调研结果：</p>
+<table><thead><tr><th>方案</th><th>问题</th></tr></thead><tbody>
+<tr><td>$$N_{cpu} = \text{number of CPUs}$$ $$U_{cpu} = \text{target CPU utilization}, 0 \le U_{cpu} \le 1$$ $$\frac{W}{C} = \text{ratio of wait time to compute time}$$ $$N_{threads} = N_{cpu} U_{cpu} (1 + \frac{W}{C})$$</td><td>出自《Java 并发编程实战》，方案偏理论，像线程的计算时间和等待时间很难测算</td></tr>
+<tr><td>$$coreSize = 2 N_{cpu}$$ $$maxSize = 25 * N_{cpu}$$</td><td>没有考虑使用多个线程池的情况，且统一配置明显不符合多样的业务场景</td></tr>
+<tr><td>$$coreSize = tps \times time$$ $$maxSize = tps \times time \times (1.7 \text{~} 2) $$</td><td>考虑了业务场景，但假定流量平均分布，可能不符合实际业务场景</td></tr>
+</tbody></table>
+<p>可以将上面的公式作为一个经验数值，再根据实际的业务情况来做性能测试来微调。就像美团的文章里说的，很多时候，流量的压力并不是平均的，实际上也不可能有一套参数能解决所有问题，还是得具体问题具体分析。</p>
+<h2><a class="header" href="#有界还是无界" id="有界还是无界">有界还是无界</a></h2>
+<p>阿里的 Java 规范里有这么一条：</p>
+<blockquote>
+<p>【强制】线程池不允许使用 <code>Executors</code> 去创建，而是通过 <code>ThreadPoolExecutor</code>
+的方式，这样的处理方式让写的同学更加明确线程池的运行规则，规避资源耗尽的风险</p>
+</blockquote>
+<p>原因是 <code>Executors</code> 方法创建出的线程池，全都是<strong>无界</strong>队列，这样的队列会一直接收任务，直到内存耗尽（OOM）<sup class="footnote-reference"><a href="#backpressure">1</a></sup>。如果有界队列满了，
+<code>ThreadPoolExecutor</code> 默认会抛出 <code>RejectedExecutionException</code> 异常。一个常见的需求是如果队列满了，就阻塞提交任务，可以这么实现：</p>
+<pre><code class="language-java">ExecutorService pool =
+    new ThreadPoolExecutor(
+        2,  // corePoolSize
+        4,  // maximumPoolSize
+        60, // keepAliveTime
+        TimeUnit.SECONDS,
+        new LinkedBlockingQueue&lt;&gt;(10), // ① bounded queue (capacity = 10)
+        (r, e) -&gt; {
+          try {
+            e.getQueue().put(r);       // ② on Rejected, blocking put
+          } catch (InterruptedException interruptedException) {
+            interruptedException.printStackTrace(); // ③ print and abort on interrupted
+          }
+        });
+</code></pre>
+<p>在 ① 处定义了接收线程池任务的有界队列，大小为 10，当等待任务超过 10 个时，新任务会在 ② 处调用阻塞的 <code>put</code> 方法再次提交到队列中直到队列能容纳新的任务。在 ③
+中处理提交被中断时的情形。</p>
+<p>阿里的规范里并不要求一定要创建有界队列，很多时候需要具体问题具体分析，不过个人认为<strong>有界</strong>队列通常是更好的选择，毕竟系统压力大时，本身就处理不了那么多任务，无界队列不断堆积任务，不仅处理不了，还消耗额外的内存，作用不大。</p>
+<h2><a class="header" href="#饱和策略" id="饱和策略">饱和策略</a></h2>
+<p>在使用有界队列时，当提交的任务达到了队列的上限，此时应该如何处理？处理的策略就称作饱和策略（Saturation Policies）。上节中我们自定义了策略：阻塞提交到队列中。<code>ThreadPoolExecutor</code> 提供了一些策略方便使用，它们实现了<code>RejectedExecutionHandler</code>：</p>
+<ul>
+<li><code>AbortPolicy</code>：拒绝新的任务，抛出 <code>RejectedExecutionException</code> 异常</li>
+<li><code>DiscardPolicy</code>：默默抛弃新的任务，不抛异常</li>
+<li><code>DiscardOldestPolicy</code>：抛弃队列中最老的未被处理的任务，并尝试重新提交新任务</li>
+<li><code>CallerRunsPolicy</code>：在调用方的线程上运行新任务</li>
+</ul>
+<p><code>ThreadPoolExecutor</code> 默认使用 <code>AbortPolicy</code>：</p>
+<pre><code class="language-java">private static final RejectedExecutionHandler defaultHandler = new AbortPolicy();
+</code></pre>
+<h2><a class="header" href="#饥饿死锁" id="饥饿死锁">饥饿死锁</a></h2>
+<p>一般死锁的发生都是由于出现了循环依赖，考虑任务 A 依赖了任务 B、C 的结果，假设
+A 将任务 B、C 提交到同一个线程池，那么可能发生下面的情形：</p>
+<p><img src="ThreadPool-deadlock.svg" alt="" /></p>
+<p>问题在于，在 B、C 任务执行完成前，任务 A 所在的线程会一直被占用。如果线程池中有空闲的线程，则 B、C 任务最终会被执行，从而任务 A 最终完成（图中上面的情况）。但是如果此时有两个任务 A 占用了线程池，导致提交的 B、C 任务无法执行，此时产生死锁（图中下面的情况）。</p>
+<p>原因是任务 A 依赖 B、C 的结果，而 B、C 又依赖任务 A 退出释放线程资源。</p>
+<h2><a class="header" href="#只运行独立同构任务" id="只运行独立同构任务">只运行独立同构任务</a></h2>
+<p>同一个线程池中运行异构的任务，除了上面说的死锁的问题，还可能影响响应时间。</p>
+<p>例如有一些时间敏感的任务，和一些时长很长的任务一起提交到线程池中，可能出现大量线程被时长很长的任务占据，导致时间敏感的任务需要等待很长时间才能被运行，从而导致响应时间过长。</p>
+<p>所以推荐在线程池中只运行同构的任务，同时为了防止死锁，尽量运行独立的任务。</p>
+<h2><a class="header" href="#扩展-threadpoolexecutor" id="扩展-threadpoolexecutor">扩展 ThreadPoolExecutor</a></h2>
+<p>要正确实现一个完整的线程池是非常困难的，很多时候我们只是希望增加某个功能或对现有功能做微调。一种方式是构造 <code>ThreadPoolExecutor</code> 时使用不同的参数；另一种是直接继承 <code>ThreadPoolExecutor</code>。</p>
+<p><code>ThreadPoolExecutor</code> 有 3 个 protected 函数可供扩展：</p>
+<ul>
+<li><code>beforeExecute</code>：在任务被执行前执行，可以用来增加一些监控信息。如果方法抛异常，则任务不被执行，且相应的 <code>afterExecute</code> 不被执行。</li>
+<li><code>afterExecute</code>：在任务执行结束后执行，由任务的执行线程调用。</li>
+<li><code>terminated</code>：线程池中止后执行。可以用来释放线程池分配的资源、记日志等。</li>
+</ul>
+<p>注意的是，实现这些方法时，约定上需要调用 <code>super</code> 的相应方法。</p>
+<p>例如我们希望记录线程池所有线程总的运行时间，可以这样做<sup class="footnote-reference"><a href="#ref-code">2</a></sup>：</p>
+<pre><code class="language-java">public static class TimingPool extends ThreadPoolExecutor {
+    private final ThreadLocal&lt;Long&gt; startTime = new ThreadLocal&lt;&gt;();
+    private final AtomicLong totalTime = new AtomicLong(0);
+    private final Logger log = Logger.getLogger(&quot;TimingPool&quot;);
+
+    public TimingPool(int corePoolSize, int maximumPoolSize, long keepAliveTime,
+            TimeUnit unit, BlockingQueue&lt;Runnable&gt; workQueue) {
+        super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue);
+    }
+
+    @Override
+    protected void beforeExecute(Thread t, Runnable r) {
+        startTime.set(System.currentTimeMillis());
+        super.beforeExecute(t, r);
+    }
+
+    @Override
+    protected void afterExecute(Runnable r, Throwable t) {
+        long elapsed = System.currentTimeMillis() - startTime.get();
+        totalTime.addAndGet(elapsed);
+        super.afterExecute(r, t);
+    }
+
+    @Override
+    protected void terminated() {
+        log.info(&quot;total time(ms) is: &quot; + totalTime.get());
+        super.terminated();
+    }
+}
+</code></pre>
+<h2><a class="header" href="#小结" id="小结">小结</a></h2>
+<p>线程池只是一把剑，有了剑还得修炼剑法才能成为大侠。本节介绍了使用线程池的一些注意点，包括线程池大小的确定；队列应该有界还是无界；队列满了该怎么办；极端情况下的饥饿死锁问题；以及如何扩展线程池的行为。</p>
+<p>这些内容只能是算抛砖引玉，希望读者能查阅更多资料，在实际中掌握更多线程池的使用技巧，也欢迎探讨这里没有涉及的内容。</p>
+<p>线程池的使用已经很复杂了，线程的清理可能还更复杂一些，下面的小节中我们会开始介绍线程的关闭及线程池的关闭。</p>
+<hr />
+<div class="footnote-definition" id="backpressure"><sup class="footnote-definition-label">1</sup>
+<p>我们希望在消费有压力的时候，能给上游的生产方压力，这也叫做“背压”(backpressure)，在线程池里，通过创建有界的队列，在队列满时会抛出异常，能及时给上游反馈，希望能减少生产的速率。</p>
+</div>
+<div class="footnote-definition" id="ref-code"><sup class="footnote-definition-label">2</sup>
+<p>修改自《Java 并发编程实战》</p>
+</div>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../Thread-Pool/Predefined.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../Thread-Pool/Interrupt.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../Thread-Pool/Predefined.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="../Thread-Pool/Interrupt.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+        <!-- Google Analytics Tag -->
+        <script type="text/javascript">
+            var localAddrs = ["localhost", "127.0.0.1", ""];
+
+            // make sure we don't activate google analytics if the developer is
+            // inspecting the book locally...
+            if (localAddrs.indexOf(document.location.hostname) === -1) {
+                (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+                ga('create', 'UA-39956831-2', 'auto');
+                ga('send', 'pageview');
+            }
+        </script>
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

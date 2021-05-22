@@ -1,0 +1,111 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="如果有人说分布式系统不难，很可能是他还不知道自己不知道。AWS 的文章：&lt;a href=&quot;https://aws.amazon.com/cn/builders-library/challenges-with-distributed-systems/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;分布式系统相关挑战
+&lt;/a&gt;
+很好地描述了布式系统面临问题。本文针对其中的一些内容，做些笔记，记录下自己的想法。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>评：分布式系统相关挑战 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Comment/" rel="tag">Comment</a><a class="post-tag-link" href="/tags/Distributed/" rel="tag">Distributed</a></div><div class="post-time">2020-03-15</div></div></div><div class="container post-header"><h1>评：分布式系统相关挑战</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#分布式系统的类型"><span class="toc-number">1.</span> <span class="toc-text">分布式系统的类型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#容错域"><span class="toc-number">2.</span> <span class="toc-text">容错域</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#通过网络收发消息"><span class="toc-number">3.</span> <span class="toc-text">通过网络收发消息</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#爆炸的测试"><span class="toc-number">4.</span> <span class="toc-text">爆炸的测试</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#处理未知的错误"><span class="toc-number">5.</span> <span class="toc-text">处理未知的错误</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#硬实时分布式系统群"><span class="toc-number">6.</span> <span class="toc-text">硬实时分布式系统群</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#分布式错误通常是潜在的"><span class="toc-number">7.</span> <span class="toc-text">分布式错误通常是潜在的</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#分布式错误的病毒式传播"><span class="toc-number">8.</span> <span class="toc-text">分布式错误的病毒式传播</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#分布式系统中的问题总结"><span class="toc-number">9.</span> <span class="toc-text">分布式系统中的问题总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#写在后面"><span class="toc-number">10.</span> <span class="toc-text">写在后面</span></a></li></ol></details></div><div class="container post-content"><p>如果有人说分布式系统不难，很可能是他还不知道自己不知道。AWS 的文章：<a href="https://aws.amazon.com/cn/builders-library/challenges-with-distributed-systems/" target="_blank" rel="noopener">分布式系统相关挑战
+</a>
+很好地描述了布式系统面临问题。本文针对其中的一些内容，做些笔记，记录下自己的想法。</p>
+<h2 id="分布式系统的类型"><a class="header-anchor" href="#分布式系统的类型"></a>分布式系统的类型</h2>
+<p>三种类型：</p>
+<ol>
+<li>离线分布式系统，一般与线上业务无关，如批处理，大数据分析平台等</li>
+<li>软实时分布式系统，宕机几分钟或几个小时不影响线上业务，如索引生成器</li>
+<li>硬实时分布式系统，也称为 请求/响应 服务，如 web 前端服务器，交易系统</li>
+</ol>
+<p>原文章主要考虑的是“硬实时系统”，就博主接触的业务来说，一般“硬实时”要求在
+200~500ms 内一个请求要返回，其它行业的业务可能要求更宽一些。</p>
+<p>一般硬实时系统跟终端用户直接相关，因此要求有很高的容错性。</p>
+<h2 id="容错域"><a class="header-anchor" href="#容错域"></a>容错域</h2>
+<blockquote>
+<p>硬实时分布式系统的难点在于网络允许将消息从一个<strong>容错域</strong>发送到另一个<strong>容错域</strong>
+。发送消息似乎没有什么危害。但事实上，发送消息是一切变得比正常情况更加复杂
+的源头</p>
+</blockquote>
+<p>容错域指的是一个边界，当错误发生时，边界内的所有内容都受到影响。例如我们的的程序调用一个方法 <code>save(id)</code>，这个方法需要写入硬盘，但是现在硬盘满了，那么我们可以假设，不仅仅 <code>save</code> 方法受影响了，接下来所有跟写硬盘相关的方法都会错误，我们也不必花心思从这个错误中恢复了，反正都没用。</p>
+<p>传统上，一台机器（或虚拟机）就可以认为是一个容错域，机器里的程序要是因为 CPU、内存、硬盘等等问题而发生错误，经常情况下程序内部也无能为力去恢复，所以索性也可以不管。</p>
+<p>而分布式是将消息从一个容错域（机器）发到另一个，因此需要考虑当另一个容错域（机器）出错时，我们要如何处理，是重试还是放弃？而最恶心的是，很多时候甚至无法得知对方发生了什么。</p>
+<h2 id="通过网络收发消息"><a class="header-anchor" href="#通过网络收发消息"></a>通过网络收发消息</h2>
+<p>通过网络收发消息至少需要 8 个步骤，而每个步骤都可能出错（整合自原文）：</p>
+<img src="/2020/Comment-on-Challenges-with-distributed-systems/Network-Call.svg" class="" title="Network Call">
+<ol>
+<li>POST REQUEST：Client 将消息放到网络上，过程中可能因为网络问题或 SERVER
+拒绝而发送失败</li>
+<li>DELIVER REQUEST：网络将消息发到 Server，可能 Server 接到消息立即崩溃而失败（Server 没收到）</li>
+<li>VALIDATE REQUEST：Server 验证请求有效性，可能由于数据包损坏，版本不兼容或其它错误而失败</li>
+<li>UPDATE SERVER STATE：Server 根据请求更新内部状态，可能由于 Server 内部问题出错</li>
+<li>POST REPLY：Server 向网络发送响应，可能由于网卡或其它问题导致失败</li>
+<li>DELIVER REPLY：即使网络在上面的步骤中正常工作，这时也可能无法正确将响应传递给 Client</li>
+<li>VALIDATE REPLY：Client 验证响应的有效性，Client 可能判定响应无效</li>
+<li>UPDATE CLIENT STAT：Client 根据响应更新自己的状态，可能由于消息不兼容或其它问题而失败</li>
+</ol>
+<p>这意味着每一个网络调用，你都需要处理上述的 8 种可能的错误。通常结果就是发现业务代码被淹没在错误处理代码中。客户端代码通常像这样（来自原文）：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">(error, reply) &#x3D; network.send(remote, actionData)</span><br><span class="line">switch error</span><br><span class="line">  case POST_FAILED:</span><br><span class="line">    &#x2F;&#x2F; 处理 Server 没有接收到请求的情形</span><br><span class="line">  case RETRYABLE:</span><br><span class="line">    &#x2F;&#x2F; Server 接收到请求，但未处理(transient failure)，需要重试</span><br><span class="line">  case FATAL:</span><br><span class="line">    &#x2F;&#x2F; Server 接到请求，但是请求不符合要求</span><br><span class="line">  case UNKNOWN: &#x2F;&#x2F; 超时</span><br><span class="line">    &#x2F;&#x2F; 最恶心的情况，只知道消息发出去了，但不知道 Server 收没收到？处理了没？结果是成功还是失败？</span><br><span class="line">    &#x2F;&#x2F; P.S. 原文说“这里我们只知道 Server 收到消息，但不知道结果”，但博主理解其实是不知道 Server 是否收到消息的。</span><br><span class="line">  case SUCCESS:</span><br><span class="line">    if validate(reply)</span><br><span class="line">      &#x2F;&#x2F; 根据响应更新状态</span><br><span class="line">      &#x2F;&#x2F; do something with reply object</span><br><span class="line">    else</span><br><span class="line">      &#x2F;&#x2F; 响应有问题或不兼容等</span><br></pre></td></tr></table></figure>
+<h2 id="爆炸的测试"><a class="header-anchor" href="#爆炸的测试"></a>爆炸的测试</h2>
+<p>例如一个功能需要 4 次网络调用，则对每个请求，客户端都需要测试 5 种错误情况，共记 20 个测试。如果单机版本的程序有 10 个测试，则现在需要 200 个测试。同样，服务端也需要类似的测试用例。</p>
+<h2 id="处理未知的错误"><a class="header-anchor" href="#处理未知的错误"></a>处理未知的错误</h2>
+<p>当调用超时的时候，客户端要怎么处理呢？这时我们只知道消息发送了，不知道 Server
+收到没有？开始处理没有？处理的结果如何？当一个 API 不是幂等的时候，问题尤为严重。</p>
+<p>例如下订单超时了，客户端应该重试吗？如果消息已经处理了，重试就会重复下单；如果消息只是网络延时了，重试之后，之前的消息又到来了，还是会重复下单；不重试的话，如果 Server 确实没收到消息，则业务逻辑出错。</p>
+<p>难处理是因为不知道真实的情况，没有办法做准确的应对。这也是为什么微服务的 API
+最好是幂等的，客户端就可以无脑重试了。</p>
+<h2 id="硬实时分布式系统群"><a class="header-anchor" href="#硬实时分布式系统群"></a>硬实时分布式系统群</h2>
+<blockquote>
+<p>天启的八种故障模式可以发生在分布式系统中的任何抽象层。上文的示例仅限于一台客
+户端计算机、一个网络和一台服务器计算机。即使在这种简单的场景中，故障状态矩阵
+的复杂性也会呈爆炸式增长。与单台客户端计算机示例相比，实时分布式系统具有更复
+杂的故障状态矩阵</p>
+</blockquote>
+<p>每过一层网络就会有 8 个步骤，就可能会有 8 个错误。考虑<code>客户端 -&gt; 负载均衡 -&gt; 服务器</code>，多了一层网络就多了 8 个可能的错误。</p>
+<h2 id="分布式错误通常是潜在的"><a class="header-anchor" href="#分布式错误通常是潜在的"></a>分布式错误通常是潜在的</h2>
+<p>通常这些错误并不是立马发生（和稳定复现）的。</p>
+<blockquote>
+<p>这些故障不仅普遍而且成本高昂，而且几个月前部署到生产中的错误也可能引发这些故
+障。然后需要一段时间来触发实际导致这些错误发生（并蔓延到整个系统）的场景的组
+合</p>
+</blockquote>
+<h2 id="分布式错误的病毒式传播"><a class="header-anchor" href="#分布式错误的病毒式传播"></a>分布式错误的病毒式传播</h2>
+<p>原文举了很有意思的例子：</p>
+<ul>
+<li>一台 catalog server 硬盘满了，于是总是返回空</li>
+<li>负载均衡发现它的响应特别快，将更多的请求发到这台机器上</li>
+<li>接到空请求的业务系统出错，整个网站瘫痪了</li>
+</ul>
+<h2 id="分布式系统中的问题总结"><a class="header-anchor" href="#分布式系统中的问题总结"></a>分布式系统中的问题总结</h2>
+<blockquote>
+<ul>
+<li>工程师无法对错误状况进行组合。相反，他们必须考虑许多故障排列。大多数错误可以随时发生，与任何其他错误状况无关（因此，可能会与其他错误状况相结合）。</li>
+<li>任何网络操作的结果都可能是 UNKNOWN，在这种情况下，请求可能已成功、失败或已接收但未处理。</li>
+<li>分布式问题发生在分布式系统的所有逻辑层级，而不仅仅是低层级的物理计算机。</li>
+<li>由于递归，分布式问题在更高层级的系统上会变得更加严重。</li>
+<li>分布式错误通常会在部署到系统后很长时间才出现。</li>
+<li>分布式错误可能会蔓延到整个系统。</li>
+<li>上述许多问题都源自联网的物理定律，无法更改</li>
+</ul>
+</blockquote>
+<h2 id="写在后面"><a class="header-anchor" href="#写在后面"></a>写在后面</h2>
+<p>原文描述的挑战主要是容错/故障方面的，分布式系统的“难”还有其它方面的体现，例如（不全面）：</p>
+<ul>
+<li>业务上，如何管理分布式状态，如何处理数据一致性</li>
+<li>开发上，不同服务可能使用不同技术栈，如何抹平差异，服务间如何通信，隔离？</li>
+<li>安全上，如何管理授权，如何止恶意破坏、修改，如何防止可用性的干扰</li>
+<li>管理上，机器多，服务多，配置多，如何有效管理（部署、更新、排查、扩展、监控等）。</li>
+</ul>
+<p>分布式系统是十分复杂的，要心存敬畏。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2020/Comment-on-Challenges-with-distributed-systems/';
+var disqus_title = '评：分布式系统相关挑战';
+var disqus_url = 'https://lotabout.me/2020/Comment-on-Challenges-with-distributed-systems/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

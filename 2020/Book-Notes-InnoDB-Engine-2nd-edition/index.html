@@ -1,0 +1,1675 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="本文是读书笔记，由 XMind 导出（&lt;a href=&quot;/2020/Book-Notes-InnoDB-Engine-2nd-edition/InnoDB.xmind&quot;&gt;XMind 源文件&lt;/a&gt;）。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>《MySQL技术内幕：InnoDB存储引擎（第2版）》 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/InnoDB/" rel="tag">InnoDB</a><a class="post-tag-link" href="/tags/MySQL/" rel="tag">MySQL</a></div><div class="post-time">2020-01-05</div></div></div><div class="container post-header"><h1>《MySQL技术内幕：InnoDB存储引擎（第2版）》</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#ch01-mysql-体系架构与存储引擎"><span class="toc-number">1.</span> <span class="toc-text">Ch01: MySQL 体系架构与存储引擎</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#mysql-体系结构"><span class="toc-number">1.1.</span> <span class="toc-text">MySQL 体系结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#mysql-存储引擎"><span class="toc-number">1.2.</span> <span class="toc-text">MySQL 存储引擎</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#连接-mysql"><span class="toc-number">1.3.</span> <span class="toc-text">连接 MySQL</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch02-innodb-存储引擎"><span class="toc-number">2.</span> <span class="toc-text">Ch02: InnoDB 存储引擎</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#innodb-体系架构"><span class="toc-number">2.1.</span> <span class="toc-text">InnoDB 体系架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#checkpoint"><span class="toc-number">2.2.</span> <span class="toc-text">Checkpoint</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#master-thread-工作方式"><span class="toc-number">2.3.</span> <span class="toc-text">Master Thread 工作方式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#innodb-关键特性"><span class="toc-number">2.4.</span> <span class="toc-text">InnoDB 关键特性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#启动-关闭-恢复"><span class="toc-number">2.5.</span> <span class="toc-text">启动、关闭、恢复</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch03-文件"><span class="toc-number">3.</span> <span class="toc-text">Ch03: 文件</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#参数文件"><span class="toc-number">3.1.</span> <span class="toc-text">参数文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#日志文件"><span class="toc-number">3.2.</span> <span class="toc-text">日志文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#socket-文件"><span class="toc-number">3.3.</span> <span class="toc-text">socket 文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#pid-文件"><span class="toc-number">3.4.</span> <span class="toc-text">pid 文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#表结构定义文件"><span class="toc-number">3.5.</span> <span class="toc-text">表结构定义文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#innodb-存储引擎文件"><span class="toc-number">3.6.</span> <span class="toc-text">InnoDB 存储引擎文件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch04-表"><span class="toc-number">4.</span> <span class="toc-text">Ch04: 表</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#索引组织表"><span class="toc-number">4.1.</span> <span class="toc-text">索引组织表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#innodb-逻辑存储结构"><span class="toc-number">4.2.</span> <span class="toc-text">InnoDB 逻辑存储结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#innodb-行记录格式"><span class="toc-number">4.3.</span> <span class="toc-text">InnoDB 行记录格式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#innodb-数据页结构-见书"><span class="toc-number">4.4.</span> <span class="toc-text">InnoDB 数据页结构（见书）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#named-file-formats-机制"><span class="toc-number">4.5.</span> <span class="toc-text">Named File Formats 机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#约束-constraint"><span class="toc-number">4.6.</span> <span class="toc-text">约束 (constraint)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#视图"><span class="toc-number">4.7.</span> <span class="toc-text">视图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#分区-partition-表"><span class="toc-number">4.8.</span> <span class="toc-text">分区(partition)表</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch05-索引与算法"><span class="toc-number">5.</span> <span class="toc-text">Ch05: 索引与算法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#存储索引概述"><span class="toc-number">5.1.</span> <span class="toc-text">存储索引概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#数据结构与算法"><span class="toc-number">5.2.</span> <span class="toc-text">数据结构与算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#b-树"><span class="toc-number">5.3.</span> <span class="toc-text">B+ 树</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#b-树索引"><span class="toc-number">5.4.</span> <span class="toc-text">B+ 树索引</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#cardinality"><span class="toc-number">5.5.</span> <span class="toc-text">Cardinality</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#b-树索引的使用"><span class="toc-number">5.6.</span> <span class="toc-text">B+ 树索引的使用</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#哈希算法"><span class="toc-number">5.7.</span> <span class="toc-text">哈希算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#全文索引"><span class="toc-number">5.8.</span> <span class="toc-text">全文索引</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch06：锁"><span class="toc-number">6.</span> <span class="toc-text">Ch06：锁</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#什么是锁"><span class="toc-number">6.1.</span> <span class="toc-text">什么是锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#lock-与-latch"><span class="toc-number">6.2.</span> <span class="toc-text">Lock 与 Latch</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#innodb-存储引擎中的锁"><span class="toc-number">6.3.</span> <span class="toc-text">InnoDB 存储引擎中的锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#锁的算法"><span class="toc-number">6.4.</span> <span class="toc-text">锁的算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#锁问题"><span class="toc-number">6.5.</span> <span class="toc-text">锁问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#阻塞"><span class="toc-number">6.6.</span> <span class="toc-text">阻塞</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#死锁"><span class="toc-number">6.7.</span> <span class="toc-text">死锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#锁升级-lock-escalation"><span class="toc-number">6.8.</span> <span class="toc-text">锁升级 (Lock Escalation)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch07-事务"><span class="toc-number">7.</span> <span class="toc-text">Ch07: 事务</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#认识事务"><span class="toc-number">7.1.</span> <span class="toc-text">认识事务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#事务的实现"><span class="toc-number">7.2.</span> <span class="toc-text">事务的实现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#事务控制语句"><span class="toc-number">7.3.</span> <span class="toc-text">事务控制语句</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#隐式提交的-sql-语句"><span class="toc-number">7.4.</span> <span class="toc-text">隐式提交的 SQL 语句</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#对于事务操作的统计"><span class="toc-number">7.5.</span> <span class="toc-text">对于事务操作的统计</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#事务的隔离级别"><span class="toc-number">7.6.</span> <span class="toc-text">事务的隔离级别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#分布式事务-xa"><span class="toc-number">7.7.</span> <span class="toc-text">分布式事务 (XA)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#不好的事务习惯"><span class="toc-number">7.8.</span> <span class="toc-text">不好的事务习惯</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#长事务"><span class="toc-number">7.9.</span> <span class="toc-text">长事务</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch08-备份与恢复"><span class="toc-number">8.</span> <span class="toc-text">Ch08: 备份与恢复</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch09-性能调优"><span class="toc-number">9.</span> <span class="toc-text">Ch09: 性能调优</span></a></li></ol></details></div><div class="container post-content"><p>本文是读书笔记，由 XMind 导出（<a href="/2020/Book-Notes-InnoDB-Engine-2nd-edition/InnoDB.xmind">XMind 源文件</a>）。</p>
+<h2 id="ch01-mysql-体系架构与存储引擎"><a class="header-anchor" href="#ch01-mysql-体系架构与存储引擎"></a>Ch01: MySQL 体系架构与存储引擎</h2>
+<h3 id="mysql-体系结构"><a class="header-anchor" href="#mysql-体系结构"></a>MySQL 体系结构</h3>
+<ul>
+<li>MySQL 的存储引擎是基于表的，不是数据库</li>
+</ul>
+<h3 id="mysql-存储引擎"><a class="header-anchor" href="#mysql-存储引擎"></a>MySQL 存储引擎</h3>
+<ul>
+<li>
+<p>InnoDB</p>
+<ul>
+<li>行锁、外键、非锁定读</li>
+<li>MVCC + next-key 避免幻读</li>
+<li>insert buffer, double write, adaptive hash index, read ahead</li>
+</ul>
+</li>
+<li>
+<p>MyISAM</p>
+<ul>
+<li>不支持事务、表锁</li>
+<li>支持全文索引</li>
+</ul>
+</li>
+</ul>
+<h3 id="连接-mysql"><a class="header-anchor" href="#连接-mysql"></a>连接 MySQL</h3>
+<ul>
+<li>
+<p>TCP/IP</p>
+<ul>
+<li>mysql -h host</li>
+</ul>
+</li>
+<li>
+<p>named piped, shared memory</p>
+</li>
+<li>
+<p>unix socket</p>
+<ul>
+<li>mysql -S /tmp/mysql.sock</li>
+</ul>
+</li>
+</ul>
+<h2 id="ch02-innodb-存储引擎"><a class="header-anchor" href="#ch02-innodb-存储引擎"></a>Ch02: InnoDB 存储引擎</h2>
+<h3 id="innodb-体系架构"><a class="header-anchor" href="#innodb-体系架构"></a>InnoDB 体系架构</h3>
+<ul>
+<li>
+<p>后台线程</p>
+<ul>
+<li>Master Thread: 刷新内存数据到缓冲区</li>
+<li>IO Thread: 使用 AIO 处理请求</li>
+<li>Purge Thread: 回收已使用并分配的 undo 页</li>
+</ul>
+</li>
+<li>
+<p>内存</p>
+<ul>
+<li>缓冲池
+<ul>
+<li>索引页</li>
+<li>数据页</li>
+<li>undo 页</li>
+<li>insert buffer</li>
+<li>adaptive hash index</li>
+<li>lock info</li>
+<li>data dictionary</li>
+</ul>
+</li>
+<li>LRU List, Free List, Flush List
+<ul>
+<li>页大小默认 16K</li>
+<li>新页加入到 midpoint(默认 5/8)，而非 LRU 首部索引，数据扫描等操作涉及的数据并非热点数据，容易使缓冲区的页被刷出，影响效率</li>
+<li>页加入大于 innodb_old_blocks_time 后才会被认为是热点数据，加入 LRU 的热端</li>
+<li>pages made young</li>
+</ul>
+</li>
+<li>redo log buffer
+<ul>
+<li>innodb_log_buffer_size (default 8M)</li>
+</ul>
+</li>
+<li>额外的内存池</li>
+</ul>
+</li>
+</ul>
+<h3 id="checkpoint"><a class="header-anchor" href="#checkpoint"></a>Checkpoint</h3>
+<ul>
+<li>Write Ahead Log
+<ul>
+<li>先写 redo log，再修改页</li>
+</ul>
+</li>
+<li>解决问题
+<ul>
+<li>缩短数据库恢复时间。宕机时只需要从 checkpoint 恢复</li>
+<li>缓冲池不够时，将脏页刷新到磁盘。LRU 不够用时溢出最近最小使用的页，若为脏页则强制 checkpoint，并刷回磁盘</li>
+<li>redo log 不可用时，刷新脏页。redo log 是循环 buffer? 空间不足时需要刷回</li>
+</ul>
+</li>
+<li>When
+<ul>
+<li>Sharp Checkpoint
+<ul>
+<li>数据库关闭时刷回所有脏页</li>
+</ul>
+</li>
+<li>Fuzzy Checkpoint (default)
+<ul>
+<li>刷新部分脏页</li>
+<li>Master Thread checkpoint
+<ul>
+<li>happens every 1 or 10s</li>
+<li>async</li>
+</ul>
+</li>
+<li>FLUSH_LRU_LIST checkpoint
+<ul>
+<li>LRU 需要保证约 100 个空闲页</li>
+<li>Page Cleaner thread</li>
+<li>现在由 innodb_lru_scan_depth 控制保留页数</li>
+</ul>
+</li>
+<li>Async/Sync Flush checkpoint
+<ul>
+<li>发生在 redo log 不可用时</li>
+<li>checkpoint_age &lt; async_water_mark 是不触发</li>
+<li>async_water_mark &lt; checkpoint_age &lt; sync_water_mark 时触发  Async Flush</li>
+<li>checkpoint_age &gt; sync_water_mark 触发 Sync Flush 操作，很少发生</li>
+</ul>
+</li>
+<li>Dirty Page too much checkpoint
+<ul>
+<li>innodb_max_dirty_pages_pct (default 75)</li>
+<li>脏页超过 75% 时强制刷新</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="master-thread-工作方式"><a class="header-anchor" href="#master-thread-工作方式"></a>Master Thread 工作方式</h3>
+<ul>
+<li>1.0.x 前
+<ul>
+<li>每秒发生的操作
+<ul>
+<li>[总是] 日志缓冲刷回磁盘（即使事务未提交）</li>
+<li>[可能] 合并 insert buffer</li>
+<li>[可能] 刷新脏页到磁盘（最多 100 页）</li>
+<li>[可能] 如果当前没有用户活动，则切到 background loop</li>
+</ul>
+</li>
+<li>每十秒的操作
+<ul>
+<li>[可能] 刷新脏页到磁盘（最多 100 页）</li>
+<li>[总是] 合并 insert buffer (最多 5 个)</li>
+<li>[总是] 将日志缓冲刷回磁盘</li>
+<li>[总是] 删除无用 undo 页</li>
+<li>[总是] 刷新 100 个或 10 个脏页到磁盘</li>
+</ul>
+</li>
+<li>background loop
+<ul>
+<li>[总是] 删除无用的 undo 页</li>
+<li>[总是] 全新 20 个 insert buffer</li>
+<li>[总是] 跳回到主循环</li>
+<li>[可能] 不断刷新 100 个页直到符合条件 （跳转到 flush loop 完成）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>1.2.x 前
+<ul>
+<li>可配置的 IO 写入比例
+<ul>
+<li>innodb_io_capacity (default 200)</li>
+<li>合并插入缓冲时，数量为 capacity * 0.05 (之前为 5）</li>
+<li>刷新脏页时，数量为 capacity</li>
+</ul>
+</li>
+<li>innodb_max_dirty_pages_pct (-&gt; 75)
+<ul>
+<li>加快了脏页的刷新频率</li>
+<li>同时兼顾了 IO 负载</li>
+</ul>
+</li>
+<li>可配置回收 undo 页个数
+<ul>
+<li>innodb_purge_batch_size(default 20)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>1.2.x
+<ul>
+<li>刷新页的操作分离为单独的 page cleaner thread</li>
+</ul>
+</li>
+</ul>
+<h3 id="innodb-关键特性"><a class="header-anchor" href="#innodb-关键特性"></a>InnoDB 关键特性</h3>
+<ul>
+<li>
+<p>插入缓冲 (Insert buffer)</p>
+<ul>
+<li>Insert Buffer
+<ul>
+<li>插入自增主键时，只需要顺序读取，不需要随机访问
+<ul>
+<li>并非所有主键插入都是顺序的</li>
+<li>主键是 UUID 时，是随机</li>
+<li>主键是自增类型，但插入时指定了值，而非 NULL，则依旧是随机的。</li>
+</ul>
+</li>
+<li>如果表上有 secondary index，则由于不是聚集的，依旧需要随机访问索引页</li>
+<li>插入时，如果索引页在缓冲池中，则直接插入</li>
+<li>如果不在，则先放到 Insert Buffer 中，假装插入成功</li>
+<li>定期将 Insert Buffer 和索引页进行合并</li>
+<li>使用时需要满足条件
+<ul>
+<li>索引是辅助索引 (secondary index)</li>
+<li>索引不唯一</li>
+</ul>
+</li>
+<li>存在问题
+<ul>
+<li>宕机恢复时间长</li>
+<li>写密集时占用过多缓冲区</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Change Buffer
+<ul>
+<li>Insert Buffer 的升级，可缓冲 DML 操作</li>
+</ul>
+</li>
+<li>Insert Buffer 内部实现
+<ul>
+<li>全局的一棵 B+ 树</li>
+<li>非叶节点存放 search key。(space, marker, offset)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>两次写 (Double Write)</p>
+<p>数据只有写到磁盘才安全，如果脏页未刷回，如何保证 crash safe？使用了 WAL，先写入 log 再刷回磁盘。由于 log 是顺序写入，性能过关，写入页的途中可能 crash，此时使用 double write 恢复，相当于存档</p>
+<ul>
+<li>作用：带来数据页的可靠性，解决在将页写入磁盘时发生宕机</li>
+<li>由两部分缓存：内在中的 buffer，和磁盘上共享表空间的连续 128 个页，大小都是 2MB</li>
+<li>先将页复制到 double write buffer，再分两次，每次 1MB 写入磁盘，后马上调用 fsync 同步磁盘</li>
+<li>double write 结束后再写入表空间的文件中</li>
+</ul>
+</li>
+<li>
+<p>自适应哈希索引 (Adaptive Hash Index)</p>
+<ul>
+<li>会自动根据对索引页的查询情况创建哈希索引</li>
+<li>要求
+<ul>
+<li>要求对页的连续访问模式必须一样</li>
+<li>以该模式访问了 100 次</li>
+<li>页通过该模式访问了 N 次，N = 页中记录 * 1/16</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>异步 IO (Async IO)</p>
+<ul>
+<li>增加 IO 请求的吞吐</li>
+<li>底层实现可以进行 IO merge</li>
+</ul>
+</li>
+<li>
+<p>刷新邻接页 (Flush Neighbor Page)</p>
+<ul>
+<li>刷新脏页时，会检测该页所在区的所有页，如果是脏页则一起刷新</li>
+<li>好处是可以合并 IO 操作</li>
+</ul>
+</li>
+</ul>
+<h3 id="启动-关闭-恢复"><a class="header-anchor" href="#启动-关闭-恢复"></a>启动、关闭、恢复</h3>
+<p>（暂无内容）</p>
+<h2 id="ch03-文件"><a class="header-anchor" href="#ch03-文件"></a>Ch03: 文件</h2>
+<h3 id="参数文件"><a class="header-anchor" href="#参数文件"></a>参数文件</h3>
+<ul>
+<li>什么是参数</li>
+<li>参数类型
+<ul>
+<li>动态、静态</li>
+<li>SET [global | session] system_var_name = expr</li>
+<li>SET [@@global. | @@session. | @@]system_var_name = expr</li>
+</ul>
+</li>
+</ul>
+<h3 id="日志文件"><a class="header-anchor" href="#日志文件"></a>日志文件</h3>
+<ul>
+<li>错误日志 error log
+<ul>
+<li>SHOW VARIABLES LIKE ‘log_error’\G; 查看路径</li>
+</ul>
+</li>
+<li>二进制日志 bin log</li>
+<li>慢查询日志 slow query log
+<ul>
+<li>SHOW VARIABLES LIKE ‘long_query_time’\G;</li>
+<li>SHOW VARIABLES LIKE ‘slow_query_log_file’\G;</li>
+<li>SHOW VARIABLES LIKE ‘slow_query_log’\G;</li>
+</ul>
+</li>
+<li>查询日志 log</li>
+</ul>
+<h3 id="socket-文件"><a class="header-anchor" href="#socket-文件"></a>socket 文件</h3>
+<ul>
+<li>SHOW VARIABLES LIKE ‘socket’\G;</li>
+</ul>
+<h3 id="pid-文件"><a class="header-anchor" href="#pid-文件"></a>pid 文件</h3>
+<ul>
+<li>SHOW VARIABLES LIKE ‘pid_file’\G;</li>
+</ul>
+<h3 id="表结构定义文件"><a class="header-anchor" href="#表结构定义文件"></a>表结构定义文件</h3>
+<ul>
+<li>每个表对应一个 .frm 后缀的文件，记录表结构定义</li>
+</ul>
+<h3 id="innodb-存储引擎文件"><a class="header-anchor" href="#innodb-存储引擎文件"></a>InnoDB 存储引擎文件</h3>
+<ul>
+<li>表空间文件
+<ul>
+<li>数据按表空间 (tablespace) 存放</li>
+<li>默认设置下，初始为 10MB，名为 ibdata1 的文件</li>
+<li>通过 innodb_data_file_path 设置</li>
+<li>默认所有数据存放在共享的表空间中</li>
+<li>若设置了 innodb_file_per_table 则每个表会产生独立的表空间：表名.ibd
+<ul>
+<li>它只存放表的数据、引擎、插入缓冲 BITMAP 信息，其余信息还在默认表空间中</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>重做日志文件 (redo log file)
+<ul>
+<li>ib_logfile0 &amp; ib_logfile1</li>
+<li>两文件循环写入，0 满了写 1，1 满了写 0</li>
+<li>SHOW VARIABLES LIKE ‘innodb%log%’\G;</li>
+<li>redo log buffer 写入磁盘时按 512 字节写入，必定成功，不需要 doublewrite</li>
+</ul>
+</li>
+</ul>
+<h2 id="ch04-表"><a class="header-anchor" href="#ch04-表"></a>Ch04: 表</h2>
+<h3 id="索引组织表"><a class="header-anchor" href="#索引组织表"></a>索引组织表</h3>
+<ul>
+<li>
+<p>表是根据主键顺序存放的，称为索引组织表（index organized table）</p>
+</li>
+<li>
+<p>每张表都有主键，如果没有显示指定，则</p>
+<ul>
+<li>表中有唯一非空索引的列，则作为主键</li>
+<li>若无，则自动创建一个 6 字节大小的指针</li>
+<li>若有多个非空唯一索引，则选择第一个，根据的是定义索引的顺序而非定义列的顺序</li>
+</ul>
+</li>
+</ul>
+<h3 id="innodb-逻辑存储结构"><a class="header-anchor" href="#innodb-逻辑存储结构"></a>InnoDB 逻辑存储结构</h3>
+<ul>
+<li>所有数据都存放在表空间 (tablespace) 中</li>
+<li>表空间由段 (segment)、区 (extend)、页 (page) 组成</li>
+<li>表空间
+<ul>
+<li>存储引擎逻辑的最高层</li>
+<li>如果启用 innodb_file_per_table，则每张表的表空间内只存放数据、索引和插入缓冲 Bitmap 页，其它数据，如回滚信息、插入缓冲索引页、系统事务信息、double write buffer 还在原来的表空间内</li>
+</ul>
+</li>
+<li>段 (segment)
+<ul>
+<li>表空间有多个段组成，常见有数据段、索引段、回滚段等</li>
+<li>InnoDB 是索引组织的，数据即索引，索引即数据。数据段即是 B+ 树的叶子节点</li>
+</ul>
+</li>
+<li>区(extent)
+<ul>
+<li>由连续页组成</li>
+<li>任何情况下每个区的大小都是 1MB</li>
+<li>为了保证区中叶的连续性，一次从磁盘中申请 4～5 个区</li>
+<li>默认页大小为 16K，一个区中有 64 个连续页</li>
+<li>每个段开始时，会先用 32个页大小的碎片页(fragment page) 来存放数据，之后才是 64 个连续申请的页。目的应对小表或 undo 段，减小磁盘开销</li>
+</ul>
+</li>
+<li>页 (page)
+<ul>
+<li>InnoDB 管理磁盘的最小单位 ，默认为 16KB</li>
+<li>常见类型
+<ul>
+<li>数据页 (B-tree Node)</li>
+<li>Undo 页 (undo log page)</li>
+<li>系统页 (system page)</li>
+<li>事务数据页 (transaction system page)</li>
+<li>插入缓冲位图页 (Insert Buffer Bitmap)</li>
+<li>插入缓冲空闲页列表页 (insert buffer free list)</li>
+<li>未压缩的二进制大对象页 (Uncompressed BLOB page)</li>
+<li>压缩的二进制大对象页 (compressed BLOB page)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>行
+<ul>
+<li>数据是按行存储</li>
+<li>每个页最多允许存放 16KB/2 - 200 = 7992 行</li>
+</ul>
+</li>
+</ul>
+<h3 id="innodb-行记录格式"><a class="header-anchor" href="#innodb-行记录格式"></a>InnoDB 行记录格式</h3>
+<ul>
+<li>
+<p>REDUNDANT, COMPACT, DYNAMIC, COMPRESSED</p>
+<ul>
+<li>SHOW TABLE STATUS LIKE ‘<table>’ \G;</table></li>
+</ul>
+</li>
+<li>
+<p>COMPACT format</p>
+<ul>
+<li>目的是高效存储数据</li>
+<li>| 变长字段长度列表 | NULL 标志位 | 记录头信息 | 列 1 数据 | …</li>
+<li>变长字段长度列表按列的逆序放置
+<ul>
+<li>若列小于 255 字节，用 1 字节表示</li>
+<li>如大于 255 字节，用 2 字节表示</li>
+</ul>
+</li>
+<li>NULL 标志位
+<ul>
+<li>第 N 位表示第 N 列是否是 NULL，是则为 1</li>
+</ul>
+</li>
+<li>记录头信息占 5B（40 bit)</li>
+<li>NULL 列不占数据列的空间</li>
+<li>有两个隐藏列
+<ul>
+<li>事务 ID 列(6B)</li>
+<li>回滚指针列(7B)</li>
+</ul>
+</li>
+<li>若不指定主键，则会增加一个 rowid 列(6B)</li>
+<li>Index 指向的应该是记录头，再向前找长度列表</li>
+</ul>
+</li>
+<li>
+<p>REDUNDANT format</p>
+<ul>
+<li>| 字段长度偏移列表 | 记录头信息 | 列 1 数据 | …</li>
+<li>记录头占 6B(48Bit)
+<ul>
+<li>n_fields(10bit) 代表列数量，所以最大列数为 1023</li>
+</ul>
+</li>
+<li>NULL 字段需要占空间</li>
+</ul>
+</li>
+<li>
+<p>行溢出数据</p>
+<ul>
+<li>可以将记录中的某些数据（如 BLOB）存储在真正的数据页之外</li>
+<li>页大小为 16K，如何存放 &gt; 16K 数据？</li>
+<li>行溢出时，数据存放在页类型为 Uncompress BLOB 页中</li>
+<li>数据页中只保留前 768 字节的 prefix 数据</li>
+<li>| prefix 768 bytes | <ptr to blob page> | …</ptr></li>
+<li>存放在数据页还是 uncompressed blob page，取决于一页中是否能存放两条记录，如果可以则放数据页中，否则放 blob page 中</li>
+</ul>
+</li>
+<li>
+<p>Compressed 和 Dynamic</p>
+<ul>
+<li>对存放在 BLOB 中的数据采用了完全的行溢出</li>
+<li>数据页中只存放 20 字节的指针，数据存放在 Off Page</li>
+<li>Compressed 还会使用 zlib 对 BLOB, TEXT, VARCHAR 进行压缩</li>
+</ul>
+</li>
+<li>
+<p>CHAR 的行结构存储</p>
+<ul>
+<li>CHR(N) 中 N 开始指的是字符长度</li>
+<li>多字节字符集下，CHAR 与 VARCHAR 的处理相同，在行的变长字段长度列表中也会记录长度</li>
+</ul>
+</li>
+</ul>
+<h3 id="innodb-数据页结构-见书"><a class="header-anchor" href="#innodb-数据页结构-见书"></a>InnoDB 数据页结构（见书）</h3>
+<p>（暂无内容）</p>
+<h3 id="named-file-formats-机制"><a class="header-anchor" href="#named-file-formats-机制"></a>Named File Formats 机制</h3>
+<ul>
+<li>解决不同版本下页结构兼容性问题</li>
+<li>1.0.x 之前的格式定义为 antelope, 当前版本为 Barracuda</li>
+<li>新的文件格式总是包含之前的版本的页格式</li>
+<li>简单地说就是新格式兼容旧格式？并重新命名？</li>
+</ul>
+<h3 id="约束-constraint"><a class="header-anchor" href="#约束-constraint"></a>约束 (constraint)</h3>
+<ul>
+<li>数据完整性
+<ul>
+<li>实体完整性保证表中有主键
+<ul>
+<li>通过定义 Primary Key, Unique Key 或触发器</li>
+</ul>
+</li>
+<li>域完整性保证每列的值满足特定条件
+<ul>
+<li>选择合适的数据类型确保数值满足特定条件</li>
+<li>外键约束</li>
+<li>编写触发器</li>
+<li>用 DEFAULT 值</li>
+</ul>
+</li>
+<li>参照完整性保证两张表之间的关系</li>
+<li>InnoDB 支持的约束
+<ul>
+<li>Primary Key, Unique Key, Foreign Key, Default, Non NULL</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>约束的创建和查找
+<ul>
+<li>创建
+<ul>
+<li>建表时创建</li>
+<li>ALTER TABLE 来创建</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>约束与索引的区别
+<ul>
+<li>约束是逻辑概念，用以保证数据的完整性</li>
+<li>索引是数据结构，既有逻辑上的概念，还代表物理存储的方式</li>
+</ul>
+</li>
+<li>对错误数据的约束
+<ul>
+<li>某些默认设置下，允许非法或不正确的数据插入或更新</li>
+<li>设置  sql_mode = ‘STRICT_TRANS_TABLES’ 强制约束</li>
+</ul>
+</li>
+<li>ENUM 和 SET 约束
+<ul>
+<li>通过 ENUM/SET 类型约束取值</li>
+</ul>
+</li>
+<li>触发器与约束
+<ul>
+<li>可以通过触发器做一些高级的约束</li>
+</ul>
+</li>
+<li>外键
+<ul>
+<li>MyISAM 不支持</li>
+<li>ON DELETE/ON UPDATE 指定父表进行 DELETE/UPDATE 操作时，对子表所做的操作
+<ul>
+<li>CASCADE</li>
+<li>SET NULL</li>
+<li>NO ACTION</li>
+<li>RESTRICT</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="视图"><a class="header-anchor" href="#视图"></a>视图</h3>
+<ul>
+<li>named virtual table，由 SQL 查询定义，可以当作表，但没有实际的物理存储</li>
+<li>视图的作用
+<ul>
+<li>作为应用层的抽象</li>
+</ul>
+</li>
+<li>物化视图
+<ul>
+<li>Oracle 支持，将视图存成实表</li>
+</ul>
+</li>
+</ul>
+<h3 id="分区-partition-表"><a class="header-anchor" href="#分区-partition-表"></a>分区(partition)表</h3>
+<ul>
+<li>分区概述
+<ul>
+<li>将一个表或索引分解成多个更小的、更可管理的部分</li>
+<li>逻辑上不变，物理上可能由多个物理分区(partition)组成</li>
+<li>SHOW VARIABLES LIKE ‘%partition%’ \G;</li>
+<li>PARTITION BY …</li>
+</ul>
+</li>
+<li>分区类型
+<ul>
+<li>RANGE 分区
+<ul>
+<li>行根据列值是否在区间内放入分区</li>
+<li>
+<pre><code>PARTITION BY RANGE(id) (
+PARTITION p0 VALUES LESS THAN (10),
+PARTITION p1 VALUES LESS THAN (20));
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">    - 分区后，表由多个 idb 文件组成</span><br><span class="line">    - RANGE 主要用于日期列的分区</span><br><span class="line">- LIST 分区</span><br><span class="line">    - 和 RANGE 类似，但面向的是离散值</span><br><span class="line">    -</span><br></pre></td></tr></table></figure>
+PARTITION BY LIST(b) (
+PARTITION p0 VALUES in (1, 3, 5, 7, 9),
+PARTITION p1 VALUES in (0, 2, 4, 6, 8));
+</code></pre>
+</li>
+</ul>
+</li>
+<li>HASH 分区
+<ul>
+<li>根据用户自定义的表达式返回值进行分区</li>
+<li>PARTITION BY HASH(expr)</li>
+</ul>
+</li>
+<li>KEY 分区
+<ul>
+<li>根据 MySQL 提供的哈希函数进行分区</li>
+</ul>
+</li>
+<li>COLUMNS 分区
+<ul>
+<li>支持非整型数据</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>子分区(subpartitioning)
+<ul>
+<li>MySQL 允许在 RANGE 和 LIST 的分区上再进行 HASH/KEY 的子分区</li>
+<li>可用于特别大的表，在多个磁盘间分配数据和索引</li>
+</ul>
+</li>
+<li>子分区中的 NULL 值
+<ul>
+<li>MySQL 中将 NULL 视作小于任何一个非 NULL 值</li>
+<li>因此插入 RANGE 分区时会插入最左的分区</li>
+<li>HASH 和 KEY 会将含有 NULL 值的记录返回为 0</li>
+</ul>
+</li>
+<li>分区和性能
+<ul>
+<li>大意：OLAP 应用一般可以分区，OLTP 要小心分析</li>
+</ul>
+</li>
+<li>在表和分区间交换数据
+<ul>
+<li>ALTER TABLE … EXCHANGE PARTITION</li>
+<li>用于交换分区或子分区的数据与另一非分区表中的数据</li>
+</ul>
+</li>
+</ul>
+<h2 id="ch05-索引与算法"><a class="header-anchor" href="#ch05-索引与算法"></a>Ch05: 索引与算法</h2>
+<h3 id="存储索引概述"><a class="header-anchor" href="#存储索引概述"></a>存储索引概述</h3>
+<ul>
+<li>B+ 树索引
+<ul>
+<li>B+ 树只能找到数据对应的页，而不是行</li>
+</ul>
+</li>
+<li>全文索引</li>
+<li>Hash 索引</li>
+</ul>
+<h3 id="数据结构与算法"><a class="header-anchor" href="#数据结构与算法"></a>数据结构与算法</h3>
+<ul>
+<li>二分查找法</li>
+<li>二叉查找树与二叉平衡树</li>
+</ul>
+<h3 id="b-树"><a class="header-anchor" href="#b-树"></a>B+ 树</h3>
+<ul>
+<li>所有的值都放在叶子节点上</li>
+<li>B+ 树的插入操作
+<ul>
+<li>Leaf Page 满
+<ul>
+<li>Index Page 满
+<ul>
+<li>直接将记录插入叶子节点</li>
+</ul>
+</li>
+<li>Index Page 满
+<ol>
+<li>拆分 Leaf Page</li>
+<li>将中间的节点放入 Index Page 中</li>
+<li>小于中间节点的记录放左边</li>
+<li>大于或等于中间节点的记录放右边
+- 1. 拆分 Leaf Page</li>
+<li>小于中间节点的记录放左边</li>
+<li>大于或等于中间节点的记录放右边</li>
+<li>拆分 Index page</li>
+<li>小于中间节点的记录放左边</li>
+<li>大于蹭节点的记录放右边</li>
+<li>中间节点放入上一层 Index Page</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>B+ 树的删除操作
+<ul>
+<li>叶子节点小于填充因子
+<ul>
+<li>直接将记录从叶子节点删除，如果该节点还是 Index page 的节点，用访节点的右节点代替</li>
+<li>中间节点小于填充因子
+<ul>
+<li>合并叶子节点和它的兄弟节点，同时更新 Index Page</li>
+<li>
+<ol>
+<li>合并叶子节点和它的兄弟节点</li>
+</ol>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ol start="2">
+<li>更新 Index Page</li>
+<li>合并 Index Page 和它的兄弟节点</li>
+</ol>
+<h3 id="b-树索引"><a class="header-anchor" href="#b-树索引"></a>B+ 树索引</h3>
+<ul>
+<li>
+<p>聚集索引 (clustered index)</p>
+<ul>
+<li>
+<p>按每张表的主键构造一棵 B+ 树</p>
+</li>
+<li>
+<p>同时叶子节点存放的即为整张表的行记录数据</p>
+</li>
+<li>
+<p>每张表只能拥有一个聚集索引</p>
+</li>
+<li>
+<p>聚集索引的存储是逻辑的连续而非物理上的</p>
+<p>即页内是连续的，但是如果在多个页中，则并不需要在物理上连续</p>
+</li>
+<li>
+<p>主键的排序查找和范围查找速度非常快</p>
+<p>主要原因是数据本身就在叶子节点上，逻辑连续，因此只需要找到头和尾就可以通过双向链表顺序读取</p>
+</li>
+</ul>
+</li>
+<li>
+<p>辅助索引 (secondary index)</p>
+<ul>
+<li>
+<p>叶子节点包含键值和 bookmark</p>
+<ul>
+<li>bookmark 指向对应的行数据</li>
+<li>bookmark 即为其聚集索引的键值</li>
+</ul>
+</li>
+<li>
+<p>搜索时先遍历辅助索引，获得指向主键索引的键</p>
+</li>
+<li>
+<p>再通过主键索引找到完整的记录行</p>
+</li>
+</ul>
+</li>
+<li>
+<p>B+ 树索引的分裂</p>
+</li>
+<li>
+<p>B+ 树索引的管理</p>
+<ul>
+<li>
+<p>索引管理</p>
+<ul>
+<li>
+<p>ALTER TABLE</p>
+</li>
+<li>
+<p>CREATE/DROP INDEX</p>
+</li>
+<li>
+<p>SHOW INDEX FROM</p>
+<ul>
+<li>Cardinality：尽可能接近 1</li>
+<li>Sub_part: 是否只有列的部分用于索引</li>
+<li>……</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>Fast index creation</p>
+<ul>
+<li>创建时对表加上 S 锁，不需要重建表</li>
+<li>删除时只需更新内部视图</li>
+</ul>
+</li>
+<li>
+<p>Online Schema Change</p>
+<p>操作比较复杂，需要复习</p>
+</li>
+<li>
+<p>Online DDL</p>
+<ul>
+<li>原理是将 CUD 操作写入缓冲，完成索引创建后重新应用到表上</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="cardinality"><a class="header-anchor" href="#cardinality"></a>Cardinality</h3>
+<ul>
+<li>
+<p>什么是 Cardinality 值？</p>
+<p>高选择性的列适合建索引，即通过某个 key 能找到的数据越少越好</p>
+<ul>
+<li>SHOW INDEX 中可以看到对应的值</li>
+<li>代表索引中预估的不重复记录数</li>
+<li>Cardinality/n_rows_in_table 应尽可能接近 1</li>
+</ul>
+</li>
+<li>
+<p>Cardinality 统计</p>
+<ul>
+<li>
+<p>通过采样完成</p>
+</li>
+<li>
+<p>统计信息发生在 INSERT/UPDATE 时</p>
+</li>
+<li>
+<p>更新 Cardinality 信息的策略为</p>
+<ul>
+<li>表中 1/16 的数据已经发生过变化</li>
+<li>stat_modified_counter &gt; 20 亿</li>
+</ul>
+</li>
+<li>
+<p>如何更新？</p>
+<ul>
+<li>默认对 8 个叶子节点（leaf page）进行采样</li>
+<li>取得 B+ 树索引的叶子节点的数量，记为 A</li>
+<li>随机取得 B+ 树索引中的 8 个叶子节点。统计每个叶不同记录的个数，记为 P1, … P8</li>
+<li>预估值：Cardinality = (P1 + P2 + … + P8) * A / 8</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="b-树索引的使用"><a class="header-anchor" href="#b-树索引的使用"></a>B+ 树索引的使用</h3>
+<ul>
+<li>
+<p>不同应用中 B+ 树索引的使用</p>
+<ul>
+<li>OLTP 应用中，建立索引后，应该只通过该索引查询得到表中的少量数据</li>
+<li>OLAP 中，很多字段通常会拉取全表（如姓名），则没有必要创建索引</li>
+<li>OLAP 中常对时间进行筛选，因此通常会对时间字段进行索引</li>
+</ul>
+</li>
+<li>
+<p>联合索引</p>
+<ul>
+<li>例如有 a, b 两个字段，联合索引中会先以 a, b 的顺序进行排序 (a0, b1) &lt; (a1, b0) &lt; (a1, b2)</li>
+<li>如果结果需要以 b 进行排序，则有了联合索引后可以省去对结果进行排序</li>
+</ul>
+</li>
+<li>
+<p>覆盖索引（covering index）</p>
+<ul>
+<li>从辅助索引中就可以得到查询的记录，就不需要查询聚集索引中的记录。</li>
+<li>例如，select 的 key 全在索引中</li>
+<li>例如，只需要 count</li>
+</ul>
+</li>
+<li>
+<p>优化器选择不使用索引的情况</p>
+<ul>
+<li>对于不能进行索引覆盖的情况，优化器只有在查找的数据是少量的情况下才会选择辅助索引，否则查出最后的数据也很耗时（无序磁盘读）</li>
+</ul>
+</li>
+<li>
+<p>索引提示</p>
+<ul>
+<li>优化器可能错误选择了某个索引</li>
+<li>索引过多，选择执行计划开销大</li>
+<li>SELECT * FROM t USE INDEX(xxx) …</li>
+</ul>
+</li>
+<li>
+<p>Multi-range READ 优化</p>
+<ul>
+<li>
+<p>目的：减少磁盘的随机访问</p>
+</li>
+<li>
+<p>适用于：range, ref, eq_ref 类型的查询</p>
+</li>
+<li>
+<p>好处：</p>
+<ul>
+<li>使访问变得有序。查询辅助索引时，得到结果根据主键排序，并依照主键顺序进行书签查找</li>
+<li>减少缓冲池中需要替换的页的次数</li>
+<li>批量处理对键的查询操作</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>Index Condition Pushdown(ICP) 优化</p>
+<ul>
+<li>将 WHERE 的部分过滤操作放在了存储引擎层</li>
+<li>支持 range, ref, eq_ref, ref_or_null 类型</li>
+</ul>
+</li>
+</ul>
+<h3 id="哈希算法"><a class="header-anchor" href="#哈希算法"></a>哈希算法</h3>
+<ul>
+<li>
+<p>InnoDB 中的哈希算法</p>
+<ul>
+<li>散列哈希+链表冲突</li>
+</ul>
+</li>
+<li>
+<p>自适应哈希索引</p>
+</li>
+</ul>
+<h3 id="全文索引"><a class="header-anchor" href="#全文索引"></a>全文索引</h3>
+<ul>
+<li>
+<p>概述</p>
+<ul>
+<li>B+ 树支持前缀查找：(like ‘xxx%’)</li>
+<li>MyISAM 支持</li>
+<li>InnoDB 1.2.x 支持</li>
+</ul>
+</li>
+<li>
+<p>倒排索引</p>
+<ul>
+<li>Inverted file index: (term -&gt; docId)</li>
+<li>full inverted index (term -&gt; (docId, position))</li>
+</ul>
+</li>
+<li>
+<p>InnoDB 全文检索</p>
+<ul>
+<li>
+<p>使用 full inverted index</p>
+</li>
+<li>
+<p>需要将 word 放在一张表中：Auxiliary Table</p>
+</li>
+<li>
+<p>在 InnoDB 中，为了提高并行性能，存了 6 张，并根据 word 的 Latin 编码进行分区</p>
+</li>
+<li>
+<p>FTS Index Cache 存放于内存中，提高速度</p>
+<ul>
+<li>红黑树</li>
+<li>根据 （word, ilist）排序</li>
+</ul>
+</li>
+<li>
+<p>批量更新 Auxiliary Table</p>
+</li>
+<li>
+<p>关闭数据库时，会将 FTS Index Cache 同步到磁盘中的 Auxiliary Table</p>
+</li>
+<li>
+<p>索引的写入是在事务提交的时候完成</p>
+</li>
+<li>
+<p>删除的 DOC 不更新 Auxiliary Table，而是记录在删除表DELETED Auxiliary Table 中</p>
+</li>
+<li>
+<p>限制</p>
+<ul>
+<li>每张表只能有一个全文检索的索引</li>
+<li>由多列组合而成的全文检索的索引列必须使用相同的字符集与排序规则</li>
+<li>不支持没有 delimiter 的语言，如 CJK</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>全文检索</p>
+<p>讲了一些全文检索的语法</p>
+<ul>
+<li>MATCH (col1, col2, …) AGAINST (expr [search modifier])</li>
+</ul>
+</li>
+</ul>
+<h2 id="ch06：锁"><a class="header-anchor" href="#ch06：锁"></a>Ch06：锁</h2>
+<h3 id="什么是锁"><a class="header-anchor" href="#什么是锁"></a>什么是锁</h3>
+<ul>
+<li>不同数据库、不同存储引擎的锁实现不同</li>
+</ul>
+<h3 id="lock-与-latch"><a class="header-anchor" href="#lock-与-latch"></a>Lock 与 Latch</h3>
+<ul>
+<li>
+<p>Latch 一般称为闩锁（轻量级的锁），锁定的时间非常短</p>
+<ul>
+<li>Mutex</li>
+<li>Rwlock</li>
+</ul>
+</li>
+<li>
+<p>Lock 的对象是事物，锁表、页、行</p>
+</li>
+<li>
+<p>SHOW ENGINE INNODB MUTEX 查看 latch</p>
+</li>
+<li>
+<p>SHOW ENGINE INNODB STATUS 查看 lock</p>
+</li>
+</ul>
+<h3 id="innodb-存储引擎中的锁"><a class="header-anchor" href="#innodb-存储引擎中的锁"></a>InnoDB 存储引擎中的锁</h3>
+<ul>
+<li>
+<p>锁的类型</p>
+<ul>
+<li>
+<p>共享锁 (S Lock)，允许事务读一行数据</p>
+</li>
+<li>
+<p>排他锁 (X Lock)，允许事务删除或更新一行数据</p>
+</li>
+<li>
+<p>意向锁 (Intention Lock)，表示事务希望在更细欧亚上进行加锁</p>
+<ul>
+<li>对下层对象（最细粒度）上锁，需要先对上层对象（粗粒度）上意向锁</li>
+<li>其中任何一个部分导致等待，则需要等待粗粒度的锁完成</li>
+<li>意向共享锁(IS Lock)，想要获取表中某几行的共享锁</li>
+<li>意向排他锁(IX Lock)，想要获取表中某几行的排他锁</li>
+<li>用来与其它粗粒度的 S/X 竞争</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>一致性非锁定读 (Consistent Non-locking Read)</p>
+<ul>
+<li>通过 MVCC 读快照</li>
+<li>通过 undo 段实现，没有额外开销</li>
+<li>READ COMMITTED 总是读取被锁定行的最新一份快照数据</li>
+<li>REPEATABLE READ 总是读取事务开始时的行数据版本</li>
+</ul>
+</li>
+<li>
+<p>一致性锁定读</p>
+<ul>
+<li>
+<p>SELECT … FOR UPDATE</p>
+<ul>
+<li>对行记录加 X 锁</li>
+</ul>
+</li>
+<li>
+<p>SELECT … LOCK IN SHARE MODE</p>
+<ul>
+<li>对行记录加 S 锁</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>自增长与锁</p>
+<ul>
+<li>
+<p>AUTO-INC Locking</p>
+</li>
+<li>
+<p>不是在事务完成后释放，而是自增的插入语句完成后立即释放</p>
+</li>
+<li>
+<p>插入分类</p>
+<ul>
+<li>
+<p>insert-like</p>
+<ul>
+<li>所有插入语句</li>
+</ul>
+</li>
+<li>
+<p>simple inserts</p>
+<ul>
+<li>插入前就能确定插入行数，包括 INSERT/REPLACE</li>
+<li>不包括 INSERT … ON DUPLICATE KEY UPDATE 等</li>
+</ul>
+</li>
+<li>
+<p>bulk insert</p>
+<ul>
+<li>插入前不能确定得到插入行数的语句，如 INSERT … SELECT, REPLACE … SELECT, LOAD DATA</li>
+</ul>
+</li>
+<li>
+<p>mixed-mode insert</p>
+<ul>
+<li>一部分是自增长的，一部分是确定的</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>外键和锁</p>
+<ul>
+<li>对于外键列，如果没有显式加索引，会自动添加</li>
+<li>对外键值的插入更新时，首先用 SELECT … LOCK IN SHARE MODE 方式锁父表的记录</li>
+</ul>
+</li>
+</ul>
+<h3 id="锁的算法"><a class="header-anchor" href="#锁的算法"></a>锁的算法</h3>
+<ul>
+<li>
+<p>行锁的三种算法</p>
+<ul>
+<li>
+<p>Record Lock 单个行上的锁</p>
+<ul>
+<li>如果没有索引，会使用隐式的主键进行锁定</li>
+</ul>
+</li>
+<li>
+<p>Gap Lock 间隙锁，锁范围，但不包含记录本身</p>
+<ul>
+<li>行查询时使用的算法</li>
+<li>为了解决 Phantom Problem</li>
+</ul>
+</li>
+<li>
+<p>Next-Key Lock: Gap Lock + Record Lock</p>
+</li>
+<li>
+<p>当 SELECT … FOR UPDATE 时，会对上一个范围增加 next-key lock，然后对下一个范围 加 gap lock</p>
+<ul>
+<li>create table z (a INT, b INT, primary key(a), key(b)</li>
+<li>假设有 (1,1) (3,1) (5,3) (7,6) (10,8) 数据</li>
+<li>select * from z where b = 3 for update</li>
+<li>会锁住 b 列的 (1,3], (3, 6)</li>
+<li>插入 (4,2) 或 (6,5) 都会被阻塞</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>解决 Phantom Problem</p>
+<ul>
+<li>指：在同一事务下，连续执行两次同样的 SQL 语句可能导致不同的指标，第二次 SQL 语句可能返回之前不存在的行</li>
+<li>有了 next-key lock，则 WHERE a &gt; 2 FOR UPDATE 会为范围 (2, +inf) 增加 X 锁</li>
+</ul>
+</li>
+</ul>
+<h3 id="锁问题"><a class="header-anchor" href="#锁问题"></a>锁问题</h3>
+<ul>
+<li>
+<p>脏读 (Dirty Read)</p>
+<ul>
+<li>指可以读到未提交事务的数据</li>
+<li>在 READ UNCOMMITTED 下发生</li>
+<li>违反了 Isolation</li>
+</ul>
+</li>
+<li>
+<p>不可重复读</p>
+<ul>
+<li>即会有幻读，同一 SQL 执行两次结果可能不同</li>
+<li>设置为 REPEATABLE READ 隔离级别解决</li>
+</ul>
+</li>
+<li>
+<p>丢失更新</p>
+<ul>
+<li>一个事务的更新会被另一个事务的更新覆盖</li>
+<li>一般是由于业务逻辑上的非原子性修改导致的</li>
+<li>需要通过悲观锁行来解决</li>
+</ul>
+</li>
+</ul>
+<h3 id="阻塞"><a class="header-anchor" href="#阻塞"></a>阻塞</h3>
+<ul>
+<li>
+<p>innodb_lock_wait_timeout 控制等待锁的时间</p>
+</li>
+<li>
+<p>innodb_rollback_on_timeout 设定是否回超时事务（默认 OFF 不回滚）</p>
+<ul>
+<li>why default OFF?</li>
+</ul>
+</li>
+</ul>
+<h3 id="死锁"><a class="header-anchor" href="#死锁"></a>死锁</h3>
+<ul>
+<li>超时机制</li>
+<li>wait-for graph（等待图）检测死锁</li>
+<li>默认不回滚大部分错误异常，死锁除外</li>
+</ul>
+<h3 id="锁升级-lock-escalation"><a class="header-anchor" href="#锁升级-lock-escalation"></a>锁升级 (Lock Escalation)</h3>
+<ul>
+<li>例如将 1k 个行锁升级成页锁</li>
+<li>InnoDB 中不存在锁升级的问题</li>
+</ul>
+<h2 id="ch07-事务"><a class="header-anchor" href="#ch07-事务"></a>Ch07: 事务</h2>
+<h3 id="认识事务"><a class="header-anchor" href="#认识事务"></a>认识事务</h3>
+<ul>
+<li>
+<p>分类</p>
+<ul>
+<li>
+<p>扁平事务 (flat transactions)</p>
+<ul>
+<li>begin 开始，commit/rollback 结束</li>
+<li>要么全提交，要么全回滚</li>
+<li>一般数据库都支持，太常用了</li>
+</ul>
+</li>
+<li>
+<p>带保存点的扁平事务 (flat transactions with savepoints)</p>
+<ul>
+<li>允许回滚到同一事务之前较早的状态</li>
+<li>SAVE WORK 函数建立保存点</li>
+<li>保存点在事务内是递增的，rollback 后计数继续增加</li>
+<li>需要多次 rollback 才能完全回滚事务</li>
+<li>但是 save point 不是持久的，系统崩溃后依旧要重新开始</li>
+</ul>
+</li>
+<li>
+<p>链事务 (chained transactions)</p>
+<ul>
+<li>提交事务时，释放不需要的对象，将必要的上下文隐式地传给下一个要开始的事务</li>
+<li>即提交事务与下一个事务的操作将合并成原子操作</li>
+<li>仅限回滚当前事务</li>
+</ul>
+</li>
+<li>
+<p>嵌套事务 (nested transactions)</p>
+<ul>
+<li>是一棵树，子树可以是嵌套事务，也可以是扁平事务</li>
+<li>叶节点的事务是扁平事务，但树高可以不同</li>
+<li>根节点的事务称为顶层事务，其它称为子事务</li>
+<li>子事务可以提交也可以回滚，但不马上生效，除非父事务已提交。推论：顶层提交后才真正提交</li>
+<li>树中任意事务回滚会引起所有子事务一起回滚</li>
+</ul>
+</li>
+<li>
+<p>分布式事务 (distributed transactions)</p>
+<ul>
+<li>分布式环境下运行的扁平事务</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>InnoDB 不支持嵌套事务，其它都支持</p>
+</li>
+</ul>
+<h3 id="事务的实现"><a class="header-anchor" href="#事务的实现"></a>事务的实现</h3>
+<ul>
+<li>
+<p>redo</p>
+<ul>
+<li>
+<p>基本概念</p>
+<ul>
+<li>
+<p>实现持久性，即 ACID 中的 D</p>
+</li>
+<li>
+<p>包含两部分</p>
+<ul>
+<li>redo log buffer 内存中的，易失</li>
+<li>redo log file 磁盘中的，持久</li>
+</ul>
+</li>
+<li>
+<p>持久性通过 Force Log at Commit 实现</p>
+<ul>
+<li>
+<p>在事务提交时，必须将该事务的所有日志写到 redo log &amp; undo log 文件中才算完成</p>
+</li>
+<li>
+<p>redo log 保证事务的持久性，基本是顺序写</p>
+</li>
+<li>
+<p>undo log 帮助事务回滚及 MVCC，需要随机读写</p>
+</li>
+<li>
+<p>写入 redo log file 后要显示调用 fsync 确保真正刷回磁盘</p>
+<p>innodb_flush_log_at_trx_commit 可以控制刷新策略默认为 1，代表写入文件且调用 fsync
+0 表示不进行写入操作，仅由 master thread  每 1 秒进行 fsync
+2 表示写入文件，但不强制 fsync</p>
+</li>
+</ul>
+</li>
+<li>
+<p>bin log</p>
+<ul>
+<li>redo log 是存储引擎层，而 bin log 是数据库层, redo log 是 InnoDB 产生，bin log 对所有引擎适用</li>
+<li>bin log 是逻辑日志，记录 SQL，redo log 是物理日志，记录对页的修改</li>
+<li>bin log 只在事务提交后进行一次写入，redo log 在事务中不断被写入</li>
+<li>redo log 中一个事务可能对应多个条目，写入是并发的</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>log block</p>
+<ul>
+<li>
+<p>redo log 以 512B 存储，称为 log block</p>
+</li>
+<li>
+<p>log block 与磁盘的扇区大小一致，可以保证写入原子性，不需要 double write 技术</p>
+</li>
+<li>
+<p>block header 占 12B &amp; block tailer 共占用 8B</p>
+</li>
+<li>
+<p>block header</p>
+<ul>
+<li>
+<p>LOG_BLOCK_HDR_NO(4)</p>
+<ul>
+<li>标记 log buffer 中的位置，递增循环使用</li>
+</ul>
+</li>
+<li>
+<p>LOG_BLOCK_HDR_DATA_LEN(2)</p>
+<ul>
+<li>log block 所占用的大小</li>
+</ul>
+</li>
+<li>
+<p>LOG_BLOCK_FIRST_REC_GROUP(2)</p>
+<ul>
+<li>表示 block 中第一个日志的偏移量</li>
+</ul>
+</li>
+<li>
+<p>LOG_BLOCK_CHECKPOINT_NO(4)</p>
+<ul>
+<li>写入时 checkpoint 第 4 字节的值</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>log group</p>
+<ul>
+<li>
+<p>逻辑概念，由多个 redo log file 组成</p>
+</li>
+<li>
+<p>redo log file 存储的就是 log buffer 中保存的 log block</p>
+</li>
+<li>
+<p>刷回磁盘的策略</p>
+<ul>
+<li>事务提交时</li>
+<li>log buffer 中有一半空间已经被使用时</li>
+<li>log checkpoint 时</li>
+</ul>
+</li>
+<li>
+<p>log block 会 append 在 redo log file 的末尾</p>
+</li>
+<li>
+<p>log file 写满时，会写入下一个 log file (round-robin)</p>
+</li>
+<li>
+<p>每个 log file 的前 2KB 用于保存其它信息</p>
+</li>
+</ul>
+</li>
+<li>
+<p>redo log 格式</p>
+<ul>
+<li>存储管理是基于页的，因此 redo log 也基于页</li>
+<li>| redo_log_type | space | page_no | redo log body |</li>
+</ul>
+</li>
+<li>
+<p>LSN</p>
+<ul>
+<li>
+<p>日志序列号，8B，单调递增</p>
+</li>
+<li>
+<p>含义</p>
+<ul>
+<li>
+<p>redo log 写入的总量</p>
+</li>
+<li>
+<p>checkpoint 的位置</p>
+</li>
+<li>
+<p>页的版本</p>
+<ul>
+<li>如每个页上在保留着最后刷新数据对应的 LSN</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>恢复</p>
+<ul>
+<li>由于 checkpoint 表示刷回磁盘页上的 LSN，仅需要从 checkpoint 后的日志开始恢复</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>undo</p>
+<ul>
+<li>
+<p>基本概念</p>
+<ul>
+<li>用于回滚事务、MVCC</li>
+<li>存放在缓冲区中的特殊段(undo segment)，undo 段位于共享表空间</li>
+<li>undo 是逻辑日志，只是做反向的修改，如 INSERT 操作写入一个 DELETE 作为 undo</li>
+<li>undo log 也会产生 redo log，用于持久化</li>
+</ul>
+</li>
+<li>
+<p>undo 存储管理</p>
+<ul>
+<li>
+<p>有专门的 rollback segment，每个段记录 1024 个 undo segment，在 undo log segment 中申请 undo 页</p>
+</li>
+<li>
+<p>事务提交时</p>
+<ul>
+<li>将 undo log 放入列表 中，供之后 purge 操作</li>
+<li>判断 undo log 所在页是否可重用，若可以则分配给下个事务使用</li>
+</ul>
+</li>
+<li>
+<p>事务提交后不能立马删除 undo log 及所在页，因为可能有其它事务在使用(MVCC)</p>
+</li>
+<li>
+<p>会对 undo 页进行重用，事务提交时，先将它放入链表，若空间小于 3/4，则可以重用，新的 undo log 写在当前 undo log 之后</p>
+</li>
+</ul>
+</li>
+<li>
+<p>undo log 格式</p>
+<p>具体格式要看书，不过可能过于细节，正常做业务不需要理解</p>
+<ul>
+<li>
+<p>insert undo log</p>
+<ul>
+<li>INSERT 只对事务本身可见，对其它不可见（隔离性要求），因此事务提交后可以直接删除</li>
+</ul>
+</li>
+<li>
+<p>update undo log</p>
+<ul>
+<li>可能被 MVCC 用到，只能等 purge 删除</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>查看 undo 信息</p>
+<ul>
+<li>SELECT segment_id, space, page_no FROM INNODB_TRX_ROLLBACK_SEGMENT;</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>purge</p>
+<ul>
+<li>purge 用于最终完成 delete/update 操作（由于 MVCC，并不能立即应用这些更改）</li>
+<li>内部有个 history list，会按照事务提交的顺序组织 undo log，先提交的事务总在末尾</li>
+<li>purge 时，先找到每一个可以被清理的记录</li>
+<li>清理后会在 undo 页中先查看是否有其它可以清理的记录</li>
+<li>若没有，则再回 history list 查找</li>
+</ul>
+</li>
+<li>
+<p>group commit</p>
+<ul>
+<li>group commit 来减少 fsync 的调用次数</li>
+</ul>
+</li>
+</ul>
+<h3 id="事务控制语句"><a class="header-anchor" href="#事务控制语句"></a>事务控制语句</h3>
+<ul>
+<li>
+<p>START TRANSACTION | BEGIN</p>
+<ul>
+<li>显示开启事务</li>
+</ul>
+</li>
+<li>
+<p>COMMIT</p>
+<ul>
+<li>提交事务</li>
+</ul>
+</li>
+<li>
+<p>ROLLBACK</p>
+<ul>
+<li>回滚，结束事务并撤销未提交的更改</li>
+</ul>
+</li>
+<li>
+<p>SAVEPOINT identifier</p>
+<ul>
+<li>创建 save point，事务中可以有多个</li>
+</ul>
+</li>
+<li>
+<p>RELEASE SAVEPOINT identifier</p>
+<ul>
+<li>删除事务 checkpoint，不存在时抛异常</li>
+</ul>
+</li>
+<li>
+<p>ROLLBACK TO [SAVEPOINT] identifier</p>
+<ul>
+<li>回滚到标记点</li>
+</ul>
+</li>
+<li>
+<p>SET TRANSACTION</p>
+<ul>
+<li>
+<p>设置隔离级别</p>
+<ul>
+<li>READ UNCOMMITED</li>
+<li>READ COMMITTED</li>
+<li>REPEATABLE READ</li>
+<li>SERIALIZABLE</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="隐式提交的-sql-语句"><a class="header-anchor" href="#隐式提交的-sql-语句"></a>隐式提交的 SQL 语句</h3>
+<ul>
+<li>
+<p>DDL 语句</p>
+<ul>
+<li>[CREATE|DROP|ALTER] [DATABASE|EVENT|INDEX|PROCEDURE|TABLE|TRIGGER|VIEW]</li>
+<li>UPGRADE DATA DIRECTORY NAME</li>
+<li>[RENAME|TRUNCATE] TABLE</li>
+</ul>
+</li>
+<li>
+<p>隐式修改 MySQL 架构的操作</p>
+<ul>
+<li>CREATE USER, DROP USER, GRANT, RENAME USER, REVOKE, SET PASSWORD</li>
+</ul>
+</li>
+<li>
+<p>管理语句</p>
+<ul>
+<li>ANALYZE TABLE, CACHE INDEX, CHECK TABLE, LOAD INDEX INTO CACHE, OPTIMIZE TABLE, REPAIR TABLE</li>
+</ul>
+</li>
+</ul>
+<h3 id="对于事务操作的统计"><a class="header-anchor" href="#对于事务操作的统计"></a>对于事务操作的统计</h3>
+<ul>
+<li>TPS: (com_commit + com_rollback)/time</li>
+<li>SHOW GLOBAL STATUS LIKE ‘…’ \G;</li>
+</ul>
+<h3 id="事务的隔离级别"><a class="header-anchor" href="#事务的隔离级别"></a>事务的隔离级别</h3>
+<h3 id="分布式事务-xa"><a class="header-anchor" href="#分布式事务-xa"></a>分布式事务 (XA)</h3>
+<ul>
+<li>
+<p>MySQL 数据库分布式事务</p>
+<ul>
+<li>
+<p>隔离级别必须为 SERIALIZABLE</p>
+</li>
+<li>
+<p>1~N Resource Manager</p>
+<ul>
+<li>提供访问事务资源的方法，通常数据库就是</li>
+</ul>
+</li>
+<li>
+<p>Transaction Manager</p>
+<ul>
+<li>协调参与全局事务中的各个事务，需要和所有 resource manager 通信</li>
+</ul>
+</li>
+<li>
+<p>Application Program</p>
+<ul>
+<li>定义事务的边界</li>
+</ul>
+</li>
+<li>
+<p>使用 2PC，需要先 PREPARE 再 COMMIT|ROLLBACK</p>
+</li>
+<li>
+<p>语法</p>
+<ul>
+<li>XA {START|BEGIN} xid [JOIN|RESUME]</li>
+<li>XA END xid [SUSPEND [FOR MIGRATE]]</li>
+<li>XA PREPARE xid</li>
+<li>XA COMMIT xid [ONE PHASE]</li>
+<li>XA ROLLBACK xid</li>
+<li>XA RECOVER</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>内部 XA 事务</p>
+<ul>
+<li>在存储引擎与插件间的分布式事务</li>
+<li>如 bin log 与 InnoDB 间</li>
+</ul>
+</li>
+</ul>
+<h3 id="不好的事务习惯"><a class="header-anchor" href="#不好的事务习惯"></a>不好的事务习惯</h3>
+<ul>
+<li>
+<p>在循环中提交事务</p>
+<ul>
+<li>写 redo log 和 fsync 次数太多</li>
+</ul>
+</li>
+<li>
+<p>使用自动提交</p>
+</li>
+<li>
+<p>使用自动回滚</p>
+<ul>
+<li>应当交由程序端控制，需要知道具体出了什么错</li>
+</ul>
+</li>
+</ul>
+<h3 id="长事务"><a class="header-anchor" href="#长事务"></a>长事务</h3>
+<ul>
+<li>执行时间太长的事务</li>
+<li>回滚的代价太大</li>
+<li>常常可以转换成 mini-batch 来提交</li>
+</ul>
+<h2 id="ch08-备份与恢复"><a class="header-anchor" href="#ch08-备份与恢复"></a>Ch08: 备份与恢复</h2>
+<p>（暂无内容）</p>
+<h2 id="ch09-性能调优"><a class="header-anchor" href="#ch09-性能调优"></a>Ch09: 性能调优</h2>
+<p>（暂无内容）</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2020/Book-Notes-InnoDB-Engine-2nd-edition/';
+var disqus_title = '《MySQL技术内幕：InnoDB存储引擎（第2版）》';
+var disqus_url = 'https://lotabout.me/2020/Book-Notes-InnoDB-Engine-2nd-edition/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

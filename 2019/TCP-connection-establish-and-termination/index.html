@@ -1,0 +1,85 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="最近在学习 HTTP 长连接，发现需要复习一些 TCP 连接的建立、关闭的过程，做些笔记。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>复习：TCP 三次握手、四次挥手 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/handshake/" rel="tag">handshake</a><a class="post-tag-link" href="/tags/header/" rel="tag">header</a><a class="post-tag-link" href="/tags/tcp/" rel="tag">tcp</a></div><div class="post-time">2019-09-26</div></div></div><div class="container post-header"><h1>复习：TCP 三次握手、四次挥手</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#tcp-报文头"><span class="toc-number">1.</span> <span class="toc-text">TCP 报文头</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#三次握手"><span class="toc-number">2.</span> <span class="toc-text">三次握手</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#四次挥手"><span class="toc-number">3.</span> <span class="toc-text">四次挥手</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#状态转换"><span class="toc-number">4.</span> <span class="toc-text">状态转换</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">5.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>最近在学习 HTTP 长连接，发现需要复习一些 TCP 连接的建立、关闭的过程，做些笔记。</p>
+<h2 id="tcp-报文头"><a class="header-anchor" href="#tcp-报文头"></a>TCP 报文头</h2>
+<p>先来看看 TCP 报文头的格式：</p>
+<img src="/2019/TCP-connection-establish-and-termination/TCP-header.svg" class="" title="TCP Header">
+<ul>
+<li>source port/destination port 分别代表源端口和目标端口</li>
+<li>sequence/acknowledge number 用来标记发送和接收的字节数</li>
+<li>data offset 占 4 位，代表报文头中的字(32位)数，如果没有 options，则为固定值5</li>
+<li>Flags，共 9 位
+<ul>
+<li>NS、CWR、ECE、URG，不懂</li>
+<li>ACK，设置了后表示 acknowledge 字段生效</li>
+<li>PSH，要求将缓存的数据推送给接收方</li>
+<li>RST，重置连接，比如接收方已经关闭连接，收到迟到的报文，则会重置报文</li>
+<li>SYN，三次握手第一次，代表同步 sequence number</li>
+<li>FIN，四次挥手时的结束报文</li>
+</ul>
+</li>
+<li>Window size，拥塞控制中的窗口大小</li>
+<li>Checksum，校验码，用于传输检测过程中的错误</li>
+<li>Urgent pointer，不懂</li>
+<li>Options，一般在三次握手、四次挥手中用到。不懂</li>
+</ul>
+<h2 id="三次握手"><a class="header-anchor" href="#三次握手"></a>三次握手</h2>
+<p>三次握手过程为：</p>
+<ol>
+<li>客户端随机生成一个 sequence number，并发送 SYN 报文到服务端，请求连接</li>
+<li>服务端发送 SYN＋ACK，在应答请求的同时，也随机生成一个 sequence id，请求同步</li>
+<li>客户端应答，服务端收到应答后双方建立连接。</li>
+</ol>
+<img src="/2019/TCP-connection-establish-and-termination/3-way-handshake.svg" class="" title="3-Way-Handshake">
+<p>正如 SYN 标志的含义，三次握手的过程在建立连接的过程中完成了自身初始 sequence
+number 的同步。使用随机生成的 sequence number 是为了防止在网络中滞后的报文影响新建立的连接。</p>
+<p>三次握手的重要问题是：为什么要三次？因为信道不可靠。考虑两次握手。假设客户端发送的第一个 SYN 在网络中滞留了，客户端因此重发 SYN 并建立连接，使用直到释放。此时滞留的第一个 SYN 终于到了，根据两次握手的规则，服务端直接进入 <code>ESTABLISHED</code>
+状态，而此时客户端根本没有连接，不会理会服务端发送的报文，白白浪费了服务端的资源。</p>
+<p>事实上，只要信道不可靠，双方永远都没有办法确认对方知道自己将要进入连接状态。例如三次握手，最后一次 ACK 如果丢失，则只有客户端进入连接状态。四次、五次、多少次握手都有类似问题，三次其实是理论和实际的一个权衡。</p>
+<h2 id="四次挥手"><a class="header-anchor" href="#四次挥手"></a>四次挥手</h2>
+<p>要断开连接需要“四次挥手”，可以由客户端发起，也可以由服务端发起，步骤如下：</p>
+<ol>
+<li>发起方发送 FIN 报文，代表断开连接</li>
+<li>接收方响应 ACK 报文，并在自己发送完未处理的报文后发送 FIN 报文</li>
+<li>发起方接收 ACK 报文后等待接收方的 FIN 报文，收到后发送 ACK 报文，自己进入
+TIME_WAIT 状态，等待 2MSL 后关闭连接</li>
+<li>接收方收到 ACK 报文，关闭连接</li>
+</ol>
+<img src="/2019/TCP-connection-establish-and-termination/4-way-handshake.svg" class="" title="4-Way-Handshake">
+<p>为什么需要 4 次挥手？一般会说因为连接是双方的，每一方关闭连接时需要 FIN+ACK。因此一共 4 次。而从上图来看，主要是因为接收方发送 ACK 和发送 FIN 之间可能有间隔，接收方需要等待应用程序处理结束后发送 FIN 报文。如果 ACK+FIN 一起发送，则就变成三次挥手了。</p>
+<p>在做短连接做压测的时候经常会出现大量端口处理 <code>TIME_WAIT</code> 状态，导致无端口可用。为什么需要这个状态？</p>
+<ol>
+<li>防止滞后的报文被后续建立的连接接收，因此结束连接前先等待 2MSL 的时间。（MSL
+是最大的报文存活时间，一来一回可以认为与上次连接相关的报文都不在网络中了）</li>
+<li>确保接收方已经正确关闭连接，考虑发起方最后一次 ACK 滞留，则接收方一直处于
+<code>LAST_ACK</code> 状态，而不会关闭连接。那么此时发送方重新建立连接 SYN，则由于序列号不同，处于 <code>LAST_ACK</code> 的接收方会响应 <code>RST</code> 报文。即连接未正确关闭导致后续连接无法建立。</li>
+</ol>
+<h2 id="状态转换"><a class="header-anchor" href="#状态转换"></a>状态转换</h2>
+<p>附一张状态转换图作为参考：</p>
+<img src="/2019/TCP-connection-establish-and-termination/Tcp_state_diagram_fixed_new.svg" class="" title="TCP State Diagram">
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="http://intronetworks.cs.luc.edu/current/html/tcp.html" target="_blank" rel="noopener">http://intronetworks.cs.luc.edu/current/html/tcp.html</a></li>
+<li><a href="https://vincent.bernat.ch/en/blog/2014-tcp-time-wait-state-linux" target="_blank" rel="noopener">https://vincent.bernat.ch/en/blog/2014-tcp-time-wait-state-linux</a> 对
+TIME_WAIT 有细致的讲解</li>
+<li><a href="https://en.wikipedia.org/wiki/Transmission_Control_Protocol" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Transmission_Control_Protocol</a> 维基百科，依旧是你最好的朋友</li>
+<li><a href="http://blog.qiusuo.im/blog/2014/03/19/tcp-timeout/" target="_blank" rel="noopener">http://blog.qiusuo.im/blog/2014/03/19/tcp-timeout/</a> TCP 中的各种超时</li>
+</ul></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2019/TCP-connection-establish-and-termination/';
+var disqus_title = '复习：TCP 三次握手、四次挥手';
+var disqus_url = 'https://lotabout.me/2019/TCP-connection-establish-and-termination/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

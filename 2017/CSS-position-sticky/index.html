@@ -1,0 +1,53 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="大约两年看在看 &lt;a href=&quot;https://www.ecma-international.org/ecma-262/6.0/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;ECMA 2015&lt;/a&gt;
+的时候，发现在滚动时每个章节的标题都会固定在页面的顶端，好奇的我看了下它的
+CSS，发现只有简单的一行 &lt;code&gt;position: sticky&lt;/code&gt;。当时只有 Firefox 实现了这个特性，不免心生遗憾，今天恰巧注意到 Chrome 从 56 也支持这个特性了！这里我们就来介绍下这个神奇的特性吧。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>CSS position:sticky | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/CSS/" rel="tag">CSS</a><a class="post-tag-link" href="/tags/position/" rel="tag">position</a><a class="post-tag-link" href="/tags/sticky/" rel="tag">sticky</a></div><div class="post-time">2017-09-04</div></div></div><div class="container post-header"><h1>CSS position:sticky</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#先暏为快"><span class="toc-number">1.</span> <span class="toc-text">先暏为快</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#工作原理"><span class="toc-number">2.</span> <span class="toc-text">工作原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#最后"><span class="toc-number">3.</span> <span class="toc-text">最后</span></a></li></ol></details></div><div class="container post-content"><p>大约两年看在看 <a href="https://www.ecma-international.org/ecma-262/6.0/" target="_blank" rel="noopener">ECMA 2015</a>
+的时候，发现在滚动时每个章节的标题都会固定在页面的顶端，好奇的我看了下它的
+CSS，发现只有简单的一行 <code>position: sticky</code>。当时只有 Firefox 实现了这个特性，不免心生遗憾，今天恰巧注意到 Chrome 从 56 也支持这个特性了！这里我们就来介绍下这个神奇的特性吧。</p>
+<h2 id="先暏为快"><a class="header-anchor" href="#先暏为快"></a>先暏为快</h2>
+<p>先看下面的 JsFiddle，注意滚动时左侧导航栏的行为。</p>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/d6xv8num/2/embedded/result,html,css/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>下面这个例子是 MDN 的 demo:</p>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/hjf99x20/embedded/result,html,css/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>只需要一行 CSS 就能实现，没有这个特性时，我们需要用 JS 监控滚动事件来实现。下面我们看看它的工作原理吧。</p>
+<h2 id="工作原理"><a class="header-anchor" href="#工作原理"></a>工作原理</h2>
+<blockquote>
+<p>Sticky positioning can be thought of as a hybrid of relative and fixed
+positioning. A stickily positioned element is treated as relatively positioned
+until it crosses a specified threshold, at which point it is treated as fixed.</p>
+</blockquote>
+<p>可以认为 sticky 是 relative 及 fixed 两种 position 的混合。当一个元素的
+position 为 sticky 时，它首先会被当成是 <code>position: relative</code>，之后，当它的位置超出一定的阈值时，该元素就被认为是 <code>position: fixed</code>。</p>
+<p>默认情况下，元素被当作是 <code>position: relative</code>，当用户滚动页面时，元素跟着它的父元素一起滚动。当元素和视区（viewport，这里可以理解成浏览器窗口）的距离小于（通过 <code>top: 10px</code> 等）指定的数值时，元素被认为是 <code>position: fixed</code>。造成的效果是元素和 viewport 的距离保持不变，不会小于指定的距离。</p>
+<p>例如：</p>
+<figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="selector-id">#one</span> &#123;</span><br><span class="line">    <span class="attribute">position</span>: sticky;</span><br><span class="line">    <span class="attribute">top</span>: <span class="number">10px</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当滚动屏幕使得元素 <code>#one</code> 与视区的距离小于 <code>10px</code> 时，它就变成了 <code>position: fixed; top: 10px</code>，此时继续滚动的话，<code>#one</code> 是不会移动的，因此也称为黏性
+(sticky)的。</p>
+<p>最后要注意一个注意点， <code>position: sticky</code> 的元素是不会“超出”父元素的。当滚动时，父元素也快离开屏幕时，子元素是不会继续保持 <code>sticky</code> 的状态的，它会随着父元素一起“滚”出屏幕。可以参考上节给出的 MDN 的例子。</p>
+<p>因此，如果将 <code>position: sticky</code> 与 <code>flexbox</code> 一起使用，要注意 flexbox 默认会拉伸元素。如第一个例子中，我们使用了 <code>align-items: flex-start;</code> 来保证导航栏的高度不会和父元素一样，否则 sticky 就没作用了。</p>
+<h2 id="最后"><a class="header-anchor" href="#最后"></a>最后</h2>
+<p>本文只是对 <code>position: sticky</code> 做一个简单的介绍，对它的介绍也是以自己的直观理解为主，如果遇到问题还请查阅官方文档。</p>
+<ul>
+<li><a href="https://developer.mozilla.org/en/docs/Web/CSS/position#Sticky_positioning" target="_blank" rel="noopener">MDN: sticky position</a></li>
+<li><a href="https://developers.google.com/web/updates/2012/08/Stick-your-landings-position-sticky-lands-in-WebKit" target="_blank" rel="noopener">sticky 支持 webkit!</a></li>
+<li><a href="https://github.com/wilddeer/stickyfill" target="_blank" rel="noopener">sticky polyfill</a></li>
+</ul></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2017/CSS-position-sticky/';
+var disqus_title = 'CSS position:sticky';
+var disqus_url = 'https://lotabout.me/2017/CSS-position-sticky/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

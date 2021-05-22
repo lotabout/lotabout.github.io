@@ -1,0 +1,250 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="Michael Nielsen 的 &lt;a href=&quot;http://neuralnetworksanddeeplearning.com/chap2.html&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;深度学习
+&lt;/a&gt; 文章里对 BP 算法有了相当全面的介绍，网上也有中文翻译版本。本文是自己学习的一些笔记，主要是抄一遍公式的证明来加强记忆。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Back Propagation 笔记 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a><a class="post-tag-link" href="/tags/Neural-Network/" rel="tag">Neural Network</a></div><div class="post-time">2018-03-13</div></div></div><div class="container post-header"><h1>Back Propagation 笔记</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#符号说明"><span class="toc-number">1.</span> <span class="toc-text">符号说明</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#bp-算法"><span class="toc-number">2.</span> <span class="toc-text">BP 算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#四个基本公式"><span class="toc-number">3.</span> <span class="toc-text">四个基本公式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#公式推导"><span class="toc-number">4.</span> <span class="toc-text">公式推导</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#bp1"><span class="toc-number">4.1.</span> <span class="toc-text">BP1</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bp2"><span class="toc-number">4.2.</span> <span class="toc-text">BP2</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bp3"><span class="toc-number">4.3.</span> <span class="toc-text">BP3</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bp4"><span class="toc-number">4.4.</span> <span class="toc-text">BP4</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#代码实现"><span class="toc-number">5.</span> <span class="toc-text">代码实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考资料"><span class="toc-number">6.</span> <span class="toc-text">参考资料</span></a></li></ol></details></div><div class="container post-content"><p>Michael Nielsen 的 <a href="http://neuralnetworksanddeeplearning.com/chap2.html" target="_blank" rel="noopener">深度学习
+</a> 文章里对 BP 算法有了相当全面的介绍，网上也有中文翻译版本。本文是自己学习的一些笔记，主要是抄一遍公式的证明来加强记忆。</p>
+<h2 id="符号说明"><a class="header-anchor" href="#符号说明"></a>符号说明</h2>
+<img src="/2018/Back-Propagation-Note/NN.png" class="" title="Decision Neural Network">
+<ul>
+<li>$b_j^l$ 表示第 $l$ 层的第 $j$ 个节点对应的偏置</li>
+<li>$w_{jk}^l$ 表示从第 $l-1$ 层的第 $k$ 个节点到 $l$ 层的 $j$ 个节点的连线的权重。</li>
+<li>$z_j^l$ 表示第 $l$ 层的第 $j$ 个节点的加权输入，即 $z_j^l \equiv
+\sum_k{w_{kj}^l a_k^{l-1}} + b_j^l$</li>
+<li>$a_j^l$ 表示第 $l$ 层的第 $j$ 个节点的激活输出，即 $a_j^l \equiv \sigma(z_j^l)$</li>
+</ul>
+<h2 id="bp-算法"><a class="header-anchor" href="#bp-算法"></a>BP 算法</h2>
+<ol>
+<li>输入 $x$: 设输入层的激活值 $a^1 = x$。</li>
+<li>前向传播：对于 $l = 2, 3, …, L$，计算 $z^l = w^l a^{l-1} + b^l$ 及 $a^l =
+\sigma(z^l)$。</li>
+<li>计算 error $\delta^L = \nabla_a C \odot \sigma’(z^L)$。</li>
+<li>反射传播错误：对于 $l = L-1, L-2, …, 2$ 计算
+$\delta^l = (( w^{l+1} )^T \delta^{l+1} ) \odot \sigma’(z^l)$</li>
+<li>输出每层的梯度变化：
+$\nabla_{w^l} C = \delta^l (a^{l-1} )^T $ ， $\nabla_{b^l} C = \delta^l$</li>
+</ol>
+<p>如果算法需要计算多个样本 $x$ 对应的梯度变化，然后取平均时，可以输入 $X = [x_1,
+x_2, …, x_m]$，其中 $m$ 为样本数目。上面的算法不需要任何的修改，算法的输入变为：$\nabla_{b^l} C = [\nabla_{b^{l, 1}} C, \nabla_{b^{l, 2}} C, …
+\nabla_{b^{l, m}} C]$ ，$\nabla_{w^l} C = \sum_m{w^{l, m}}$ ，其中上标 ${l,
+m}$ 代表第 $m$ 个样本对应的第 $l$ 层。这可以认为是算法在多个样本下的矩阵形式。</p>
+<h2 id="四个基本公式"><a class="header-anchor" href="#四个基本公式"></a>四个基本公式</h2>
+<p>矩阵形式：</p>
+<p>\begin{eqnarray}
+\delta^L = \nabla_a C \odot \sigma’(z^L).
+\tag{BP1a}\end{eqnarray}</p>
+<p>\begin{eqnarray}
+\delta^l = (( w^{l+1} )^T \delta^{l+1} ) \odot \sigma’(z^l )
+\tag{BP2a}\end{eqnarray}</p>
+<p>\begin{eqnarray}
+\nabla_{b^l} C = \delta^l
+\tag{BP3a}\end{eqnarray}</p>
+<p>\begin{eqnarray}
+\nabla_{w^l} C = \delta^l (a^{l-1} )^T
+\tag{BP4a}\end{eqnarray}</p>
+<p>分量形式：</p>
+<p>\begin{eqnarray}
+\delta^L_j = \frac{\partial C}{\partial a^L_j} \sigma’(z^L_j)
+\tag{BP1}\end{eqnarray}</p>
+<p>\begin{eqnarray}
+\delta^l_j = \sum_k w^{l+1}_{kj}  \delta^{l+1}_k \sigma’(z^l_j).
+\tag{BP2}\end{eqnarray}</p>
+<p>\begin{eqnarray}
+\frac{\partial C}{\partial b^l_j} = \delta^l_j
+\tag{BP3}\end{eqnarray}</p>
+<p>\begin{eqnarray}
+\frac{\partial C}{\partial w^l_{jk}} = a^{l-1}_k \delta^l_j.
+\tag{BP4}\end{eqnarray}</p>
+<h2 id="公式推导"><a class="header-anchor" href="#公式推导"></a>公式推导</h2>
+<p>这里涉及很多变量和下标，这是理解神经网络“最大”的门槛了吧。下面我们要证明上面提到的四个公式，证明的过程基本是原文的翻译。</p>
+<h3 id="bp1"><a class="header-anchor" href="#bp1"></a>BP1</h3>
+<p>下面我们先证明公式 BP1，我们要先定义 $\delta_j^l$：</p>
+<p>$$\delta^l_j \equiv \frac{\partial C}{\partial z^l_j}$$</p>
+<p>根据链式法则，由于 $C$ 是 $a_1^L, a_2^L, …$ 的函数，所以有</p>
+<p>$$\delta^L_j = \sum_k{\frac{\partial C}{\partial a_k^L} \frac{\partial a_k^L}{\partial z_j^L}}$$</p>
+<p>其中 $k$ 是输出层 L 的节点个数。当然，根据 $a_j^l$ 的定义我们知道，$a_j^l$ 完全取决于 $z_j^l$ 的值。这意味着当 $j \ne k$ 时，$\partial a_k^L/\partial
+z_j^L = 0$。于是上式又可以简化成：</p>
+<p>$$\delta^L_j = \frac{\partial C}{\partial a_j^L} \frac{\partial a_j^L}{\partial z_j^L}$$</p>
+<p>而由于 $a_j^L = \sigma(z_j^L)$，上式的第二项就可以用 $\sigma’(z_j^L)$ 替换，于是得到公式 BP1 ：</p>
+<p>\begin{eqnarray}
+\delta^L_j = \frac{\partial C}{\partial a^L_j} \sigma’(z^L_j)
+\tag{BP1}\end{eqnarray}</p>
+<p>上式中 $\frac{\partial C}{\partial a_j^L}$ 取决于损失函数 $C$ 的选择，当 $C =
+\frac{1}{2}\sum_j(y_j - a_j^L )^2$ 时，有 $\partial C/\partial a_j^L = (a_j^L -
+y_j)$。</p>
+<p>矩阵形式如下：</p>
+<p>\begin{eqnarray}
+\delta^l
+= \begin{bmatrix}
+\delta_1^L \\
+\delta_2^L \\
+\vdots \\
+\delta_j^L
+\end{bmatrix}
+= \begin{bmatrix}
+\frac{\partial C}{\partial a_1^L} \\
+\frac{\partial C}{\partial a_2^L} \\
+\vdots \\
+\frac{\partial C}{\partial a_j^L}
+\end{bmatrix} \odot \begin{bmatrix}
+\sigma’(z_1^L) \\
+\sigma’(z_2^L) \\
+\vdots \\
+\sigma’(z_j^L)
+\end{bmatrix}
+= \nabla_a C \odot \sigma’(z^L)
+\tag{BP1a}\end{eqnarray}</p>
+<h3 id="bp2"><a class="header-anchor" href="#bp2"></a>BP2</h3>
+<p>类似的，我们从定义出发：</p>
+<p>$$
+\delta_j^l = \frac{\partial C}{\partial z_j^l}
+$$</p>
+<p>类似上一节，$C$ 可以认为是任意一层的所有参数 $z_1^l, z_2^l, …$ 的复合函数，因此根据链式法则：</p>
+<p>$$
+\delta_j^l
+= \frac{\partial C}{\partial z_j^l}
+= \sum_k{\frac{\partial C}{\partial z_k^{l+1}} \frac{\partial z_k^{l+1}}{\partial z_j^l}}
+= \sum_k{\delta_k^{l+1} \frac{\partial z_k^{l+1}}{\partial z_j^l}}
+$$</p>
+<p>根据 $z_k^{l+1}$ 的定义，我们又有：</p>
+<p>$$
+z_k^{l+1} = \sum_j{w_{kj}^{l+1} a_j^l + b_k^{l+1 }} = \sum_j{w_{kj}^{l+1} \sigma(z_j^l )+b_k^{l+1}}
+$$</p>
+<p>对 $z_j^l$ 求导，注意到只有当 $z_j$ 匹配时导数才不为零，所以有 ：</p>
+<p>$$\frac{\partial z_k^{l+1}}{\partial z_j^l} = w_{kj}^{l+1}\sigma’ (z_j^l)$$</p>
+<p>最后代入 $\delta_j^l$ 的式子，即为公式 BP2：</p>
+<p>\begin{eqnarray}
+\delta^l_j = \sum_k w^{l+1}_{kj}  \delta^{l+1}_k \sigma’(z^l_j).
+\tag{BP2}\end{eqnarray}</p>
+<p>矩阵形式如下：</p>
+<p>\begin{eqnarray}
+\delta^l
+&amp;=&amp; \begin{bmatrix}
+\delta_1^l \\
+\delta_2^l \\
+\vdots \\
+\delta_j^l
+\end{bmatrix}
+= \begin{bmatrix}
+w_{11}^{l+1} &amp; w_{21}^{l+1} &amp; \dots &amp; w_{k1}^{l+1} \\
+w_{12}^{l+1} &amp; w_{22}^{l+1} &amp; \dots &amp; w_{k2}^{l+1} \\
+\dots &amp; \dots &amp; \dots &amp; \dots \\
+w_{1j}^{l+1} &amp; w_{2j}^{l+1} &amp; \dots &amp; w_{kj}^{l+1}
+\end{bmatrix} \begin{bmatrix}
+\delta_1^{l+1} \\
+\delta_2^{l+1} \\
+\vdots \\
+\delta_k^{l+1} \\
+\end{bmatrix} \odot \begin{bmatrix}
+\sigma’(z_1^L) \\
+\sigma’(z_2^L) \\
+\vdots \\
+\sigma’(z_j^L)
+\end{bmatrix} \\
+&amp;=&amp; (( w^{l+1} )^T \delta^{l+1} ) \odot \sigma’(z^l )
+\tag{BP2a}\end{eqnarray}</p>
+<h3 id="bp3"><a class="header-anchor" href="#bp3"></a>BP3</h3>
+<p>由于 $b_j^l$ 的作用于 $z_j^l$ 的作用基本一致，所以对于 BP2 的证明几乎可以直接对 $b_j^l$ 使用。$C$ 可以认为是任意一层的所有参数 $z_1^l, z_2^l, …$ 的复合函数，因此根据链式法则：</p>
+<p>$$
+\frac{\partial C}{\partial b_j^l}
+= \sum_k{\frac{\partial C}{\partial z_k^{l+1}} \frac{\partial z_k^{l+1}}{\partial b_j^l}}
+= \sum_k{\delta_k^{l+1} \frac{\partial z_k^{l+1}}{\partial b_j^l}}
+$$</p>
+<p>根据 $z_k^{l+1}$ 的定义，我们又有：</p>
+<p>$$
+z_k^{l+1} = \sum_j{w_{kj}^{l+1} a_j^l + b_k^{l+1 }} = \sum_j{w_{kj}^{l+1} \sigma(z_j^l )+b_k^{l+1}}
+$$</p>
+<p>对 $b_j^l$ 求导，注意到只有当 $z_j$ 匹配时导数才不为零，所以有 ：</p>
+<p>$$
+\frac{\partial z_k^{l+1}}{\partial b_j^l}
+= w_{kj}^{l+1} \frac{\partial \sigma (z_j^l )}{\partial z_j^l} \frac{\partial z_j^l }{\partial b_j^l }
+= w_{kj}^{l+1}\sigma’ (z_j^l)
+$$</p>
+<p>代入公式，有：</p>
+<p>\begin{eqnarray}
+\frac{\partial C}{\partial b_j^l} = \sum_k w^{l+1}_{kj}  \delta^{l+1}_k \sigma’(z^l_j) = \delta^l_j
+\tag{BP3}\end{eqnarray}</p>
+<p>矩阵形式如下：</p>
+<p>\begin{eqnarray}
+\nabla_{b^l} C = \delta
+\tag{BP3a}\end{eqnarray}</p>
+<h3 id="bp4"><a class="header-anchor" href="#bp4"></a>BP4</h3>
+<p>证明过程中先运用链式法则引入 $z_j^l$，之后代入 $z_j^l = \sum_k{w_{kj}^l a_k^{l-1}} + b_j^l$ 求导即可。</p>
+<p>\begin{eqnarray}
+\frac{\partial C}{\partial w_{kj}^l} &amp;=&amp; \sum_i{\frac{\partial C}{\partial z_i^l} \frac{\partial z_i^l}{\partial w_{kj}^l}} \\
+&amp;=&amp; \frac{\partial C}{\partial z_j^l} \frac{\partial z_j^l}{\partial w_{kj}^l} = \delta_j^l \frac{\partial z_j^l}{\partial w_{kj}^l} \\
+&amp;=&amp; \delta_j^l \Big( \sum_i{\frac{\partial w_{ij}^l a_i^{l-1}}{\partial w_{kj}^l}} + \frac{\partial b_j^l}{\partial w_{kj}^l} \Big) \\
+&amp;=&amp; \delta_j^l a_k^{l-1} = a_k^{l-1} \delta_j^l
+\tag{BP4}\end{eqnarray}</p>
+<p>矩阵形式如下（为了方便观看，把 $\partial C/\partial w_{kj}^l$ 与成了 $w_{kj}^l$）：</p>
+<p>\begin{eqnarray}
+\nabla_{w^l} C
+= \begin{bmatrix}
+w_1^l \\
+w_2^l \\
+\dots \\
+w_j^l
+\end{bmatrix}
+&amp;=&amp; \begin{bmatrix}
+w_{11}^l &amp; w_{21}^l &amp; \dots &amp; w_{k1}^l \\
+w_{12}^l &amp; w_{22}^l &amp; \dots &amp; w_{k2}^l \\
+\dots &amp; \dots &amp; \dots &amp; \dots \\
+w_{1j}^l &amp; w_{2j}^l &amp; \dots &amp; w_{kj}^l
+\end{bmatrix} \\
+&amp;=&amp; \begin{bmatrix}
+a_1^{l-1} \delta_1^l &amp; a_2^{l-1} \delta_1^l &amp; \dots &amp; a_k^{l-1} \delta_1^l \\
+a_1^{l-1} \delta_2^l &amp; a_2^{l-1} \delta_2^l &amp; \dots &amp; a_k^{l-1} \delta_2^l \\
+\dots &amp; \dots &amp; \dots &amp; \dots \\
+a_1^{l-1} \delta_j^l &amp; a_2^{l-1} \delta_j^l &amp; \dots &amp; a_k^{l-1} \delta_j^l
+\end{bmatrix} \\
+&amp;=&amp; \begin{bmatrix}
+\delta_1^{l} \\
+\delta_2^{l} \\
+\vdots \\
+\delta_j^{l}
+\end{bmatrix} \begin{bmatrix}
+a_1^{l-1} &amp; a_2^{l-1} &amp; \dots &amp; a_k^{l-1}
+\end{bmatrix} \\
+&amp;=&amp; \delta^l (a^{l-1} )^T
+\tag{BP4a}\end{eqnarray}</p>
+<h2 id="代码实现"><a class="header-anchor" href="#代码实现"></a>代码实现</h2>
+<p>可以在
+<a href="https://gist.github.com/lotabout/7a98d62caa4b0e7084ee0e85e79a5fe4" target="_blank" rel="noopener">lotabout/neural-network.py</a>
+中找到，代码在原文的基础之上实现了 mini batch 的矩阵运算。</p>
+<h2 id="参考资料"><a class="header-anchor" href="#参考资料"></a>参考资料</h2>
+<ul>
+<li><a href="http://neuralnetworksanddeeplearning.com/chap2.html" target="_blank" rel="noopener">http://neuralnetworksanddeeplearning.com/chap2.html</a> 本文的主要参考资料</li>
+<li><a href="http://colah.github.io/posts/2015-08-Backprop/" target="_blank" rel="noopener">http://colah.github.io/posts/2015-08-Backprop/</a> 通俗讲解了 BP 的基本数学原理</li>
+</ul></div></div><script type="text/x-mathjax-config">
+   MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    }); 
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/Back-Propagation-Note/';
+var disqus_title = 'Back Propagation 笔记';
+var disqus_url = 'https://lotabout.me/2018/Back-Propagation-Note/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

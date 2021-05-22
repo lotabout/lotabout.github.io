@@ -1,0 +1,57 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;p&gt;恭喜你完成了自己的 C 语言编译器，本章中我们发一发牢骚，说一说编写编译器值得注意的一些问题；编写编译器时遇到的一些难题。&lt;/p&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>手把手教你构建 C 语言编译器（9）- 总结 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/C/" rel="tag">C</a><a class="post-tag-link" href="/tags/compiler/" rel="tag">compiler</a></div><div class="post-time">2016-01-05</div></div></div><div class="container post-header"><h1>手把手教你构建 C 语言编译器（9）- 总结</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#虚拟机与目标代码"><span class="toc-number">1.</span> <span class="toc-text">虚拟机与目标代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#词法分析"><span class="toc-number">2.</span> <span class="toc-text">词法分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#语法分析"><span class="toc-number">3.</span> <span class="toc-text">语法分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#关于编代码"><span class="toc-number">4.</span> <span class="toc-text">关于编代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">5.</span> <span class="toc-text">结语</span></a></li></ol></details></div><div class="container post-content"><p>恭喜你完成了自己的 C 语言编译器，本章中我们发一发牢骚，说一说编写编译器值得注意的一些问题；编写编译器时遇到的一些难题。</p>
+<a id="more"></a>
+<p>手把手教你构建 C 语言编译器系列共有10个部分：</p>
+<ol>
+<li><a href="http://lotabout.me/2015/write-a-C-interpreter-0/">手把手教你构建 C 语言编译器（0）——前言</a></li>
+<li><a href="http://lotabout.me/2015/write-a-C-interpreter-1/">手把手教你构建 C 语言编译器（1）——设计</a></li>
+<li><a href="http://lotabout.me/2015/write-a-C-interpreter-2/">手把手教你构建 C 语言编译器（2）——虚拟机</a></li>
+<li><a href="http://lotabout.me/2015/write-a-C-interpreter-3/">手把手教你构建 C 语言编译器（3）——词法分析器</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-4/">手把手教你构建 C 语言编译器（4）——递归下降</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-5/">手把手教你构建 C 语言编译器（5）——变量定义</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-6/">手把手教你构建 C 语言编译器（6）——函数定义</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-7/">手把手教你构建 C 语言编译器（7）——语句</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-8/">手把手教你构建 C 语言编译器（8）——表达式</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-9/">手把手教你构建 C 语言编译器（9）——总结</a></li>
+</ol>
+<h2 id="虚拟机与目标代码"><a class="header-anchor" href="#虚拟机与目标代码"></a>虚拟机与目标代码</h2>
+<p>整个系列的一开始，我们就着手虚拟机的实现。不知道你是否有同感，这部分对于整个编译器的编写其实是十分重要的。我认为至少占了重要程度的50%。</p>
+<p>这里要说明这样一个观点，学习编译原理时常常着眼于词法分析和语法分析，而忽略了同样重要的代码生成。对于学习或考试而言或许可以，但实际编译项目时，最为重要的是能“跑起来”，所以我们需要给予代码生成高度的重视。</p>
+<p>同时我们也看到，在后期解析语句和表达式时，难点已经不再是语法分析了，而是如何为运算符生成相应的汇编代码。</p>
+<h2 id="词法分析"><a class="header-anchor" href="#词法分析"></a>词法分析</h2>
+<p>我们用了很暴力的手段编写了我们的词法分析器，我认为这并无不可。</p>
+<p>但你依旧可以学习相关的知识，了解自动生成词法分析器的原理，它涉及到了“正则表达式”，“状态机”等等知识。相信这部分的知识能够很大程度上提高你的编程水平。</p>
+<p>同时，如果今后你仍然想编写编译器，不妨试试这些自动生成工具。</p>
+<h2 id="语法分析"><a class="header-anchor" href="#语法分析"></a>语法分析</h2>
+<p>长期以来，语法分析对我而言一直是迷一样的存在，直到真正用递归下降的方式实现了一个。</p>
+<p>我们用了专门的一章讲解了“递归下降”与 BNF 文法的关系。希望能减少你对理论的厌恶。至少，实现起来并不是太难。</p>
+<p>如果有兴趣，可以学习学习这些文法，因为已经有许多自动生成的工具支持它们。这样你就不需要重复造轮子。可以看看 yacc 等工具，更先进的版本是 <code>bsion</code>。同时其它语言也有许多类似的支持。</p>
+<p>题外话，最近知道了一个叫“PEG 文法”的表示方法，无论是读起来，还是实现起来，都比
+BNF 要容易，你也可以学习看看。</p>
+<h2 id="关于编代码"><a class="header-anchor" href="#关于编代码"></a>关于编代码</h2>
+<p>这也是我自己的感慨吧。无论多好的教程，想要完全理解它，最好的方式恐怕还是要自己实现它。</p>
+<p>只是在编写代码的过程中，我们会遇到许多的挫折，例如需要考虑许多细节，或是调试起来十分困难。但也只有真正静下心来去克服它，我们才能有所成长吧。</p>
+<p>例如在编写表达式的解析时，大量重复的代码特别让人崩溃。还有就是调试编译器，简直痛苦地无话可说。</p>
+<p>P.S. 如果你按这个系列自己编写代码，记得事先写一些用于输出汇编代码的函数，很有帮助的。</p>
+<p>还有就是写这个系列的文章，开始的冲动过了之后，每写一篇都特别心烦，希望文章本身没有受我的这种情绪影响吧。</p>
+<h2 id="结语"><a class="header-anchor" href="#结语"></a>结语</h2>
+<p>编程有趣又无趣，只有身在其中的我们才能体会吧。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2016/write-a-C-interpreter-9/';
+var disqus_title = '手把手教你构建 C 语言编译器（9）- 总结';
+var disqus_url = 'https://lotabout.me/2016/write-a-C-interpreter-9/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

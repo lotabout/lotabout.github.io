@@ -1,0 +1,88 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="This is the second chapter of series “Let’s Build a C Compiler”, In this
+chapter we will have an overview of the structures of our compiler."><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Let's Build a C Compiler (1) -- Design | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/C/" rel="tag">C</a><a class="post-tag-link" href="/tags/compiler/" rel="tag">compiler</a></div><div class="post-time">2016-02-06</div></div></div><div class="container post-header"><h1>Let's Build a C Compiler (1) -- Design</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#phases-of-compiler-construction"><span class="toc-number">1.</span> <span class="toc-text">Phases of Compiler Construction</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#overall-structure-of-our-compiler"><span class="toc-number">2.</span> <span class="toc-text">Overall Structure of our Compiler</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#code"><span class="toc-number">3.</span> <span class="toc-text">Code</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#summary"><span class="toc-number">4.</span> <span class="toc-text">Summary</span></a></li></ol></details></div><div class="container post-content"><p>This is the second chapter of series “Let’s Build a C Compiler”, In this
+chapter we will have an overview of the structures of our compiler.</p>
+<p>Previous Chapters:</p>
+<ol>
+<li><a href="http://lotabout.me/2016/Let-s-Build-a-C-Interpreter-0/">Let’s Build a C Compiler (0) – Preface</a></li>
+</ol>
+<p>As we said in previous chapter, we promise a “Compiler”, but it is actually an
+&quot;Interpreter&quot;. That means we can run a C source file just like a script, we
+did this mainly for two reasons:</p>
+<ol>
+<li>Interpreter is different with Compiler only in code generation phase. They
+are the same in lexical analysis and parsing.</li>
+<li>We will build our own virtual machine and assembly instructions, that would
+help us better understanding the how computer works.</li>
+</ol>
+<h2 id="phases-of-compiler-construction"><a class="header-anchor" href="#phases-of-compiler-construction"></a>Phases of Compiler Construction</h2>
+<p>Normally, there are three phases of compiler parsing a source file:</p>
+<ol>
+<li>lexical analysis: that converts source strings into internal token stream.</li>
+<li>parsing: that consumes token stream and constructs a syntax tree.</li>
+<li>code generation: walk through the synatx tree and convert it to target
+code.</li>
+</ol>
+<p>Compiler Construction had been so mature that part 1 &amp; 2 can be done by
+automation tools. For example, flex can be used for lexical analysis, bison is
+for parsing. They are powerful but do thousands of things behind the scene. In
+order to fully understand how to build a compiler, we are going to build all
+of them from scratch.</p>
+<ol>
+<li>Build our own virtual machine and instruction set. This is the target code
+that will be using in our code generation phase.</li>
+<li>Build our own lexer for C compiler.</li>
+<li>Write a recusion descent parser on our own.</li>
+</ol>
+<h2 id="overall-structure-of-our-compiler"><a class="header-anchor" href="#overall-structure-of-our-compiler"></a>Overall Structure of our Compiler</h2>
+<p>Taken from c4, our compiler includes 4 main functions:</p>
+<ol>
+<li><code>next()</code> for lexical analysis; get the next token; will ignore spaces tabs etc.</li>
+<li><code>program()</code> entry for parser.</li>
+<li><code>expression(level)</code> parse expression; <code>level</code> will be explained in later
+chapter.</li>
+<li><code>eval()</code> the entry of our virtual machine; used to interpret target
+instructions.</li>
+</ol>
+<p>Why would <code>expression</code> exist when we have <code>program</code> for parser? It is because
+the parser for expressions is relatively independent and complex, so we put it
+into a single mmodule(function).</p>
+<p>Then our code looks like:</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;memory.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> token;            <span class="comment">// current token</span></span><br><span class="line"><span class="keyword">char</span> *src, *old_src;  <span class="comment">// pointer to source code string;</span></span><br><span class="line"><span class="keyword">int</span> poolsize;         <span class="comment">// default size of text/data/stack</span></span><br><span class="line"><span class="keyword">int</span> <span class="built_in">line</span>;             <span class="comment">// line number</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">next</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    token = *src++;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">expression</span><span class="params">(<span class="keyword">int</span> level)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// do nothing</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">program</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    next();                  <span class="comment">// get next token</span></span><br><span class="line">    <span class="keyword">while</span> (token &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"token is: %c\n"</span>, token);</span><br><span class="line">        next();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">eval</span><span class="params">()</span> </span>&#123; <span class="comment">// do nothing yet</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i, fd;</span><br><span class="line"></span><br><span class="line">    argc--;</span><br><span class="line">    argv++;</span><br><span class="line"></span><br><span class="line">    poolsize = <span class="number">256</span> * <span class="number">1024</span>; <span class="comment">// arbitrary size</span></span><br><span class="line">    <span class="built_in">line</span> = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((fd = <span class="built_in">open</span>(*argv, <span class="number">0</span>)) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"could not open(%s)\n"</span>, *argv);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!(src = old_src = <span class="built_in">malloc</span>(poolsize))) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"could not malloc(%d) for source area\n"</span>, poolsize);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// read the source file</span></span><br><span class="line">    <span class="keyword">if</span> ((i = <span class="built_in">read</span>(fd, src, poolsize<span class="number">-1</span>)) &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"read() returned %d\n"</span>, i);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    src[i] = <span class="number">0</span>; <span class="comment">// add EOF character</span></span><br><span class="line">    <span class="built_in">close</span>(fd);</span><br><span class="line"></span><br><span class="line">    program();</span><br><span class="line">    <span class="keyword">return</span> eval();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>The code might seems to be a lot for the very first chapter. But if you are
+familiar with C, you’ll find it simple enough. The code above reads a source
+file, character by character, and output them.</p>
+<p>The most important thing here is to understand the meaning of these functions,
+they represents the whole framework of a interpreter. We’ll implement all of
+them step by step in the following chapters and finally a whole compiler.</p>
+<h2 id="code"><a class="header-anchor" href="#code"></a>Code</h2>
+<p>The code for this chapter can be downloaded from
+<a href="https://github.com/lotabout/write-a-C-interpreter/tree/step-0" target="_blank" rel="noopener">Github</a>, or
+clone by:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git clone -b step-0 https:&#x2F;&#x2F;github.com&#x2F;lotabout&#x2F;write-a-C-interpreter</span><br></pre></td></tr></table></figure>
+<p>Note that I might fix bugs later, and if there is any incosistance between the
+artical and the code branches, follow the article. I would only update code in
+the <code>master</code> branch.</p>
+<h2 id="summary"><a class="header-anchor" href="#summary"></a>Summary</h2>
+<p>With simple coding, we have the simplest compiler: a do-nothing compiler. In
+<a href="http://lotabout.me/2016/Let-s-Build-a-C-Interpreter-2/">next chapter</a>, we
+will implement the <code>eval</code> function, i.e. our own virtual machine</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2016/Let-s-Build-a-C-Interpreter-1/';
+var disqus_title = 'Let's Build a C Compiler (1) -- Design';
+var disqus_url = 'https://lotabout.me/2016/Let-s-Build-a-C-Interpreter-1/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="Deprecated. 这篇文章写得太仓促了，急切地想表达原子性的重要性，但内容组织得不太好，感觉文章比较乱，另一方面也不是一个好的系列开篇。不建议阅读。不过为了完整性还是保留，有兴趣的也可以看看写得有多烂哈。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Deprecated. Java 并发（零）- 原子性 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Java-Concurrency/" rel="tag">Java Concurrency</a></div><div class="post-time">2020-06-14</div></div></div><div class="container post-header"><h1>Deprecated. Java 并发（零）- 原子性</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#多个线程多十倍烦恼"><span class="toc-number">1.</span> <span class="toc-text">多个线程多十倍烦恼</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#原子是不可分割的"><span class="toc-number">2.</span> <span class="toc-text">原子是不可分割的</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#原子能力最终依赖于底层"><span class="toc-number">3.</span> <span class="toc-text">原子能力最终依赖于底层</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#万恶之源：shared-mutable-state"><span class="toc-number">4.</span> <span class="toc-text">万恶之源：Shared Mutable State</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">5.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">6.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>Deprecated. 这篇文章写得太仓促了，急切地想表达原子性的重要性，但内容组织得不太好，感觉文章比较乱，另一方面也不是一个好的系列开篇。不建议阅读。不过为了完整性还是保留，有兴趣的也可以看看写得有多烂哈。</p>
+<p>并发问题主要有三个根源：原子性、可见性及有序性。作为 Java 并发系列的开篇，我们先来谈谈原子性，以及引发原子性问题的 Shared Mutable State(共享可变状态)。</p>
+<h2 id="多个线程多十倍烦恼"><a class="header-anchor" href="#多个线程多十倍烦恼"></a>多个线程多十倍烦恼</h2>
+<p>没有多线程就不存在并发问题<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>，一旦有多个线程，情况就复杂了起来。下例中我们起了两个线程，分别尝试对全局变量 <code>counter</code> 做<code>++</code>
+操作，最终输出的结果会是多少呢？</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AtomicTest</span> </span>&#123;</span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException </span>&#123;</span><br><span class="line">    Thread th1 = <span class="keyword">new</span> Thread(AtomicTest::increase);</span><br><span class="line">    Thread th2 = <span class="keyword">new</span> Thread(AtomicTest::increase);</span><br><span class="line">    th1.start();</span><br><span class="line">    th2.start();</span><br><span class="line">    th1.join();</span><br><span class="line">    th2.join();</span><br><span class="line">    System.out.println(counter);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">increase</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10000</span>; i++) &#123;</span><br><span class="line">      counter++;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>我们预期它永远输出 <code>20000</code>，但实际运行可能输出任意值。仅仅两个线程就让简单的
+<code>++</code> 操作不再正确。</p>
+<p>当代码逻辑在多线程环境下运行结果不符合预期时，我们会称代码是不是“线程安全”的，有时候也说“有并发问题”。上例中的 <code>increase</code> 函数就不是“线程安全”，也可以说是“线程不安全的”。为了达到线程安全，我们需要原子操作。</p>
+<h2 id="原子是不可分割的"><a class="header-anchor" href="#原子是不可分割的"></a>原子是不可分割的</h2>
+<p>物理上“原子”是“不可分割的粒子”。编程中借用了这个概念，我们说一个操作是“原子的”代表这个操作在执行的过程中是不可分割的。一个操作在真正执行时可能需要执行底层的粒度更细的多个指令，如果这些指令的执行结果表现成一个整体，则认为操作是原子的。</p>
+<p>例如上面的 <code>counter++</code> 操作是 Java 层面的，在执行时需要多个底层的 Java 字节码指令来完成，可以理解成下面的伪代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">reg0 &#x3D; counter</span><br><span class="line">reg0 &#x3D; reg0 + 1</span><br><span class="line">counter &#x3D; reg0</span><br></pre></td></tr></table></figure>
+<p>当有两个线程同时执行 <code>counter++</code> 时，JVM 可能会交替执行两个线程的指令
+<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>，实际执行的顺序可能会是（序号代表实际执行顺序）：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">------- Thread 1 ------+------ Thread 2 --------</span><br><span class="line">1. reg0 &#x3D; counter (0)  |</span><br><span class="line">                       | 2. reg1 &#x3D; counter (0)</span><br><span class="line">3. reg0 &#x3D; reg0 + 1 (1) |</span><br><span class="line">                       | 4. reg1 &#x3D; reg1 + 1; (1)</span><br><span class="line">5. counter &#x3D; reg0 (1)  |</span><br><span class="line">                       | 6. counter &#x3D; reg1 (1)</span><br></pre></td></tr></table></figure>
+<p>我们预期结果 <code>counter = 2</code>，但实际结果为 <code>counter = 1</code>，这是由于 <code>++</code> 操作的底层指令在执行时并不是一个整体，而是被另一个线程的指令“分割”了。换言之，<code>++</code> 操作不是“原子的”。</p>
+<h2 id="原子能力最终依赖于底层"><a class="header-anchor" href="#原子能力最终依赖于底层"></a>原子能力最终依赖于底层</h2>
+<p>实现原子性，意味着多个操作在执行时作为一个不可分割的整体。通常情况下，编程语言会提供一些原子的能力让我们实现原子性，将多个操作作为整体执行。Java 中常见的有
+<code>synchronized</code> 代表的锁、<code>ReentrantLock</code>代表的显示锁及 <code>AtomicInteger</code> 代表的原子类等。</p>
+<p>而 Java 类库和 JVM 在实现这些机制时，需要依赖操作系统提供的原子能力。如
+<code>synchronized</code> 通常是利用操作系统的<code>mutex</code> 机制实现的，而操作系统的 <code>mutex</code> 实现又依赖 CPU 提供的原子指令，如 x86 提供的
+<a href="https://c9x.me/x86/html/file_module_x86_id_41.html" target="_blank" rel="noopener">CMPXCHG</a> 指令<sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup>
+。</p>
+<p>那么如果 CPU 不提供 CAS 的原子，JVM 有办法实现锁机制吗？答案是有，但依旧需要依赖其它的原子能力。例如早期的一些互斥锁(Mutual exclusion)算法<sup class="footnote-ref"><a href="#fn4" id="fnref4">[4]</a></sup>不依赖 CAS 指令，但要求对某个变量(寄存器/内存)的读写是原子的（通常情况下也是成立的）。</p>
+<h2 id="万恶之源：shared-mutable-state"><a class="header-anchor" href="#万恶之源：shared-mutable-state"></a>万恶之源：Shared Mutable State</h2>
+<p>前文提到了原子性是逻辑作为一个整体被执行，不被分割。那么什么情况下才可能出现被分割呢？要有多线程。多线程就一定破坏原子性吗？只有在它们 <strong>Shared Mutable
+State</strong>(共享可变状态) 的时候。</p>
+<p>这个概念非常重要，也是后续文章中会经常出现的概念。一共三个词：</p>
+<ul>
+<li>State(状态)，存储下来的都是“状态”，比如存在寄存器、内存的变量；存在文件、数据库的内容等。</li>
+<li>Shared(共享)，有多个参与者，“同时”访问某个状态。如多个线程访问同一个变量，多个进程访问同一个数据库等。</li>
+<li>Mutable(可变)，访问分为“读”和“写”，可变指的是写。至少有一个参与者想要写入新的状态。</li>
+</ul>
+<p>只有同时满足 “Shared” 和 “Mutable” 才造成并发问题。如果没有共享，也就不存在操作被分割的问题，原子性是成立的。如果“不可变”，则虽然实际操作可能被分割，但由于操作不改变状态，操作的结果最终“看起来”<sup class="footnote-ref"><a href="#fn5" id="fnref5">[5]</a></sup>也是原子性的。</p>
+<p>在一些语言中，为了保证线程安全，会尝试打破其中一个。例如 Clojure 中所有的对象都是 Immutable（不可变）的；Java 中其实也鼓励多用不可变的对象；Rust 中则是尝试阻止 Share，一个对象只能两种情况：要么只有一个引用，它可以是可变的，要么可以有多个引用，但所有引用都是不可变的。</p>
+<p>Java 中的“锁”也可以认为是阻止 Share 的机制。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>本章探讨了原子性，原子性指的是操作的执行作为一个整体不可分割，它（通常）是我们编码时预期的行为。在多线程的环境下，代码的执行通常不具备原子性，从而导致了并发问题。</p>
+<p>编程语言层面提供了一些机制来让我们实现原子性，从而避免并发问题，达到线程安全。这些机制的实现又依赖更底层提供的原子能力。</p>
+<p>而从编码的角度，并发问题的产生，是由于代码里有共享的可变的状态，为了达到线程安全，我们需要合理地使用原子机制（如锁）来阻止状态的共享。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li>“Java Concurrency in Practice”，中译《Java 并发编程实战》，学习并发一定要看的书</li>
+<li><a href="https://laike9m.com/blog/huan-zai-yi-huo-bing-fa-he-bing-xing,61/" target="_blank" rel="noopener">还在疑惑并发和并行？</a> 并发不等于并行，本文可以作为了解的开始，讨论也挺深</li>
+<li><a href="https://nofluffjuststuff.com/magazine/2016/07/a_gentle_introduction_to_java_concurrency" target="_blank" rel="noopener">A Gentle Introduction to Java Concurrency</a> Java 并发的概念的细致讲解，包括原子性、可见性、顺序等</li>
+<li><a href="http://pages.cs.wisc.edu/~remzi/OSTEP/threads-sema.pdf" target="_blank" rel="noopener">Operating Systems: Three Easy Pieces</a> 第 31 章，操作系统关于信号量(Semaphore)的实现</li>
+<li><a href="https://preshing.com/20130618/atomic-vs-non-atomic-operations/" target="_blank" rel="noopener">Atomic vs. Non-Atomic Operations</a> 讲解了一些 CPU 读写指令的原子性</li>
+</ul>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>并发的含义比较广，像协程这种一个线程处理多个任务的模式也会产生并发问题。并发的核心是<strong>逻辑</strong>时间上的重叠。Java 中我们简单地认为并发等于多线程。 <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p>虽然还没讲到，但这里不涉及“顺序性”问题。另外这里也可以隐含着并发问题本身不需要多线程参与，只要出现了交替执行（如协程）就有可能出问题。 <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn3" class="footnote-item"><p>CMPXCHG 指令代表的是 CAS(compare and swap) 机制，AtomicInteger
+和 ReentrantLock 等的实现依赖了 CAS 机制，后续章节会介绍。 <a href="#fnref3" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn4" class="footnote-item"><p><a href="https://en.wikipedia.org/wiki/Mutual_exclusion#Software_solutions" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Mutual_exclusion#Software_solutions</a> <a href="#fnref4" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn5" class="footnote-item"><p>其实我们并不关心是不是真的作为一个整体执行，我们关心的是执行的结果是不是等价于作为整体执行，换句话说，是不是符合原子性的预期。 <a href="#fnref5" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2020/Java-Concurrency-0-Shared-Mutable-State/';
+var disqus_title = 'Deprecated. Java 并发（零）- 原子性';
+var disqus_url = 'https://lotabout.me/2020/Java-Concurrency-0-Shared-Mutable-State/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

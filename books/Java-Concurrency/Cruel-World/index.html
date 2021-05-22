@@ -1,0 +1,380 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>残酷的现实 - Java 并发知识</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+        <link rel="stylesheet" href="../css/lotabout.css">
+        
+
+        
+        <!-- MathJax -->
+        <script async type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Java 并发知识</a></li><li class="chapter-item expanded affix "><li class="part-title">理解线程安全</li><li class="chapter-item expanded "><a href="../Ideal-World/index.html"><strong aria-hidden="true">1.</strong> 理想的并发世界</a></li><li class="chapter-item expanded "><a href="../Cruel-World/index.html" class="active"><strong aria-hidden="true">2.</strong> 残酷的现实</a></li><li class="chapter-item expanded "><a href="../Happens-Before/index.html"><strong aria-hidden="true">3.</strong> Happens Before</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/index.html"><strong aria-hidden="true">4.</strong> 常见线程安全问题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/TOCTOU.html"><strong aria-hidden="true">4.1.</strong> TOCTOU</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Double-Checked-Locking.html"><strong aria-hidden="true">4.2.</strong> Double Checked Locking</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Compound-Actions.html"><strong aria-hidden="true">4.3.</strong> 复合操作</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Summary.html"><strong aria-hidden="true">4.4.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Best-Practice/index.html"><strong aria-hidden="true">5.</strong> 良好的并发编程习惯</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Best-Practice/Confinement.html"><strong aria-hidden="true">5.1.</strong> 封闭</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Immutability.html"><strong aria-hidden="true">5.2.</strong> 不可变</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Threadsafe-Data-Types.html"><strong aria-hidden="true">5.3.</strong> 利用线程安全类</a></li></ol></li><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/index.html"><strong aria-hidden="true">6.</strong> 思考题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/Spring-Bean-Initialization.html"><strong aria-hidden="true">6.1.</strong> Spring Bean 初始化如何线程安全</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">线程与线程池</li><li class="chapter-item expanded "><a href="../Amdahl-Law/index.html"><strong aria-hidden="true">7.</strong> Amdahl 定律</a></li><li class="chapter-item expanded "><a href="../Cost-of-Thread/index.html"><strong aria-hidden="true">8.</strong> 线程的代价</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/index.html"><strong aria-hidden="true">9.</strong> 线程池</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Pool/Concepts.html"><strong aria-hidden="true">9.1.</strong> 线程池相关概念</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Predefined.html"><strong aria-hidden="true">9.2.</strong> 预定义的线程池</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Usage.html"><strong aria-hidden="true">9.3.</strong> 线程池使用</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Interrupt.html"><strong aria-hidden="true">9.4.</strong> 线程的中断</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Shutdown.html"><strong aria-hidden="true">9.5.</strong> 如何优雅退出</a></li></ol></li><li class="chapter-item expanded "><strong aria-hidden="true">10.</strong> 线程调度</li><li class="chapter-item expanded affix "><li class="part-title">源码分析</li><li class="chapter-item expanded "><a href="../Source-Unsafe/index.html"><strong aria-hidden="true">11.</strong> Unsafe</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/index.html"><strong aria-hidden="true">12.</strong> Atomic</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicInteger.html"><strong aria-hidden="true">12.1.</strong> AtomicInteger</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicIntegerArray.html"><strong aria-hidden="true">12.2.</strong> AtomicIntegerArray</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Striped64.html"><strong aria-hidden="true">12.3.</strong> Striped64</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Adder.html"><strong aria-hidden="true">12.4.</strong> Adder</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/FieldUpdater.html"><strong aria-hidden="true">12.5.</strong> FieldUpdater</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/StampedReference.html"><strong aria-hidden="true">12.6.</strong> StampedReference</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-AQS/AQS.html"><strong aria-hidden="true">13.</strong> AbstractQueuedSynchronizer</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-AQS/blocking-exclusive.html"><strong aria-hidden="true">13.1.</strong> 互斥锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/blocking-shared.html"><strong aria-hidden="true">13.2.</strong> 共享锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/timeout.html"><strong aria-hidden="true">13.3.</strong> 超时</a></li><li class="chapter-item expanded "><a href="../Source-AQS/interrupt.html"><strong aria-hidden="true">13.4.</strong> 中断</a></li><li class="chapter-item expanded "><a href="../Source-AQS/cancellation.html"><strong aria-hidden="true">13.5.</strong> 取消</a></li><li class="chapter-item expanded "><a href="../Source-AQS/condition.html"><strong aria-hidden="true">13.6.</strong> 条件变量</a></li><li class="chapter-item expanded "><a href="../Source-AQS/Summary.html"><strong aria-hidden="true">13.7.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-Lock/Lock.html"><strong aria-hidden="true">14.</strong> Lock</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantLock.html"><strong aria-hidden="true">14.1.</strong> ReentrantLock</a></li><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantReadWriteLock.html"><strong aria-hidden="true">14.2.</strong> ReentrantReadWriteLock</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Java 并发知识</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#残酷的现实" id="残酷的现实">残酷的现实</a></h1>
+<p>我们常说并发问题的根源是原子性(Atomicity)、可见性(Visibility)与有序性
+(Ordering)。它们是祭品，是我们换取极致性能的代价。</p>
+<p>本章我们来看看这三个性质是什么，以及破坏它们的缘由。</p>
+<h2><a class="header" href="#缓存层次结构" id="缓存层次结构">缓存层次结构</a></h2>
+<p>在了解三个性质之前，我们先了解一下 CPU 的缓存结构，它对这些性质有很大的影响。</p>
+<p>当前 CPU 性能强劲，程序的主要的瓶颈不在计算，而在数据读写。根据 <a href="https://colin-scott.github.io/personal_website/research/interactive_latency.html">Latency
+Numbers Every Programmer Should
+Know</a>
+里的数据，2020 年，访问 L1 缓存需要 1ns，而访问内存/主存则需要 100ns。因此不管是硬件还是软件的优化，都在尝试提升缓存的命中率。而破坏原子性、可见性、有序性，很大程度上也是为了充分利用缓存。</p>
+<h3><a class="header" href="#core-i7-缓存结构" id="core-i7-缓存结构">Core i7 缓存结构</a></h3>
+<p>我们来看看 Core i7 的经典三层缓存结构<sup class="footnote-reference"><a href="#cache-hierarchy">1</a></sup>（有大概印象就行，不需要深入理解），如下图：</p>
+<p><img src="core-i7-cache-architecture.svg" alt="Core i7 内存体系结构" /></p>
+<p>核内独占 L1, L2 缓存，核间共享 L3 缓存。其中 L1 分为指令高速缓存(i-cache)和数据高速缓存(d-cache)。</p>
+<p>在 CPU 指令需要读取内存时，会先尝试从 L1 缓存中读取，如果发现缓存中没有(称作
+cache miss)，则开始从 L2 中读取，依此类推，最终会从内存中读取数据。我们上面说过，缓存的访问速度与内存的访问速度天差地别，因此很多时候，无论是编译器还是 CPU
+都会尽量让运行的代码能充分利用缓存。</p>
+<p>在 CPU 需要写入内存时，有两种策略：直写(write-through)和回写(write-back)。直写会要求把写入的值一路直接写回内存，属于简单粗爆型；而回写则是先写回缓存，等待某个合适的时机，再将缓存中的所有修改一次性写回内存，性能上会更好。</p>
+<p>（要注意的是，现代 CPU 有很多优化，这里的讨论只关心缓存的理论模型，不关心实现细节）</p>
+<h3><a class="header" href="#缓存友好的代码" id="缓存友好的代码">缓存友好的代码</a></h3>
+<p>考虑对一个二维数组的遍历，有两种写法：</p>
+<pre><code>for (int i=0; i&lt;rows; i++) {     | for (int j=0; i&lt;cols; j++) {
+    for(int j=0; j&lt;cols; j++) {  |     for(int i=0; j&lt;rows; i++) {
+        array[i][j] += 42;       |         array[i][j] += 42;
+    }                            |     }
+}                                | }
+</code></pre>
+<p>哪一种效率更高呢？它们的区别仅仅只在于优先遍历行（左）还是优先遍历列（右）。事实上左边代码的效率远高于右边的代码，这是因为通常行的数据在内存里是连续排布的，按行遍历时，该行下一列元素的缓存命中率会比按列遍历时，该列一下个元素的命中率高很多，这能极大提高程序的效率（可能会高几十倍）。</p>
+<p>当然，我们写代码的时候不会也不应该时刻考虑这么细节的优化，大部分情况下这是编译器和 CPU 要考虑的事。这就引出了影响并发问题的几个关键因素。</p>
+<h2><a class="header" href="#原子性" id="原子性">原子性</a></h2>
+<p>原子在物理上是不可分割的粒子<sup class="footnote-reference"><a href="#atomic-induction">2</a></sup>，在编程的语境中，<a href="http://www.cs.umd.edu/%7Epugh/java/memoryModel/CommunityReview.pdf">原子性的含义是</a>：</p>
+<blockquote>
+<p>If an action is (or a set of actions are) atomic, its result must be seen to
+happen &quot;all at once&quot;, or indivisibly.</p>
+</blockquote>
+<p>体现在一个或多个操作作为一个整体，执行的结果看起来是“一起”发生的，不被其它的操作打断或影响。</p>
+<h3><a class="header" href="#原子性的粒度" id="原子性的粒度">原子性的粒度</a></h3>
+<p>你可能已经知道，Java 中的 <code>++</code> 操作不是原子的，因为它对应的字节码等价于下面伪代码：</p>
+<pre><code>Initial: x = 0;
+----------- Thread A --------+--------- Thread B -----------
+   x++;                      |    x++;
+1. reg0 = value_of_X         |
+2. reg0 = reg0 + 1           |
+                             | 1. reg0 = value_of_X
+                             | 2. reg0 = reg0 + 1
+                             | 3. value_of_X = reg0
+3. value_of_X = reg0         |
+Result:  x = 1               v    x = 1
+</code></pre>
+<p>JVM 并不保证这些 3 个字节码作为一个整体是原子的，于是如上述代码所示，在最终结束后，两个线程都得到 <code>x=1</code> 的结果，但预期至少有一个线程应该得到 <code>x = 2</code> 的结果。</p>
+<p>这个例子中，我们隐含假设了字节码的执行是原子的，在这种情况下，由多条字段码组成的 <code>++</code> 操作不是原子的。这个结论在各个粒度下都适用：即使 CPU 指令都是原子的，由它组成的字节码也不一定是原子的；即使字节码都是原子的，由它组成的 Java 操作也不一定是原子的；即使 Java 操作是原子的，由它组成的 Java 函数也不一定是原子的。</p>
+<h3><a class="header" href="#上层的原子能力依赖下层" id="上层的原子能力依赖下层">上层的原子能力依赖下层</a></h3>
+<p>反过来，如果上层的某些操作是原子的，那么它一定需要更底层的原子能力支持。</p>
+<p>例如之前章节中提到的 Dekker 算法，它能够从软件层面实现互斥锁，但是它依赖变量读写操作的原子性。</p>
+<p>Java 提供了内置锁(Intrinsic Lock/Monitor Lock) 等语义帮助我们方便地实现多个
+Java 操作整体的原子性（可以是一个函数，可以是几行语句），但我们要意识到Java 在实现这些机制时依赖了操作系统提供的原子能力。</p>
+<p>通常操作系统会提供一些原子能力，如 Linux 提供了互斥锁(Mutex)、信号量
+(Semaphore)和自旋锁(SpinLock)等锁的语义。而操作系统又依赖一些 CPU 的指令来实现，如 x86 提供了 <a href="https://c9x.me/x86/html/file_module_x86_id_41.html">CMPXCHG</a>
+指令<sup class="footnote-reference"><a href="#cas">3</a></sup> 和 <a href="https://c9x.me/x86/html/file_module_x86_id_159.html">LOCK</a> 等锁的语义。</p>
+<p>至于 CPU 的锁是如何实现的，就超出了我的知识范围了。</p>
+<h3><a class="header" href="#为什么不默认原子性" id="为什么不默认原子性">为什么不默认原子性？</a></h3>
+<p>Java 语言规范规定了读写一个变量是原子操作（除了 long 和 double 型变量），而
+long 和 double 型变量只有在声明为 <code>volatile</code> 时才是原子的。为什么不让所有操作都变成原子的呢？</p>
+<p>我个人理解有两点（很少看到相关讨论）：</p>
+<ol>
+<li>原子性通常意味着独占某些资源，如 CPU 数据总线，使得底层没有优化空间</li>
+<li>原子性如果缺少了可见性，通常就没太大用处（如 Sequential Consistency 同时要求原子性与可见性），而可见性的实现代价太高了，不适合作为默认选项。</li>
+</ol>
+<h2><a class="header" href="#可见性" id="可见性">可见性</a></h2>
+<p>可见性问题可以简单表述为，线程 A 写入某个变量后，线程 B 读取，读到的值会是最新的值吗？前文提到的 Sequential Consistency 是有这个要求的，JVM 能提供这个保证吗？</p>
+<p>答案是不行。考虑下面的示例：</p>
+<pre><code class="language-java">public class Shared {
+    private int count = 0;
+
+    public void write() {
+        count = 1;
+    }
+
+    public void read() {
+        System.out.println(count); // ①
+    }
+}
+</code></pre>
+<p>如果线程 1 先调用 <code>write</code> 方法，线程 2 再调用 <code>read</code> 方法，此时可能发生如下情形：</p>
+<p><img src="visibility.svg" alt="visibility" /></p>
+<p>虽然 CPU 1 写入操作成功，但写入的值并没有被 CPU 2 读到<sup class="footnote-reference"><a href="#visibility-caution">4</a></sup>。</p>
+<p>你可能有疑问，我们在编写单线程的程序时，好像也没有管过可见性问题啊？这是因为操作系统给我们提供了保证<sup class="footnote-reference"><a href="#visibility-single-thread">5</a></sup>：</p>
+<ol>
+<li>操作系统会保证单线程的代码在一个核上运行，读写肯定都是这个核的缓存，没有可见性问题。</li>
+<li>如果线程发生了切换，线程在另一个核上恢复运行，那么操作系统需要做状态的保存和还原，保证新核上的缓存反映了之前的修改。</li>
+</ol>
+<p>为什么不保证所有操作的可见性？原因可能已经很明显了，就是性能，读写内存对 CPU
+来说实在是太慢了，每个读写操作都同步会极大降低性能<sup class="footnote-reference"><a href="#cache-improvement">6</a></sup>。</p>
+<h2><a class="header" href="#有序性" id="有序性">有序性</a></h2>
+<p>如果说可见性是因为缓存问题客观上被破坏的，那么有序性就是一个主观的破坏行为，主观上进行重排序来提高程序的性能。程序的重排序一般有两方面：编译器在编译时会对代码进行重排序；CPU 在执行指令时可能会乱序执行，除此之外Java 使用的 JIT 也对执行的指令有重排序。而这样做的目的，都是为了提高性能。下面举几个重排序的例子<sup class="footnote-reference"><a href="#reordering-example">7</a></sup>：</p>
+<p><img src="Single-Thread-Optimization.svg" alt="Single Thread Optimization" /></p>
+<ol>
+<li>这个例子很好理解，省去了无用的赋值。</li>
+<li>这个例子是编译器很重要的一个优化，与其在循环内不断更新内存变量 <code>z</code>，我们用寄存器 <code>r1</code> 来临时存储计算结果，循环结束后再更新到内存 <code>z</code> 中。</li>
+<li>这个例子重新排序了我们的赋值语句，可能上面的代码刚刚访过变量 <code>z</code>，因此将对
+<code>z</code> 的赋值提前可以充分利用已有的缓存。</li>
+<li>这个例子和我们前面小节说的，将一个按列遍历的逻辑替换成按行遍历的逻辑，能提高缓存的命中率。</li>
+</ol>
+<p>在单线程的程序中，编译器、CPU 总是在做着这些重排序，并且最终的结果“看上去”和不进行重排序没有区别，为什么到了多线程就到处是坑呢？</p>
+<p>这是因为单线程程序的预期运行顺序和代码的编写顺序一样，编译器预先知道了各个操作的依赖关系，因此可以在不破坏依赖关系的前提下进行重排序，而在多线程的语境下，只看代码，编译器并没有办法推断出代码的依赖关系，无法知道一个线程里的 write 操作是不是一定要在另一个线程的 <code>read</code>操作前执行，无法合理地做出推断。那要怎么办呢？</p>
+<p>编程语言会提供一些语义(如 Java 中的 <code>synchronized</code> <code>volatile</code> 等)，程序员需要在编代码时，显示地指定线程间的执行顺序依赖，这样编译器会保证在重排序时不破坏这种关系，反之，如果没有指定，编译器就不做任何保证。</p>
+<h2><a class="header" href="#小结" id="小结">小结</a></h2>
+<p>尽管前面章节中我们定义了 Sequential Consistency，认为在多线程编码中它是符合常理的预期，但现实世界中，为了程序运行的效率，这些预期无法被满足。</p>
+<p>我们先学习了 CPU 的缓存层级结构，了解了缓存的性能优势。之后介绍了原子性、可见性、有序性这三个引发并发问题的根源。编译器、CPU 打破这三个保证，是为了换取更高的性能，并且在单线程情况下，也不会对程序的正确性产生影响，是很有价值的权衡。</p>
+<p>但是在多线程的语境下，程序的正确性就会受到冲击，因此需要有新的机制来修补这些问题，下一章我们会介绍 Java 的内存模型。</p>
+<hr />
+<div class="footnote-definition" id="cache-hierarchy"><sup class="footnote-definition-label">1</sup>
+<p>图来源于《深入理解计算机系统》</p>
+</div>
+<div class="footnote-definition" id="atomic-induction"><sup class="footnote-definition-label">2</sup>
+<p>虽然可能大家都知道，原子也是可分的，但在长时间内，原子是被认为不可分的</p>
+</div>
+<div class="footnote-definition" id="cas"><sup class="footnote-definition-label">3</sup>
+<p>CMPXCHG 指令代表的是 CAS(compare and swap) 机制，Java 的 AtomicInteger 和 ReentrantLock 等的实现依赖了 CAS 机制，后续章节会介绍。</p>
+</div>
+<div class="footnote-definition" id="visibility-caution"><sup class="footnote-definition-label">4</sup>
+<p>注意这个示例是理论模型上会发生的，实际上现代的一些 CPU 在缓存之间有诸如 MESI 的同步机制，能保证写入缓存的数据可以被其它核读取，这叫作缓存一致性(cache-coherency)，可以参考<a href="https://software.rajivprab.com/2018/04/29/myths-programmers-believe-about-cpu-caches/">这篇文章</a></p>
+</div>
+<div class="footnote-definition" id="visibility-single-thread"><sup class="footnote-definition-label">5</sup>
+<p>参考这个回答 https://stackoverflow.com/a/59159989/826907</p>
+</div>
+<div class="footnote-definition" id="cache-improvement"><sup class="footnote-definition-label">6</sup>
+<p>如上面的注脚提到的，CPU 层面也在尝试优化缓存间的数据同步，如 MESI 协议</p>
+</div>
+<div class="footnote-definition" id="reordering-example"><sup class="footnote-definition-label">7</sup>
+<p>例子取自 <a href="https://www.youtube.com/watch?v=A8eCGOqgvH4">Herb Sutter 的演讲</a>，<a href="https://onedrive.live.com/?authkey=%21AMtj%5FEflYn2507c&amp;cid=4E86B0CF20EF15AD&amp;id=4E86B0CF20EF15AD%2124884&amp;parId=4E86B0CF20EF15AD%21180&amp;o=OneUp">PPT 链接</a></p>
+</div>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../Ideal-World/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../Happens-Before/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../Ideal-World/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="../Happens-Before/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+        <!-- Google Analytics Tag -->
+        <script type="text/javascript">
+            var localAddrs = ["localhost", "127.0.0.1", ""];
+
+            // make sure we don't activate google analytics if the developer is
+            // inspecting the book locally...
+            if (localAddrs.indexOf(document.location.hostname) === -1) {
+                (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+                ga('create', 'UA-39956831-2', 'auto');
+                ga('send', 'pageview');
+            }
+        </script>
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

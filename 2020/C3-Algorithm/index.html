@@ -1,0 +1,107 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="在 Python 中使用 Mixin 有没有遇到过 &lt;code&gt;Cannot create a consistent method resolution&lt;/code&gt; 错误？Mixin 在 Python 里只是多继承(multiple inheritance) 的一种用法，而多继承时，Python 是如何决定父类的顺序呢？咱们就来看看 C3 算法是何方神圣。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>C3 算法：Python 多继承的内部原理 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/C3/" rel="tag">C3</a><a class="post-tag-link" href="/tags/mixin/" rel="tag">mixin</a><a class="post-tag-link" href="/tags/multiple-inheritance/" rel="tag">multiple inheritance</a><a class="post-tag-link" href="/tags/python/" rel="tag">python</a></div><div class="post-time">2020-04-15</div></div></div><div class="container post-header"><h1>C3 算法：Python 多继承的内部原理</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#method-resolution-order-mro"><span class="toc-number">1.</span> <span class="toc-text">Method Resolution Order(MRO)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c3-算法"><span class="toc-number">2.</span> <span class="toc-text">C3 算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#算法示例"><span class="toc-number">3.</span> <span class="toc-text">算法示例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#反例"><span class="toc-number">4.</span> <span class="toc-text">反例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#python-2-3-之前的问题"><span class="toc-number">5.</span> <span class="toc-text">Python 2.3 之前的问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">6.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">7.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>在 Python 中使用 Mixin 有没有遇到过 <code>Cannot create a consistent method resolution</code> 错误？Mixin 在 Python 里只是多继承(multiple inheritance) 的一种用法，而多继承时，Python 是如何决定父类的顺序呢？咱们就来看看 C3 算法是何方神圣。</p>
+<p>TLDR; 我个人觉得 C3 算法就是拓扑排序…</p>
+<h2 id="method-resolution-order-mro"><a class="header-anchor" href="#method-resolution-order-mro"></a>Method Resolution Order(MRO)</h2>
+<p>考虑下面的多继承的代码：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">hello</span><span class="params">(self)</span>:</span></span><br><span class="line">        print(<span class="string">"hello from A"</span>)</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">B</span><span class="params">(object)</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">hello</span><span class="params">(self)</span>:</span></span><br><span class="line">        print(<span class="string">"hello from A"</span>)</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">C</span><span class="params">(A, B)</span>:</span> <span class="keyword">pass</span></span><br><span class="line"></span><br><span class="line">C().hello()</span><br></pre></td></tr></table></figure>
+<p>上面的 <code>C().hello()</code> 输出是什么呢？这里会输出 <code>hello from A</code>。</p>
+<p>Python 的多继承符合直觉，可以认为：在查找一个方法或类时，<strong>会从左到右查找父类的方法或类</strong>，找到为止。这个查找顺序叫作 Method Resolution Order，简称 MRO。可以通过 <code>&lt;class&gt;.mro()</code> 查看，如：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&gt;&gt;&gt; C.mro()</span><br><span class="line">[__main__.C, __main__.A, __main__.B, object]</span><br></pre></td></tr></table></figure>
+<p>可以看出，查找方法时，会先查 A 再查 B。</p>
+<h2 id="c3-算法"><a class="header-anchor" href="#c3-算法"></a>C3 算法</h2>
+<p>那么如何计算 MRO 呢？Python 里使用 C3 算法<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>。其实就是拓扑排序，只是排序的“图”上加了点特技。</p>
+<p>符号定义：</p>
+<ul>
+<li>方便起见，先定义符号 $C_1C_2…C_N$ 代表一个列表 $[C_1, C_2, …, C_N]$</li>
+<li>再定义加号： $C + (C_1 C_2 … C_N) = C C_1 C_2 … C_N$</li>
+<li>定义 $C_1C_2…C_N$ 列表中，$C_1$ 为头部，$C_2…C_N$ 为尾部</li>
+</ul>
+<p>算法：</p>
+<ul>
+<li>对于类定义 <code>class C(B1, B2, ..., BN)</code>，记它的 MRO 为 <code>L[C]</code>（L 代表 linearization）</li>
+<li>所有类都会继承 <code>object</code>，定义 <code>L[object] = object</code></li>
+<li>算法定义计算步骤为 $L[C] = C + merge(L[B_1], L[B_2], …, L[B_N], B_1B_2…B_N)$
+<ul>
+<li>注意这里末尾的 $B_1B_2…B_N$，就是我们说的“特技”</li>
+</ul>
+</li>
+<li><code>merge</code> 方法定义为：
+<ol>
+<li>选取第一个列表 $B_1$</li>
+<li>首先选取第一个列表 $B_1$ 第一个元素</li>
+<li>如果该元素不出现在 merge 方法其它列表的尾部，则输出元素，并将该元素从其它列表中移除，取下一个元素</li>
+<li>如果该元素出现在其它列表的尾部，则选取下一个列表，并重复步骤 2，直到所有列表为空</li>
+<li>如果遍历过所有的列表，有列表不为空且过程中没有输出，则说明得不到有效
+MRO，报错</li>
+</ol>
+</li>
+</ul>
+<h2 id="算法示例"><a class="header-anchor" href="#算法示例"></a>算法示例</h2>
+<p>merge 算法其实就是拓扑排序，举例如下：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">O = object</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">F</span><span class="params">(O)</span>:</span> <span class="keyword">pass</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">E</span><span class="params">(O)</span>:</span> <span class="keyword">pass</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">D</span><span class="params">(O)</span>:</span> <span class="keyword">pass</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">C</span><span class="params">(D,F)</span>:</span> <span class="keyword">pass</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">B</span><span class="params">(E,D)</span>:</span> <span class="keyword">pass</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A</span><span class="params">(B,C)</span>:</span> <span class="keyword">pass</span></span><br></pre></td></tr></table></figure>
+<p>继承关系如下图左，而预期的 MRO 关系如下图右（A-&gt;B 表示 MRO 中 A 出现在 B 之前）：</p>
+<img src="/2020/C3-Algorithm/C3-example-1.svg" class="" title="C3 Example 1">
+<p>计算 MRO 相当于对上右图做拓扑排序，merge 参数的最后一项，实际定义了同层元素间的指向。</p>
+<p>Level 2 的 MRO 很容易计算</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">L[E] &#x3D; E + merge(L[O]) &#x3D; E + merge(O) &#x3D; E + O &#x3D; EO</span><br><span class="line">L[D] &#x3D; D + merge(L[O]) &#x3D; D + merge(O) &#x3D; D + O &#x3D; DO</span><br><span class="line">L[F] &#x3D; F + merge(L[O]) &#x3D; F + merge(O) &#x3D; F + O &#x3D; FO</span><br></pre></td></tr></table></figure>
+<p>Level 1 的 MRO 计算如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">L[B] &#x3D; B + merge(L[E], L[D], ED)</span><br><span class="line">     &#x3D; B + merge(EO, DO, ED)     # 检测 EO 中的元素 E</span><br><span class="line">     &#x3D; B + E + merge(O, DO, D)   # 检测 DO 中的元素 D</span><br><span class="line">     &#x3D; B + E + D ＋merge(O, O, ) # 检测元素 O</span><br><span class="line">     &#x3D; B + E + D ＋O</span><br><span class="line">     &#x3D; BEDO</span><br><span class="line"></span><br><span class="line">L[C] &#x3D; C + merge(L[D], L[F], DF)</span><br><span class="line">     &#x3D; B + merge(DO, FO, DF)     # 检测 DO 中的元素 D</span><br><span class="line">     &#x3D; B + D + merge(O, FO, F)   # 检测 FO 中的元素 F</span><br><span class="line">     &#x3D; B + D + F + merge(O, O, ) # 检测元素 O</span><br><span class="line">     &#x3D; B + D + F + O</span><br><span class="line">     &#x3D; BDFO</span><br></pre></td></tr></table></figure>
+<p>于是 A 的 MRO 为：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">L[A] &#x3D; A + merge(L[B], L[C], BC)</span><br><span class="line">     &#x3D; A + merge(BEDO, BDFO, BC)              # 检测 BEDO 中的 B</span><br><span class="line">     &#x3D; A + B + merge(EDO, DFO, C)             # 检测 EDO 中的 E</span><br><span class="line">     &#x3D; A + B + E + merge(DO, DFO, C)          # 检测 DO 中的 D</span><br><span class="line">     &#x3D; A + B + E + D + merge(O, FO, C)        # 检测 O 中的 O，出现在 FO 尾部</span><br><span class="line">     &#x3D; A + B + E + D + merge(O, FO, C)        # 检测 C 中的 C</span><br><span class="line">     &#x3D; A + B + E + D + C + merge(O, FO, )     # 检测 O 中的 O，出现在 FO 尾部</span><br><span class="line">     &#x3D; A + B + E + D + C + merge(O, FO, )     # 检测 FO 中的 F</span><br><span class="line">     &#x3D; A + B + E + D + C + F ＋merge(O, O, )  # 检测 O</span><br><span class="line">     &#x3D; A + B + E + D + C + F ＋O</span><br><span class="line">     &#x3D; ABEDCFO</span><br></pre></td></tr></table></figure>
+<p>最后注意根据拓扑图，元素 E 和 C 的顺序先后其实无关紧要。</p>
+<h2 id="反例"><a class="header-anchor" href="#反例"></a>反例</h2>
+<p>对于下面的类定义，算法就会报错。因为 A 要求 X 在 Y 左边，而 B 的要求正好相反，二者矛盾。</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">O = object</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">X</span><span class="params">(O)</span>:</span> <span class="keyword">pass</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Y</span><span class="params">(O)</span>:</span> <span class="keyword">pass</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">A</span><span class="params">(X,Y)</span>:</span> <span class="keyword">pass</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">B</span><span class="params">(Y,X)</span>:</span> <span class="keyword">pass</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">T</span><span class="params">(A,B)</span>:</span> <span class="keyword">pass</span></span><br></pre></td></tr></table></figure>
+<p>拓扑图如下，我们发现它存在循环引用：</p>
+<img src="/2020/C3-Algorithm/Cyclic.svg" class="" title="Cyclic Example">
+<p>算法计算过程如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">L[X] &#x3D; XO</span><br><span class="line">L[Y] &#x3D; YO</span><br><span class="line">L[A] &#x3D; A + merge(L[X], L[Y], XY)</span><br><span class="line">     &#x3D; A + merge(XO, YO, XY)</span><br><span class="line">     &#x3D; AXYO</span><br><span class="line">L[B] &#x3D; B + merge(L[Y], L[X], XY)</span><br><span class="line">     &#x3D; B + merge(YO, XO, YX)</span><br><span class="line">     &#x3D; BYXO</span><br><span class="line">L[T] &#x3D; T + merge(L[A], L[B], AB)</span><br><span class="line">     &#x3D; T + merge(AXYO, BYXO, AB)        # 检测 AXYO 中的 A</span><br><span class="line">     &#x3D; T + A + merge(XYO, BYXO, B)      # 检测 XYO 中的 X，出现在 BYXO 的尾部，跳过</span><br><span class="line">     &#x3D; T + A + merge(XYO, BYXO, B)      # 检测 BYXO 中的 B</span><br><span class="line">     &#x3D; T + A + B + merge(XYO, YXO, )    # 检测 YXO 中的 Y，出现在 XYO 的尾部</span><br><span class="line">     # 此处无法再化简，报错</span><br></pre></td></tr></table></figure>
+<h2 id="python-2-3-之前的问题"><a class="header-anchor" href="#python-2-3-之前的问题"></a>Python 2.3 之前的问题</h2>
+<p>C3 算法是在 Python 2.3 后引入的，在这之前，考虑下面的示例：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">F=type(<span class="string">'Food'</span>,(),&#123;<span class="string">'remember2buy'</span>:<span class="string">'spam'</span>&#125;)</span><br><span class="line">E=type(<span class="string">'Eggs'</span>,(F,),&#123;<span class="string">'remember2buy'</span>:<span class="string">'eggs'</span>&#125;)</span><br><span class="line">G=type(<span class="string">'GoodFood'</span>,(F,E),&#123;&#125;) <span class="comment"># works before Python 2.3</span></span><br></pre></td></tr></table></figure>
+<p>用 C3 的方式画出拓扑图如下，虽然代码里不明显，图里可以看到存在循环引用：</p>
+<img src="/2020/C3-Algorithm/Before-2.3.svg" class="" title="Bad Example Before Python 2.3">
+<p>而 Python 2.3 之前的 MRO 算法在调用 <code>G.remember2buy</code> 属性时，预期输出 <code>spam</code>（因为 <code>G(F, E)</code>，预期先查找 F 的方法），而实际会输出 <code>eggs</code>（E 的方法），不符合预期。Python 2.3 及以后就会报错。</p>
+<p>因此如果在实现 Mixin 的时候，如果搞错顺序可能就无法运行，例如：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Base</span><span class="params">(object)</span>:</span> <span class="keyword">pass</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MixinA</span><span class="params">(Base)</span>:</span> <span class="keyword">pass</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MixinB</span><span class="params">(Base)</span>:</span> <span class="keyword">pass</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Y</span><span class="params">(MixinA, MixinB, Base)</span>:</span> <span class="keyword">pass</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">X</span><span class="params">(Base, MixinA, MixinB)</span>:</span> <span class="keyword">pass</span> <span class="comment"># error</span></span><br></pre></td></tr></table></figure>
+<p>简单的结论是越具体的实现位置越靠前。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>写到最后发现：C3 算法似乎和拓扑排序没有任何区别？只是在标记拓扑图上做一些工夫，保证类定义的先后顺序反映在 MRO 中：即 <code>A(B, C)</code> 最后的 MRO 中 B 一定在 C 之前。</p>
+<p>这个知识也许在使用 mixin 出错的时候能帮上忙，剩余时候感觉也没什么用。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<p>算法、示例取自 <a href="https://www.python.org/download/releases/2.3/mro/" target="_blank" rel="noopener">The Python 2.3 Method Resolution Order</a>，建议看原文。</p>
+<div id="footnotes"><hr><div id="footnotelist"><ol style="list-style:none; padding-left: 0"><li id="fn:1"><span style="display: inline-block; vertical-align: top; padding-right: 10px">1.</span><span style="display: inline-block; vertical-align: top">python 2.3 及以后</span><a href="#fnref:1" rev="footnote"> ↩</a></li></ol></div></div></div></div><script type="text/x-mathjax-config">
+   MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    }); 
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2020/C3-Algorithm/';
+var disqus_title = 'C3 算法：Python 多继承的内部原理';
+var disqus_url = 'https://lotabout.me/2020/C3-Algorithm/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

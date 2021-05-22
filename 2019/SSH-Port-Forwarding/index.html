@@ -1,0 +1,63 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;p&gt;什么是端口转发？骑士想给公主写信，却被国王禁止，骑士只得请侍女将信带到，这就是“转发”。网络通信中，IP 标识机器（城堡），端口标识应用（国王还是公主），我们可不希望侍女把信送到国王手里。&lt;/p&gt;
+&lt;p&gt;大家常用 ssh 命令来操作远程机器，熟不知它还有强大的端口转发的各种骚操作，我们来一探究竟吧。&lt;/p&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>SSH 端口转发教程 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Port-Forwarding/" rel="tag">Port Forwarding</a><a class="post-tag-link" href="/tags/ssh/" rel="tag">ssh</a></div><div class="post-time">2019-06-09</div></div></div><div class="container post-header"><h1>SSH 端口转发教程</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#本地端口转发"><span class="toc-number">1.</span> <span class="toc-text">本地端口转发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#远程端口转发"><span class="toc-number">2.</span> <span class="toc-text">远程端口转发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#路由转发"><span class="toc-number">3.</span> <span class="toc-text">路由转发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#动态转发"><span class="toc-number">4.</span> <span class="toc-text">动态转发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">5.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>什么是端口转发？骑士想给公主写信，却被国王禁止，骑士只得请侍女将信带到，这就是“转发”。网络通信中，IP 标识机器（城堡），端口标识应用（国王还是公主），我们可不希望侍女把信送到国王手里。</p>
+<p>大家常用 ssh 命令来操作远程机器，熟不知它还有强大的端口转发的各种骚操作，我们来一探究竟吧。</p>
+<a id="more"></a>
+<h2 id="本地端口转发"><a class="header-anchor" href="#本地端口转发"></a>本地端口转发</h2>
+<p>本地端口转发指的是在本机上发起请求，由 ssh client 转发到远程的机器上。它的命令如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">ssh -L &lt;port_a&gt;:&lt;remote host&gt;:&lt;port_b&gt; user_b@ip_b</span><br></pre></td></tr></table></figure>
+<p>下图中，远程的机器上起了一个服务 <code>python3 -m http.server</code>，它监听端口 <code>8000</code>，现在我们想在本机访问这个服务，但由于防火墙的存在，<code>8000</code> 端口无法直接访问，于是我们使用 ssh 端口转发。</p>
+<img src="/2019/SSH-Port-Forwarding/local-port-forwarding-single.svg" class="" title="Local Port Forwarding 1">
+<p>首先在 A 上执行 <code>ssh -L 1234:localhost:8000 user_b@ip_b</code> 建立 ssh 隧道，它表示：所有对 <code>A:1234</code> 端口的请求，相当于在 <code>B</code> 机器上对 <code>localhost:8000</code> 的请求。因此在 A 上执行 <code>curl localhost:1234</code> 就相当于访问 B 机器上的 python 服务。</p>
+<p>上面的情况是服务部署在 ssh server 所在的机器（B）上，那么如果服务部署在其它的机器上呢？</p>
+<img src="/2019/SSH-Port-Forwarding/local-port-forwarding-two.svg" class="" title="Local Port Forwarding 2">
+<p>可以看到我们只是把上例中的 <code>localhost</code> 换成了 C 机器的 hostname/IP 就可以了。此时，发送到 <code>A:1234</code> 的请求相当于从 B 机器上对 <code>remote:8000</code> 的请求，图中在
+<code>/etc/hosts</code> 中设置了 hostname 和 IP 的对应关系，直接用机器 C 的 IP 也是可以的。可以看到，机器 A 由于防火墙无法访问内网的服务，但是由于</p>
+<ul>
+<li>机器 A 可以 ssh 到内网机器 B</li>
+<li>且 B 有权限访问内网的其它服务</li>
+</ul>
+<p>通过本地端口转发可以实现从 A 访问内网的服务。</p>
+<h2 id="远程端口转发"><a class="header-anchor" href="#远程端口转发"></a>远程端口转发</h2>
+<p>上节中，本地机器 A 可以 ssh 到内网机器 B，但如果防火墙不允许呢（或者 B 没有公网的 IP）？如果机器 A 有公网的 IP，且机器 B 允许联网，则可以通过远程端口转发完成。远程端口转发的命令如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">ssh -R &lt;port_a&gt;:&lt;remote host&gt;:&lt;port_a&gt; user_a@ip_a</span><br></pre></td></tr></table></figure>
+<p>与之前不同，此时 ssh server 是运行在本地机器 A 上，在内网机器 B 上执行上述命令。</p>
+<img src="/2019/SSH-Port-Forwarding/remote-port-forwarding.svg" class="" title="Remote Port Forwarding">
+<p>为什么称作“远程转发”呢？把最终请求的发起方（机器 A）为“本地”，服务所在的机器
+B/C 为“远程”，在本地机器上执行 <code>ssh</code> 命令就称为“本地转发”，在远程机器上执行命令就称为“远程转发”。</p>
+<h2 id="路由转发"><a class="header-anchor" href="#路由转发"></a>路由转发</h2>
+<p>上面的例子中，机器 A 配置好本地转发后，<code>A:1234</code> 只能被机器 A 访问，如果本地还有其它机器想访问这个服务怎么办？可以使用 <code>-g</code> 开启路由模式，命令如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">ssh -g -L &lt;port_a&gt;:&lt;remote host&gt;:&lt;port_b&gt; user_b@ip_b</span><br></pre></td></tr></table></figure>
+<p>但要注意的是本地机器间的连接（下图中 <code>X-&gt;A</code>、<code>B-&gt;C</code>）不是安全连接，所以要谨慎使用。</p>
+<img src="/2019/SSH-Port-Forwarding/local-port-forwarding-gateway.svg" class="" title="Local Port Forwarding Gateway">
+<p>要注意的是上述方法只对“本地转发”有效，如果想要在远程转发上使用路由功能，需要在“本地”机器 A 中的 <code>/etc/sshd_config</code> 中加入 <code>GatewayPorts yes</code> 并重启 sshd 服务：</p>
+<img src="/2019/SSH-Port-Forwarding/remote-port-forwarding-gateway.svg" class="" title="Local Port Forwarding Gateway">
+<h2 id="动态转发"><a class="header-anchor" href="#动态转发"></a>动态转发</h2>
+<p>上面的所有方法都只针对一个端口，想要转发所有端口怎么做？</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">ssh -D &lt;port&gt; user@remote_ip</span><br></pre></td></tr></table></figure>
+<p>这个模式对本地和远程转发都有效，它的工作模式和 Shadow Socks 很像，会在本地创建一个 Socks5 代理服务，监听端口 <code>&lt;port&gt;</code>，并将所有请求转发到远程机器上。如下图：</p>
+<img src="/2019/SSH-Port-Forwarding/dynamic-port-forwarding.svg" class="" title="Dynamic Port Forwarding">
+<p>图中我们通过 <code>curl -x socks5h://...</code> 来指定使用 Socks5 代理，在机器 A 上请求 <code>ip_c:8000</code> 时，相当于在 B 机器上发起对 <code>ip_c:8000</code> 的请求。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://www.ibm.com/developerworks/cn/linux/l-cn-sshforward/" target="_blank" rel="noopener">实战 SSH 端口转发</a></li>
+</ul></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2019/SSH-Port-Forwarding/';
+var disqus_title = 'SSH 端口转发教程';
+var disqus_url = 'https://lotabout.me/2019/SSH-Port-Forwarding/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

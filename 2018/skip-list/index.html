@@ -1,0 +1,117 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;p&gt;跳表(skip list) 对标的是平衡树(AVL Tree)，是一种 插入/删除/搜索 都是 &lt;code&gt;O(log n)&lt;/code&gt; 的数据结构。它最大的优势是原理简单、容易实现、方便扩展、效率更高。因此在一些热门的项目里用来替代平衡树，如 redis, leveldb 等。&lt;/p&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>跳表──没听过但很犀利的数据结构 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Data-Structure/" rel="tag">Data Structure</a><a class="post-tag-link" href="/tags/skip-list/" rel="tag">skip list</a></div><div class="post-time">2018-10-05</div></div></div><div class="container post-header"><h1>跳表──没听过但很犀利的数据结构</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#跳表的基本思想"><span class="toc-number">1.</span> <span class="toc-text">跳表的基本思想</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#跳表"><span class="toc-number">2.</span> <span class="toc-text">跳表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#简单的性能分析"><span class="toc-number">3.</span> <span class="toc-text">简单的性能分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#每层的节点数目"><span class="toc-number">3.1.</span> <span class="toc-text">每层的节点数目</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#最高的层数"><span class="toc-number">3.2.</span> <span class="toc-text">最高的层数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#搜索的时间复杂度"><span class="toc-number">3.3.</span> <span class="toc-text">搜索的时间复杂度</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">4.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">5.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>跳表(skip list) 对标的是平衡树(AVL Tree)，是一种 插入/删除/搜索 都是 <code>O(log n)</code> 的数据结构。它最大的优势是原理简单、容易实现、方便扩展、效率更高。因此在一些热门的项目里用来替代平衡树，如 redis, leveldb 等。</p>
+<a id="more"></a>
+<h2 id="跳表的基本思想"><a class="header-anchor" href="#跳表的基本思想"></a>跳表的基本思想</h2>
+<p>首先，跳表处理的是有序的链表（一般是双向链表，下图未表示双向），如下：</p>
+<img src="/2018/skip-list/linked-list.svg" class="no-border" title="Linked List">
+<p>这个链表中，如果要搜索一个数，需要从头到尾比较每个元素是否匹配，直到找到匹配的数为止，即时间复杂度是 $O(n)$。同理，插入一个数并保持链表有序，需要先找到合适的插入位置，再执行插入，总计也是 $O(n)$ 的时间。</p>
+<p>那么如何提高搜索的速度呢？很简单，做个索引：</p>
+<img src="/2018/skip-list/linked-list-2.svg" class="no-border" title="Linked List With 2 level">
+<p>如上图，我们新创建一个链表，它包含的元素为前一个链表的偶数个元素。这样在搜索一个元素时，我们先在上层链表进行搜索，当元素未找到时再到下层链表中搜索。例如搜索数字 <code>19</code> 时的路径如下图：</p>
+<img src="/2018/skip-list/linked-list-search-path.svg" class="no-border" title="Linked List Search Path">
+<p>先在上层中搜索，到达节点 <code>17</code> 时发现下一个节点为 <code>21</code>，已经大于 <code>19</code>，于是转到下一层搜索，找到的目标数字 <code>19</code>。</p>
+<p>我们知道上层的节点数目为 $n/2$，因此，有了这层索引，我们搜索的时间复杂度降为了：$O(n/2)$。同理，我们可以不断地增加层数，来减少搜索的时间：</p>
+<img src="/2018/skip-list/linked-list-4.svg" class="no-border" title="Linked List Level 4">
+<p>在上面的 4 层链表中搜索 <code>25</code>，在最上层搜索时就可以直接跳过 <code>21</code> 之前的所有节点，因此十分高效。</p>
+<p>更一般地，如果有 $k$ 层，我们需要的搜索次数会小于 $\lceil \frac{n}{2^k} \rceil + k$
+，这样当层数 $k$ 增加到 $\lceil \log_{2} n \rceil$ 时，搜索的时间复杂度就变成了
+$\log n$。其实这背后的原理和二叉搜索树或二分查找很类似，通过索引来跳过大量的节点，从而提高搜索效率。</p>
+<h2 id="跳表"><a class="header-anchor" href="#跳表"></a>跳表</h2>
+<p>上节的结构是“静态”的，即我们先拥有了一个链表，再在之上建了多层的索引。但是在实际使用中，我们的链表是通过多次插入/删除形成的，换句话说是“动态”的。上节的结构要求上层相邻节点与对应下层节点间的个数比是 <code>1:2</code>，随意插入/删除一个节点，这个要求就被被破坏了。</p>
+<p>因此跳表（skip list）表示，我们就不强制要求 <code>1:2</code> 了，一个节点要不要被索引，建几层的索引，都在节点插入时由抛硬币决定。当然，虽然索引的节点、索引的层数是随机的，为了保证搜索的效率，要大致保证每层的节点数目与上节的结构相当。下面是一个随机生成的跳表：</p>
+<img src="/2018/skip-list/skip-list.svg" class="no-border" title="Skip List">
+<p>可以看到它每层的节点数还和上节的结构差不多，但是上下层的节点的对应关系已经完全被打破了。</p>
+<p>现在假设节点 <code>17</code> 是最后插入的，在插入之前，我们需要搜索得到插入的位置：</p>
+<img src="/2018/skip-list/skip-list-insert-17.svg" class="no-border" title="Skip List Search Path">
+<p>接着，抛硬币决定要建立几层的索引，伪代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">randomLevel()</span><br><span class="line">    lvl :&#x3D; 1</span><br><span class="line">    -- random() that returns a random value in [0...1)</span><br><span class="line">    while random() &lt; p and lvl &lt; MaxLevel do</span><br><span class="line">        lvl :&#x3D; lvl + 1</span><br><span class="line">    return lvl</span><br></pre></td></tr></table></figure>
+<p>上面的伪代码相当于抛硬币，如果是正面（<code>random() &lt; p</code>）则层数加一，直到抛出反面为止。其中的 <code>MaxLevel</code> 是防止如果运气太好，层数就会太高，而太高的层数往往并不会提供额外的性能，一般 $MaxLevel = \log_{1/p}{n}$。现在假设 <code>randomLevel</code> 返回的结果是 <code>2</code>，那么就得到下面的结果。</p>
+<img src="/2018/skip-list/skip-list.svg" class="no-border" title="Skip List">
+<p>如果要删除节点，则把节点和对应的所有索引节点全部删除即可。当然，要删除节点时需要先搜索得到该节点，搜索过程中可以把路径记录下来，这样删除索引层节点的时候就不需要多次搜索了。</p>
+<p>显然，在最坏的情况下，所有节点都没有创建索引，时间复杂度为$O(n)$，但在平均情况下，搜索的时间复杂度却是 $O(\log n)$，为什么呢？</p>
+<h2 id="简单的性能分析"><a class="header-anchor" href="#简单的性能分析"></a>简单的性能分析</h2>
+<p>一些严格的证明会涉及到比较复杂的概率统计学知识，所以这里只是简单地说明。</p>
+<h3 id="每层的节点数目"><a class="header-anchor" href="#每层的节点数目"></a>每层的节点数目</h3>
+<p>上面我们提到 <code>MaxLevel</code>，<a href="ftp://ftp.cs.umd.edu/pub/skipLists/skiplists.pdf">原版论文
+</a> 中用 <code>L(n)</code> 来表示，要求
+<code>L(n)</code> 层有 <code>1/p</code> 个节点，在搜索时可以不理会比 <code>L(n)</code> 更高的层数，直接从
+<code>L(n)</code> 层开始搜索，这样效率最高。</p>
+<p>直观上看<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>，第 $l$ 层的节点中在第 $l+1$ 层也有索引的个数是 $n_{l+1} = n_l  p$ 因此第 $l$ 层的节点个数为：</p>
+<p>$$
+n_l = n p^{l-1}
+$$</p>
+<p>于是代入 $n_{L(n)} = 1/p$ 得到 $L(n) = \log_{1/p}n$。</p>
+<h3 id="最高的层数"><a class="header-anchor" href="#最高的层数"></a>最高的层数</h3>
+<p>上面推导到每层的节点数目，直观上看，如果某一层的节点数目小于等于 1，则可以认为它是最高层了，代入 $np^{l-1} = 1$ 得到层数 $L_{max} = \log_{1/p}n + 1 = L(n) + 1 = O(\log n)$。</p>
+<p>实际上这个问题并没有直接的解析解，我们能知道的是，当 $n$ 足够大时，最大能达到的层数为 $O(\log n)$，详情可以参见我的另一篇博客<a href="/2018/max-level-of-skiplist">最高楼层问题</a>。</p>
+<h3 id="搜索的时间复杂度"><a class="header-anchor" href="#搜索的时间复杂度"></a>搜索的时间复杂度</h3>
+<p>为了计算搜索的时间复杂度，我们可以将查找的过程倒过来，从搜索最后的节点开始，一直向左或向上，直到最顶层。如下图，在路径上的每一点，都可能有两种情况：</p>
+<img src="/2018/skip-list/skip-list-back-search.svg" class="no-border" title="Skip List Search Backward">
+<ol>
+<li>节点有上一层的节点，向上。这种情况出现的概率是 <code>p</code>。</li>
+<li>节点没有上一层的节点，向左。出现的概率是 <code>1-p</code>。</li>
+</ol>
+<p>于是，设 <code>C(k)</code> 为反向搜索爬到第 <code>k</code> 层的平均路径长度，则有：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">C(0) &#x3D; 0</span><br><span class="line">C(k) &#x3D; p * (情况1) + (1-p) * (情况2)</span><br></pre></td></tr></table></figure>
+<p>将两种情况也用 <code>C</code> 代入，有：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">C(k) &#x3D; p*(1 + C(k–1)) + (1–p)*(1 + C(k))</span><br><span class="line">C(k) &#x3D; C(k–1) + 1&#x2F;p</span><br><span class="line">C(k) &#x3D; k&#x2F;p</span><br></pre></td></tr></table></figure>
+<p>上式表明，搜索时，平均在每层上需要搜索的路径长度为 $1/p$，从平均的角度上和我们第一小节构造的“静态”结构相同（p 取 <code>1/2</code>）。</p>
+<p>又注意到，上小节我们知道跳表的最大层数为 $O(\log n)$，因此，搜索的复杂度
+$O(\log n) / p = O(\log n)$。</p>
+<p>P.S. 这里我们用到的是最大层数，原论文证明时用到的是 $L(n)$，然后再考虑从
+$L(n)$ 层到最高层的平均节点个数。这里为了理解方便不再详细证明。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<ol>
+<li>各种搜索结构提高效率的方式都是通过空间换时间得到的。</li>
+<li>跳表最终形成的结构和搜索树很相似。</li>
+<li>跳表通过随机的方式来决定新插入节点来决定索引的层数。</li>
+<li>跳表搜索的时间复杂度是 $O(\log n)$，插入/删除也是。</li>
+</ol>
+<p>想到快排(quick sort)与其它排序算法（如归并排序/堆排序）虽然时间复杂度是一样的，但复杂度的常数项较小；跳表的原论文也说跳表能提供一个常数项的速度提升，因此想着常数项小是不是随机算法的一个特点？这也它们大放异彩的重要因素吧。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="ftp://ftp.cs.umd.edu/pub/skipLists/skiplists.pdf">ftp://ftp.cs.umd.edu/pub/skipLists/skiplists.pdf</a> 原论文</li>
+<li><a href="https://ticki.github.io/blog/skip-lists-done-right/" target="_blank" rel="noopener">https://ticki.github.io/blog/skip-lists-done-right/</a> skip list 的一些变种、优化</li>
+<li><a href="https://eugene-eeo.github.io/blog/skip-lists.html" target="_blank" rel="noopener">https://eugene-eeo.github.io/blog/skip-lists.html</a> skip list 的一些相关复杂度分析</li>
+<li><a href="http://cglab.ca/~morin/teaching/5408/refs/p90b.pdf" target="_blank" rel="noopener">http://cglab.ca/~morin/teaching/5408/refs/p90b.pdf</a> skip list cookbook，算是
+skip list 各方面的汇总</li>
+<li><a href="https://juejin.im/entry/59b0eed46fb9a0249471f357" target="_blank" rel="noopener">一个可以在有序元素中实现快速查询的数据结构</a> 包含 skip list 的 C++ 实现</li>
+<li><a href="http://zhangtielei.com/posts/blog-redis-skiplist.html" target="_blank" rel="noopener">Redis内部数据结构详解(6)——skiplist</a> 图文并茂讲解 skip list，可与本文交叉对照</li>
+<li><a href="https://www.youtube.com/watch?v=2g9OSRKJuzM" target="_blank" rel="noopener">https://www.youtube.com/watch?v=2g9OSRKJuzM</a> MIT 关于 skip list 的课程</li>
+<li><a href="https://courses.csail.mit.edu/6.046/spring04/handouts/skiplists.pdf" target="_blank" rel="noopener">https://courses.csail.mit.edu/6.046/spring04/handouts/skiplists.pdf</a> MIT 课程讲义</li>
+</ul>
+<div id="footnotes"><hr><div id="footnotelist"><ol style="list-style:none; padding-left: 0"><li id="fn:1"><span style="display: inline-block; vertical-align: top; padding-right: 10px">1.</span><span style="display: inline-block; vertical-align: top">一个节点在第 $l$ 层有索引满足二项分布 $B(n, p^{l-1})$，因此第 $l$ 层的节点数的期望为 $np^{l-1}$。</span><a href="#fnref:1" rev="footnote"> ↩</a></li></ol></div></div></div></div><script type="text/x-mathjax-config">
+   MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    }); 
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/skip-list/';
+var disqus_title = '跳表──没听过但很犀利的数据结构';
+var disqus_url = 'https://lotabout.me/2018/skip-list/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

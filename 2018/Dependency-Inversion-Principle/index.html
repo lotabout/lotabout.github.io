@@ -1,0 +1,123 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="你听过 SOLID 原则吗？了解 Spring 的控制反转（IoC）吗？知道依赖注入（Dependency
+Injection）和它们有什么区别吗？虽然形式多样，它们的内核却很简单。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>DIP vs IoC vs DI | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Dependency-Injection/" rel="tag">Dependency Injection</a><a class="post-tag-link" href="/tags/Dependency-Inversion-Principle/" rel="tag">Dependency Inversion Principle</a><a class="post-tag-link" href="/tags/Inversion-of-Control/" rel="tag">Inversion of Control</a><a class="post-tag-link" href="/tags/SOLID/" rel="tag">SOLID</a></div><div class="post-time">2018-01-03</div></div></div><div class="container post-header"><h1>DIP vs IoC vs DI</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#tldr"><span class="toc-number">1.</span> <span class="toc-text">TLDR;</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#依赖反转原则-dependency-inversion-principle"><span class="toc-number">2.</span> <span class="toc-text">依赖反转原则（Dependency Inversion Principle）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#控制反转-inversion-of-control"><span class="toc-number">3.</span> <span class="toc-text">控制反转（Inversion of Control）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#依赖注入-dependency-injection"><span class="toc-number">4.</span> <span class="toc-text">依赖注入（Dependency Injection）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#现实中的应用"><span class="toc-number">5.</span> <span class="toc-text">现实中的应用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#写在最后"><span class="toc-number">6.</span> <span class="toc-text">写在最后</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#reference"><span class="toc-number">7.</span> <span class="toc-text">Reference</span></a></li></ol></details></div><div class="container post-content"><p>你听过 SOLID 原则吗？了解 Spring 的控制反转（IoC）吗？知道依赖注入（Dependency
+Injection）和它们有什么区别吗？虽然形式多样，它们的内核却很简单。</p>
+<h2 id="tldr"><a class="header-anchor" href="#tldr"></a>TLDR;</h2>
+<p><img src="http://www.tutorialsteacher.com/Content/images/ioc/principles-and-patterns.png" alt="IoC Principle and patterns"></p>
+<p>（图片来源： <a href="http://www.tutorialsteacher.com/ioc/introduction%EF%BC%89" target="_blank" rel="noopener">http://www.tutorialsteacher.com/ioc/introduction）</a></p>
+<blockquote>
+<p>DI is about wiring, IoC is about direction, and DIP is about shape.</p>
+</blockquote>
+<ul>
+<li>DIP 是一种思想，它认为上层代码不应该依赖下层的实现，而应该提供接口让下层实现</li>
+<li>IoC 是一种思想，它认为代码本职之外的工作都应该由某个第三方（框架）完成</li>
+<li>DI 是一种技术，将依赖通过“注入”的方式提供给需要的类，是 DIP 和 IoC
+的具体实现</li>
+</ul>
+<p>它们的目的都是解耦，使程序更好地模块化，也使各个模块更容易测试。</p>
+<h2 id="依赖反转原则-dependency-inversion-principle"><a class="header-anchor" href="#依赖反转原则-dependency-inversion-principle"></a>依赖反转原则（Dependency Inversion Principle）</h2>
+<p>它是 SOLID 原则中的“D”，根据 <a href="https://zh.wikipedia.org/wiki/%E4%BE%9D%E8%B5%96%E5%8F%8D%E8%BD%AC%E5%8E%9F%E5%88%99" target="_blank" rel="noopener">维基百科</a>：</p>
+<blockquote>
+<p>在面向对象编程领域中，依赖反转原则（Dependency inversion principle，DIP）是
+指一种特定的解耦（传统的依赖关系创建在高层次上，而具体的策略设置则应用在低层
+次的模块上）形式，使得高层次的模块不依赖于低层次的模块的实现细节，依赖关系被
+颠倒（反转），从而使得低层次模块依赖于高层次模块的需求抽象。</p>
+</blockquote>
+<p>从上面的描述我们可以看它的<strong>目的</strong>是解耦，<strong>手段</strong>是 “高层次的模块不依赖于低层次的模块的实现细节”。具体有两个原则：</p>
+<blockquote>
+<ol>
+<li>高层次的模块不应该依赖于低层次的模块，两者都应该依赖于抽象接口。</li>
+<li>抽象接口不应该依赖于具体实现。而具体实现则应该依赖于抽象接口。</li>
+</ol>
+</blockquote>
+<p>例如下面的代码中，Service 的实现依赖于 DAO 的具体实现。如图：</p>
+<img src="/2018/Dependency-Inversion-Principle/DIP-dao-normal.png" class="" title="Dependency of Service">
+<p>上图中， 高层的 <code>XXXService</code> 依赖于 DAO 的实现细节，如果 DAO 是对 SQL 数据库进行操作，那也就决定了 <code>XXXService</code> 也只适用于 SQL 数据库，之后如果添加了 NOSQL
+数据库，想再复用 <code>XXXService</code> 的逻辑就十分困难了。这是耦合的带来的弊端之一。</p>
+<p>有 Java 经验的同学肯定会觉得解决方案很简单啊，不要用 <code>DAO</code> 类啊，先实现一个
+<code>DAO</code> 接口，再实现一个实现类不就搞定了嘛。这个习惯似乎已经成了一种铁律，但没错，DIP 的实践告诉我们 <code>XXXService</code> 应该创建一个 <code>DAO</code> 接口，而具体的实现类则负责实现这个接口，如下：</p>
+<img src="/2018/Dependency-Inversion-Principle/DIP-dao-dip.png" class="" title="DIP of DAO">
+<p>上面这张图有两点要注意的地方：</p>
+<ol>
+<li><code>DAO</code> 接口是和 <code>XXXService</code>（调用方）在同一层而不是和 <code>SQLDao</code> （实现方）在一层</li>
+<li><code>XXXService</code> 依赖同一层的接口，在下层的 <code>SQLDao</code> 实现了上一层的接口。</li>
+</ol>
+<p>因此依赖反转， “反转”的是上下层的依赖，<strong>由上层依赖下层的实现，反转成下层依赖上层的接口</strong>。</p>
+<p>而在实现上也很容易理解：不要在一个类里显示 <code>new</code> 另一个类（当然一般来说这个类是 Service 或 Component，而不是普通的数据类）。</p>
+<h2 id="控制反转-inversion-of-control"><a class="header-anchor" href="#控制反转-inversion-of-control"></a>控制反转（Inversion of Control）</h2>
+<p>那么什么是控制反转呢？<a href="http://www.tutorialsteacher.com/ioc/introduction" target="_blank" rel="noopener">这篇文章</a> 讲得很清晰：</p>
+<blockquote>
+<p>IoC is a design principle which recommends inversion of different kinds of
+controls in object oriented design to achieve loose coupling between the
+application classes. Here, the control means any additional responsibilities
+a class has other than its main responsibility, such as control over the
+flow of an application, control over the dependent object creation and
+binding</p>
+</blockquote>
+<p>IoC 是一个 <strong>设计原则</strong>，它提倡我们反转面向对象设计中的各种控制，以达到各个类之间的解耦。这里“控制”的含义是除了一个类本职之外的其它所有工作，如整个软件流程的控制，依赖或绑定的创建等。</p>
+<p>IoC 的各种教程里，常说控制反转和“好莱坞原则”一致：“Don’t call me, I’ll call you.”</p>
+<p><a href="https://en.wikipedia.org/wiki/Inversion_of_control#Overview" target="_blank" rel="noopener">维基百科的例子</a>
+举得很好：</p>
+<p>例如写传统的命令行程序，我们需要展示给用户一些菜单，然后根据用户的选择做相应的操作。于是我们写了一个菜单类，这个菜单类会调用底层的“显示类”来显示菜单内容，监听并返回用户的选择。</p>
+<p>现在如果我们将代码移植到图形界面，对应地就要创建“GUI显示类”，此时需要我们修改菜单类来适应之种修改。我们只是要修改显示相关的内容却要却个性菜单类，这说明菜单类与显示类间有耦合。</p>
+<p>控制反转认为菜单类的本职工作是提供“菜单”，如何显示，如何处理用户选择等不应该是它的职责（单一职责原则）。因此，最好有一个框架专门管理整体流程。框架知道有的类负责显示、有的类负责提供菜单，同时它也知道如何软件的流程，知道什么时候需要调用菜单类得到菜单，什么时候需要调用显示类做展示。框架定好流程，各个类“填空”就行了，菜单类提供菜单内容，显示类提供显示逻辑等等。</p>
+<p>控制反转是把不属于类的职责抽离出来，让一个专门的“第三方”来做处理这些事。所以它的外延其实是很广的，我们常说的 IoC 容器只是一个专门的“第三方”用来处理依赖罢了。</p>
+<h2 id="依赖注入-dependency-injection"><a class="header-anchor" href="#依赖注入-dependency-injection"></a>依赖注入（Dependency Injection）</h2>
+<p>在实际使用和讨论中，大家滥用了 IoC 这个词，因此 Martin Fowler 等人在讨论后，确定使用“依赖注入”(DI)这个词来指代其中一项具体的技术。DI 技术背后的想法是：</p>
+<ol>
+<li>为了保证 DIP 原则，一个类应该只依赖抽象接口。</li>
+<li>于是具体的实现需要由某种方式“注入”到这个类。</li>
+<li>那么依据控制反转的思想，最好是由第三方（容器）来完成。</li>
+</ol>
+<p>“注入”又有几种方式：</p>
+<ol>
+<li>constructor injection ，依赖通过构造函数传入</li>
+<li>setter injection，依赖通过一个个 setter 传入</li>
+<li>interface injection，类显示实现一个 setter interface。</li>
+</ol>
+<p>对实现细节感兴趣的话可以看 <a href="https://en.wikipedia.org/wiki/Dependency_injection#Three_types_of_dependency_injection" target="_blank" rel="noopener">维基百科</a>
+的例子。</p>
+<p>要明白的是依赖注入只是“注入”依赖的其中一种方式（使用最广吧），还有一些其它的方式，例如“依赖查找”（Dependency Lookup），这里就不深入了。</p>
+<p>注意的是依赖注入是只明确 <strong>如何</strong> 将依赖“注入”一个类，而由谁来做并不是 DI 处理的问题，例如在 Python 等其它语言里，我们依旧可以贯彻 DIP，也可以用
+constructor injection，但与 Java 中使用 IoC 容器来管理不同，Python 中大家很少使用甚至听说 IoC 容器。</p>
+<h2 id="现实中的应用"><a class="header-anchor" href="#现实中的应用"></a>现实中的应用</h2>
+<p>这部分是看了陈浩的 <a href="https://coolshell.cn/articles/9949.html" target="_blank" rel="noopener">IOC/DIP其实是一种管理思想</a> 后想到的。其实计算机中的许多概念在现实中也是有对应的，按我的理解：</p>
+<ul>
+<li>DIP 相当于“标准化”产品</li>
+<li>IoC 相当于“流水线”化环节</li>
+</ul>
+<p>就比如说一家餐厅用的海鲜全是某个供应商供应的，后来由于店面扩大，想换一家更大供应商，但发现供应商能供应的种类和质量都和之前不同，因此换供应商的同时就要让改菜单，大厨们对一些食材要特殊处理。可见餐厅和之前的供应商耦合太高。</p>
+<p>DIP 告诉我们，餐厅不应该直接依赖某个供应商，而应该规定供应商的标准。要成为自己的供应商，必须能提供什么种类的食材，食材要达到什么标准，这样即使想换供应商，餐厅自己也不需要有任何变化。这时餐厅不是依赖于具体的供应商，而是依赖于制定的供应商标准。</p>
+<p>再比如还是这家餐厅，但它是连锁餐厅，尽管不同的供应商都满足了标准，但每家子餐厅还是自己挑选供应商，而现在总公司决定缩减成本，选择价格更低的供应商，由于每家子餐厅都是自己选择，要实施这个命令就很困难。</p>
+<p>而 IoC 认为餐厅的职责应该是生产食品，而原料的供应、定单的接收乃至食物的配送都不应该是餐厅（或者应该称为厨房）负责的。于是总公司就专门成立一个管理部门，负责管理整个流程，它为每个步骤都创建一个具体的部分，统筹规划。采购部分负责选择供应商，管理部门把得到的原料和定单交给餐厅，餐厅只专注生产。相当于建立了一个流水线，每一个部分都成了流水线的一个步骤，都专注于自己的职责。另一方面，流水线的管理也专注于流程的管理。</p>
+<h2 id="写在最后"><a class="header-anchor" href="#写在最后"></a>写在最后</h2>
+<p>最后还是想说所有的设计都是在做 trade-off。例如模块化能使软件更容易变化，模块之间能替换，但实际生产中，有多少软件会换自己的数据库呢？再比如说 IoC 其实也要看个度，如果所有的控制流都反转了，那管理起来也会过于复杂。</p>
+<p>吐糟下似乎 Java 的开发者都特别喜欢上来先写个接口，然后写一个实现类。写起来不容易，读起来也费劲，但你要是问起来，大家会说这样有得写单元测试，并且如果需要替换实现类也会更方便。可是实际上，几乎 95% 以上（随便说的数字，实际中一次都没看见过）的类都不会有两个或以上的实现，而测试其实也可以通过生成子类之类的方式来做。</p>
+<p>因此，我想说学习的时候还是要搞懂它要解决什么问题，有什么好处和缺点，这样才能具体问题具体分析。世上没有银弹。</p>
+<h2 id="reference"><a class="header-anchor" href="#reference"></a>Reference</h2>
+<ul>
+<li><a href="https://www.martinfowler.com/articles/injection.html" target="_blank" rel="noopener">Inversion of Control Containers and the Dependency Injection pattern</a> by Martin Fowler.</li>
+<li><a href="https://martinfowler.com/articles/dipInTheWild.html" target="_blank" rel="noopener">DIP in the wild</a> by Martin Fowler.</li>
+<li><a href="http://www.tutorialsteacher.com/ioc/introduction" target="_blank" rel="noopener">IoC Introduction</a> 对各种概念简短但精辟的解释。</li>
+<li><a href="https://coolshell.cn/articles/9949.html" target="_blank" rel="noopener">IOC/DIP其实是一种管理思想</a> 可以认为是这些思想在现实世界的体现</li>
+<li><a href="https://softwareengineering.stackexchange.com/questions/135971/when-is-it-not-appropriate-to-use-the-dependency-injection-pattern" target="_blank" rel="noopener">When is it not appropriate to use the dependency injection pattern?</a></li>
+</ul></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/Dependency-Inversion-Principle/';
+var disqus_title = 'DIP vs IoC vs DI';
+var disqus_url = 'https://lotabout.me/2018/Dependency-Inversion-Principle/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

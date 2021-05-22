@@ -1,0 +1,48 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="开源版的 Nginx 支持被动健康检查(passive health check)，包含两个参数
+&lt;code&gt;max_fails&lt;/code&gt; 和 &lt;code&gt;fail_timeout&lt;/code&gt;。那么它内部又是如何运行的呢？"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>QQA: Nginx 如何做健康检查? | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/QQA/" rel="tag">QQA</a><a class="post-tag-link" href="/tags/health-check/" rel="tag">health check</a><a class="post-tag-link" href="/tags/nginx/" rel="tag">nginx</a></div><div class="post-time">2019-12-20</div></div></div><div class="container post-header"><h1>QQA: Nginx 如何做健康检查?</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#示例配置"><span class="toc-number">1.</span> <span class="toc-text">示例配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#内部原理"><span class="toc-number">2.</span> <span class="toc-text">内部原理</span></a></li></ol></details></div><div class="container post-content"><p>开源版的 Nginx 支持被动健康检查(passive health check)，包含两个参数
+<code>max_fails</code> 和 <code>fail_timeout</code>。那么它内部又是如何运行的呢？</p>
+<ul>
+<li><code>max_fails</code>: 尝试连接时，如果失败的次数大于 <code>max_fails</code>，则暂时将服务标记为不可用（默认为 1）</li>
+<li><code>fail_timeout</code>: 服务标记不可用后的 <code>fail_timeout</code> 时间内，不会再尝试连接该服务（默认为 10s）</li>
+</ul>
+<h2 id="示例配置"><a class="header-anchor" href="#示例配置"></a>示例配置</h2>
+<p>取自 <a href="https://docs.nginx.com/nginx/admin-guide/load-balancer/http-health-check/" target="_blank" rel="noopener">nginx 官方文档
+</a>，会尝试连接 backend2 <code>3</code> 次后才将它标记为不可用，标记不可用后 <code>30s</code> 再重试。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">upstream backend &#123;</span><br><span class="line">    server backend1.example.com;</span><br><span class="line">    server backend2.example.com max_fails&#x3D;3 fail_timeout&#x3D;30s;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="内部原理"><a class="header-anchor" href="#内部原理"></a>内部原理</h2>
+<p>健康检查分为如下几个步骤：</p>
+<ol>
+<li>接收到请求时，Nginx 会以指定的方式（如 Round Robin）获取可用的服务</li>
+<li>获取可用服务时首先会尝试建立连接（推论：健康检查是在 TCP 层）。</li>
+<li>此时若连接失败，则将失败数 <code>fails</code> 加 1，并记录检查的时间 <code>checked</code></li>
+<li>如果获取服务时发现 <code>fails &gt;= max_fails</code> 且 <code>now - checked &lt;= fail_timeout</code>，则认为该服务不可用</li>
+<li>推论：若距离 <code>checked</code> 超过了 <code>fail_timeout</code>，nginx 又会重新尝试连接</li>
+<li>若服务恢复正常，则重置失败次数 <code>fails = 0</code></li>
+</ol>
+<img src="/2019/QQA-How-does-nginx-health-check-work/nginx-health-check.svg" class="" title="Nginx Health Check">
+<p>如上图所示，注意下面几点：</p>
+<ol>
+<li>同一个请求，只会连接一个服务一次</li>
+<li>失败数会一直累加，直到服务恢复正常</li>
+<li>在 <code>fail_timeout</code> 起作用期间，认为服务不可用，不会尝试连接</li>
+</ol></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2019/QQA-How-does-nginx-health-check-work/';
+var disqus_title = 'QQA: Nginx 如何做健康检查?';
+var disqus_url = 'https://lotabout.me/2019/QQA-How-does-nginx-health-check-work/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

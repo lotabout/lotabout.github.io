@@ -1,0 +1,82 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="简单一句 &lt;code&gt;margin: 0 auto&lt;/code&gt; 我们便能搞定水平居中，而正当我们开心地写出 &lt;code&gt;margin: auto 0&lt;/code&gt; 时，浏览器却没却无情地拒绝了我们，那我们来看看如何用 CSS 实现垂直居中吧。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>CSS 垂直居中 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/CSS/" rel="tag">CSS</a><a class="post-tag-link" href="/tags/align/" rel="tag">align</a></div><div class="post-time">2016-03-17</div></div></div><div class="container post-header"><h1>CSS 垂直居中</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#垂直居个中-怎么就这么难"><span class="toc-number">1.</span> <span class="toc-text">垂直居个中，怎么就这么难</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#vertical-align-table"><span class="toc-number">2.</span> <span class="toc-text">vertical-align + table</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#伪元素的救赎"><span class="toc-number">3.</span> <span class="toc-text">伪元素的救赎</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#transform-的神力"><span class="toc-number">4.</span> <span class="toc-text">transform 的神力</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#富人的思虑"><span class="toc-number">5.</span> <span class="toc-text">富人的思虑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#终结者-flexbox"><span class="toc-number">6.</span> <span class="toc-text">终结者 flexbox</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结语"><span class="toc-number">7.</span> <span class="toc-text">结语</span></a></li></ol></details></div><div class="container post-content"><p>简单一句 <code>margin: 0 auto</code> 我们便能搞定水平居中，而正当我们开心地写出 <code>margin: auto 0</code> 时，浏览器却没却无情地拒绝了我们，那我们来看看如何用 CSS 实现垂直居中吧。</p>
+<p>要完全理解本文，我们假设你已经对 CSS 较为熟悉，包括 CSS 盒模型(box model)，
+position 的常用方法，伪元素的使用等等。但若只是工作需要，照抄就是！</p>
+<p>本文示例用 <a href="http://jsfiddle.net/" target="_blank" rel="noopener">Jsfiddle</a> 编辑，可能载入较慢，请耐心等待。</p>
+<h2 id="垂直居个中-怎么就这么难"><a class="header-anchor" href="#垂直居个中-怎么就这么难"></a>垂直居个中，怎么就这么难</h2>
+<p>正如前言所说，水平居中，通常只需要一句：<code>margin: 0 auto</code> 即可解决。而同样的方法对于垂直居中却没用，下例为证：</p>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/jcvo1p9r/1/embedded/result,html,css/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>原因何在？我们查一下 <a href="https://www.w3.org/TR/CSS2/visudet.html#normal-block" target="_blank" rel="noopener">CSS 2 的标准</a>：计算高度时如果
+<code>margin-top</code> 或 <code>margin-bottom</code> 的值为 <code>auto</code>，则它们的 ‘used value’ 为
+<code>0</code>。也就是在计算高度时，margin 根本就没有 <code>auto</code> 的概念。</p>
+<p>好吧，那让我们静下来想想，既然 <code>auto</code> 不能用，那我们自己设置不就行了吗？当然这就需要事先知道需要居中的元素的高度，再用 <code>calc</code> 指定 <code>margin-top</code> 就能搞定了。</p>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/jcvo1p9r/2/embedded/css,html,result/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>诶？怎么跟说好的不一样？说好的这回就能居中呢？上网一查，CSS 果然是坑啊。
+<a href="http://www.w3schools.com/cssref/pr_margin-top.asp" target="_blank" rel="noopener">W3school</a> 就写得明明白白：如果使用百分比作为 <code>margin-top</code> 的值，则百分比的基准是父元素的 <strong>宽度</strong> 。好吧，三观都粉碎了。但再仔细一查，<code>margin-top</code> 是按父元素的宽度算，但
+<code>top/bottom</code> 是按父元素的高度算啊！于是我们想到了用 <code>position: relative</code> +
+<code>top: calc(50% - height/2)</code> 的手段：</p>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/jcvo1p9r/13/embedded/result,html,css/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>皇天不负苦心人，终于被我们给拿下了！这时身后的设计表示：你再帮我在居中的元素里加点东西吧。WTF？居中元素的高度不准变啊，混蛋！</p>
+<p>于是我们下面要处理的就是未知父元素高度，未知子元素高度情况下的垂直居中问题（图来源为 <a href="https://css-tricks.com/centering-in-the-unknown/" target="_blank" rel="noopener">CSS-trick</a>）：</p>
+<p><img src="https://css-tricks.com/wp-content/uploads/2011/10/unknown.png" alt="Unknown Child"></p>
+<h2 id="vertical-align-table"><a class="header-anchor" href="#vertical-align-table"></a>vertical-align + table</h2>
+<p>尽管垂直居中问题困扰着我们，更让人困扰的是 CSS 里居然有一个属性名为
+<a href="https://developer.mozilla.org/en/docs/Web/CSS/vertical-align" target="_blank" rel="noopener">vertical-align</a>，而且它有个值是 <code>vertical-align: middle</code>！但是用它根本不能垂直居中啊！谁设计的，老实站出来 -_-</p>
+<p>好吧，既然不明白为什么，那就继续好好看文档吧：<code>vertical-align</code> 是用来指定内嵌元素(inline element) 和 table-cell 的垂直对齐方式。我们先将 元素转换成 <code>table</code>
+来试试对齐。首先为父元素加上 <code>display: table</code>，为子元素加上 <code>display: table-cell</code> 来将它们变成表格的样式，再为子元素加上 <code>vertical-align: middle</code>
+即可。如下例所示。</p>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/jcvo1p9r/14/embedded/result,html,css/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>嗯，居中是居中了，而且也跟子元素的实际高度无关，但怎么感觉有点奇怪？嗯，是的，奇怪是因为父元素的宽度变小了，不像原来是 100% 的宽度。原因是 <code>table</code> 本质上也是 inline 元素，因此现在变成 inline 的父元素，它的宽度将与子元素的宽度相同。当然，我们也可以为父元素加上 <code>width: 100%</code> 来强制指定它的宽度。</p>
+<p>另一个问题是子元素的高度变得和父元素一样高了。这对读者而言也许是问题，也许不是，就要自己考虑了。</p>
+<h2 id="伪元素的救赎"><a class="header-anchor" href="#伪元素的救赎"></a>伪元素的救赎</h2>
+<p>前面说到 <code>vertical-align</code> 可以用于垂直对齐，但它只能用于 inline 元素。比起
+<code>table</code>，更为直接 的想法就是把子元素改成 <code>display: inline-block</code>，并加上
+<code>vertical-align: middle</code>。只是可惜的是这样并不成功。</p>
+<p>原因是 <code>vertical-align</code> 指的是当前 inline 元素自己，与其它 inline 元素如何对齐。而我们现在的情况是，只有一个 inline 元素，那自己跟自己，怎么对齐嘛。</p>
+<p>但如果你用过 <code>:before</code> 或 <code>:after</code> 伪元素的话，这就不是一个问题了。我们可以添加伪元素，让它的高度与父元素相同，这样子元素垂直对齐时就能居中了。如下图（来源为<a href="https://css-tricks.com/centering-in-the-unknown/" target="_blank" rel="noopener">CSS-trick</a>）</p>
+<p><img src="https://css-tricks.com/wp-content/uploads/2011/10/ghost.png" alt="Ghost element"></p>
+<p>这里要注意的是，为一个元素添加为元素，相当于为当前元素添加了子元素，因此为了生成一个 100% 高度的伪元素，我们需要对父元素添加伪元素。如下例：</p>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/jcvo1p9r/7/embedded/css,html,result/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>嗯，看起来好像很不错了吧！只是不是特别喜欢这种方法，因为如果我们需要使用父元素的伪元素做一些其它的事情，同时又需要居中，那我们就无能为力了。不过 CSS 是在不断发展的，在 CSS3 中，我们又多了一些选择。下面我们介绍两种。</p>
+<h2 id="transform-的神力"><a class="header-anchor" href="#transform-的神力"></a>transform 的神力</h2>
+<p>之前我们想到了用 <code>position: relative</code> + <code>top: calc(50% - height/2)</code> 的方法，但这种方法需要知道子元素的高度，但有了
+<a href="https://developer.mozilla.org/en-US/docs/Web/CSS/transform" target="_blank" rel="noopener">transform</a>，我们就可以用 <code>translateY(-50%)</code> 来达到 <code>- height/2</code> 的目的，而不需要知道居中元素的高度。</p>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/jcvo1p9r/15/embedded/css,html,result/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>只需要简单的三步：</p>
+<figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="selector-class">.center-container</span> &#123;</span><br><span class="line">  <span class="attribute">position</span>: relative;</span><br><span class="line">  <span class="attribute">top</span>: <span class="number">50%</span>;</span><br><span class="line">  <span class="attribute">transform</span>: <span class="built_in">translateY</span>(-<span class="number">50%</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="富人的思虑"><a class="header-anchor" href="#富人的思虑"></a>富人的思虑</h2>
+<p>现在已经有了许多的方法来实现垂直居中，尽管方法的效果不一，难度各异，可总的来说还是够用了。但一旦拥有的选择多了，反而无从下手了。那么不必着急，让我们看看它们的最后一个痛点：</p>
+<figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"container"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"vertical"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">p</span> <span class="attr">id</span>=<span class="string">"p1"</span>&gt;</span> A paragraph 1 <span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">p</span> <span class="attr">id</span>=<span class="string">"p2"</span>&gt;</span> A paragraph 2 <span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>如上 HTML 文件，我们为了居中 <code>p1</code> 和 <code>p2</code>，而为它们加了一个层包裹层
+<code>.vertical</code>。虽然也不是什么难事，但在某些情形下，我们是不能修改文档的结构的，其中一种可能是文档的内容是动态生成的。也就是，我们希望在现有的文档结构下，让某些内容垂直居中，这也许是最后一个痛点了。</p>
+<p>那么下面我们就来看看最终的杀器：flexbox。</p>
+<h2 id="终结者-flexbox"><a class="header-anchor" href="#终结者-flexbox"></a>终结者 flexbox</h2>
+<p><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Flexible_Box_Layout/Using_CSS_flexible_boxes" target="_blank" rel="noopener">flexbox</a>
+是 CSS3 为我们带来的瑞士军刀，几乎一切布局相关的问题都能用 flexbox 解决。这里我们先用实例来解决垂直居中的问题。如下：</p>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/jcvo1p9r/12/embedded/css,html,result/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>可以看到，也是简单的3行：</p>
+<figure class="highlight css"><table><tr><td class="code"><pre><span class="line"><span class="selector-class">.container</span> &#123;</span><br><span class="line">  <span class="attribute">display</span>: flex;</span><br><span class="line">  <span class="attribute">flex-direction</span>: column;</span><br><span class="line">  <span class="attribute">justify-content</span>: center;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>需要注意的是 CSS3 的支持问题。例如 IE 需要 IE11 才能支持。</p>
+<p>关于 flexbox 如何使用，可以参考 <a href="https://css-tricks.com/snippets/css/a-guide-to-flexbox/" target="_blank" rel="noopener">A Complete Guide to Flexbox</a>。</p>
+<h2 id="结语"><a class="header-anchor" href="#结语"></a>结语</h2>
+<p>可以说，整篇文章就是一句 <code>margin: 0 auto</code> 所引发的血案。而通过一步步地深入，我们也一步步接近关于 CSS 的丑陋真相。以及旧社会（CSS2）下的人们水深火热的生活，但好在社会是在不断发展进步的。我们最终还是迎来的美好的新时代。</p>
+<p>由于本人水平有限，难免会有错误，还请不吝赐教。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2016/CSS-vertical-center/';
+var disqus_title = 'CSS 垂直居中';
+var disqus_url = 'https://lotabout.me/2016/CSS-vertical-center/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

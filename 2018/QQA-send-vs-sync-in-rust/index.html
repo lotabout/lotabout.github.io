@@ -1,0 +1,49 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;p&gt;&lt;code&gt;Send&lt;/code&gt; 与 &lt;code&gt;Sync&lt;/code&gt; 是两个十分相近的 trait，它们是一起保证了 Rust 的线程安全，它们又有什么异同点呢？&lt;/p&gt;
+&lt;p&gt;（Quick Question and Answer 系列旨在对小问题做简短解答）&lt;/p&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>QQA: Rust 中 Send 与 Sync 有什么区别 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/QQA/" rel="tag">QQA</a><a class="post-tag-link" href="/tags/rust/" rel="tag">rust</a></div><div class="post-time">2018-04-01</div></div></div><div class="container post-header"><h1>QQA: Rust 中 Send 与 Sync 有什么区别</h1></div><div class="container post-content"><p><code>Send</code> 与 <code>Sync</code> 是两个十分相近的 trait，它们是一起保证了 Rust 的线程安全，它们又有什么异同点呢？</p>
+<p>（Quick Question and Answer 系列旨在对小问题做简短解答）</p>
+<a id="more"></a>
+<ul>
+<li><code>Send</code> 表示数据能安全地被 <code>move</code> 到另一个线程</li>
+<li><code>Sync</code> 表示数据能在多个线程中被同时安全地访问</li>
+</ul>
+<p>这里“安全”指不会发生数据的竞争 (race condition)。</p>
+<h2 id="send-代表没有数据共享"><a class="header-anchor" href="#send-代表没有数据共享"></a>Send 代表没有数据共享</h2>
+<p>数据如果被 move 到另一个线程里，它还安全吗？能正常使用吗？如果可以，则说它是
+<code>Send</code>。</p>
+<p>反例： <a href="https://doc.rust-lang.org/std/rc/struct.Rc.html" target="_blank" rel="noopener">Rc</a>。我们知道 <code>Rc</code> 中保存了一个 reference count，记录有多少变量引用了当前的数据，当 reference count
+归 0 时才释放(drop)数据本身。现在如果我们把一个 <code>Rc</code> move 到另一个线程里，尽管是 move，<code>Rc</code> 的实现还是决定了不同线程里的 <code>Rc</code> 会指向同一个 reference count，这意味着不同的线程可能同时修改 reference count，而 <code>Rc</code> 内部并没有实现同步机制，因此是不安全的。</p>
+<p>这里有一个推论：一个结构(Struct)如果不满足 <code>Send</code>，是不是意味着它的某个内部数据不满足<code>Sync</code> 呢？参考 <code>Rc</code> 的例子，就是内部的 reference count 不满足 Sync 。只是目前没有找到相关的证明。</p>
+<h2 id="sync-代表同步"><a class="header-anchor" href="#sync-代表同步"></a>Sync 代表同步</h2>
+<p>如果多个线程同时访问某个数据，会不会产生竞争？如果还是安全的，我们就能说它是
+<code>Sync</code>。</p>
+<p>反例：<a href="https://doc.rust-lang.org/std/cell/struct.RefCell.html" target="_blank" rel="noopener">RefCell</a>。它满足 <code>Send</code>，但不满足 <code>Sync</code>。 <code>RefCell</code> 不会与本线程的其它引用共享数据，所以被
+move 到其它线程是安全的。但如果有多个线程同时拥有 RefCell 的引用，并同时获取它的可变引用(mutable reference)并尝试修改它，则会产生竞争，亦即没有满足原子性。</p>
+<h2 id="marker-trait"><a class="header-anchor" href="#marker-trait"></a>marker trait</h2>
+<p>最后要说的是，<code>Send</code> 和 <code>Sync</code> 都属于 <a href="https://doc.rust-lang.org/std/marker/index.html" target="_blank" rel="noopener">marker
+trait</a>，marker trait 的特点是不包含任何方法，所以为某个数据结构实现 marker trait 相当于人为告诉编译器，我实现的数据结构符合你的要求（如满足 <code>Send</code>, <code>Sync</code>），编译期间就放心吧。换句话说，编译器并无法检查你的实现到底是不是满足 <code>Send</code> 或 <code>Sync</code>，只能选择相信程序员的声明，如果程序员的实现有问题，只能程序员自己背锅了。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://zhuanlan.zhihu.com/p/24142191" target="_blank" rel="noopener">线程安全</a> Rust 线程安全的讲解</li>
+<li><a href="https://doc.rust-lang.org/book/second-edition/ch16-03-shared-state.html" target="_blank" rel="noopener">Shared State Concurrency</a> 详细说明了 Rc 为什么不满足 Send</li>
+<li><a href="https://manishearth.github.io/blog/2015/05/30/how-rust-achieves-thread-safety/" target="_blank" rel="noopener">How Rust Achieves Thread Safety</a> 对 Rust 中的 Send &amp; Sync 机制有比较详细的说明</li>
+</ul></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/QQA-send-vs-sync-in-rust/';
+var disqus_title = 'QQA: Rust 中 Send 与 Sync 有什么区别';
+var disqus_url = 'https://lotabout.me/2018/QQA-send-vs-sync-in-rust/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

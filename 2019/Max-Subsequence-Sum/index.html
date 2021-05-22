@@ -1,0 +1,86 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="给定整数序列 A，对所有的子序列分别求和，求和能达到的最大值。例如对于 &lt;code&gt;[-2, 11, -4, 13, -5, -2]&lt;/code&gt; 这个序列，答案为 20 (选取子序列 &lt;code&gt;[11, -4, 13]&lt;/code&gt;)。这个问题十分有趣，它有至少 4 种不同的解法，每种方法的时间复杂度各不相同。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>精秒的算法──最大子序列和 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/algorithm/" rel="tag">algorithm</a></div><div class="post-time">2019-07-31</div></div></div><div class="container post-header"><h1>精秒的算法──最大子序列和</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#解法一"><span class="toc-number">1.</span> <span class="toc-text">解法一</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#解法二"><span class="toc-number">2.</span> <span class="toc-text">解法二</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#解法三"><span class="toc-number">3.</span> <span class="toc-text">解法三</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#解法四"><span class="toc-number">4.</span> <span class="toc-text">解法四</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">5.</span> <span class="toc-text">小结</span></a></li></ol></details></div><div class="container post-content"><p>给定整数序列 A，对所有的子序列分别求和，求和能达到的最大值。例如对于 <code>[-2, 11, -4, 13, -5, -2]</code> 这个序列，答案为 20 (选取子序列 <code>[11, -4, 13]</code>)。这个问题十分有趣，它有至少 4 种不同的解法，每种方法的时间复杂度各不相同。</p>
+<p>方便起见，如果所有数都是负数，则认为最大的子序列和为 0。</p>
+<p>(本文内容可在《数据结构与算法分析》一书中找到，本文算是读书笔记)</p>
+<h2 id="解法一"><a class="header-anchor" href="#解法一"></a>解法一</h2>
+<p>看到题目先审题，我们逐个分析：</p>
+<ol>
+<li>什么是子序列？任选 <code>i</code>, <code>j</code> 分别作为起始和结束，取元素 $A_i, A_{i+1}, \dots A_j$ 形成子序列</li>
+<li>子序列和：即 $A_i + A_{i+1} + \dots + A_j$。</li>
+</ol>
+<p>要求子序列和的最大值，只需要穷举出所有的子序列，求和并比较即可。于是代码如下：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">solution1</span><span class="params">(A)</span>:</span></span><br><span class="line">    max_sum = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> range(len(A)):</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> range(i, len(A)):</span><br><span class="line">            max_sum = max(max_sum, sum(A[i:j+<span class="number">1</span>]))</span><br><span class="line">    <span class="keyword">return</span> max_sum</span><br><span class="line"></span><br><span class="line">solution1([<span class="number">-2</span>, <span class="number">11</span>, <span class="number">-4</span>, <span class="number">13</span>, <span class="number">-5</span>, <span class="number">-2</span>]) <span class="comment"># =&gt; 20</span></span><br></pre></td></tr></table></figure>
+<p>我们知道，<code>i, j</code> 的组合且 <code>i&lt;=j</code> 大约有 $\frac{C_n^2}{2} = O(n^2)$ 个，且每次计算子序列和需要 $O(n)$，算法的复杂度是 $O(n^3)$。这个复杂度很可怕，如果序列里有 10 万个数就基本算不出结果了。</p>
+<h2 id="解法二"><a class="header-anchor" href="#解法二"></a>解法二</h2>
+<p>优化算法时需要思考的是，原算法是不是有“不必要的计算”？减少这些计算就能提高算法的效率。对于解法一而言，在计算子序列和时，其实做了不少的重复计算，如下：</p>
+<img src="/2019/Max-Subsequence-Sum/dup-sum-1.svg" class="" title="Duplicated Calculation 1">
+<p>计算 <code>i=1, j=4</code> 的序列和时，重复计算了 <code>i=1, j=3</code> 的序列和。我们利用这一发现来提供算法的效率：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">solution2</span><span class="params">(A)</span>:</span></span><br><span class="line">    max_sum = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> range(len(A)):</span><br><span class="line">        this_sum = <span class="number">0</span></span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> range(i, len(A)):</span><br><span class="line">            this_sum += A[j]                 <span class="comment"># 只增加当前的值，减少重复计算</span></span><br><span class="line">            max_sum = max(max_sum, this_sum)</span><br><span class="line">    <span class="keyword">return</span> max_sum</span><br><span class="line"></span><br><span class="line">solution2([<span class="number">-2</span>, <span class="number">11</span>, <span class="number">-4</span>, <span class="number">13</span>, <span class="number">-5</span>, <span class="number">-2</span>]) <span class="comment"># =&gt; 20</span></span><br></pre></td></tr></table></figure>
+<p>这个解法的时间复杂度是 $O(n^2)$，对于 10 万的数据量已经能算出结果了，虽然比较慢。</p>
+<h2 id="解法三"><a class="header-anchor" href="#解法三"></a>解法三</h2>
+<p>上面的算法里还有不必要的计算。假设我们通过一些对比，已经知道了三个信息：</p>
+<ol>
+<li>所有包含 x 元素的子序列的和的最大值</li>
+<li>所有元素均在 x 之前的子序列的和的最大值</li>
+<li>所有元素均在 x 之后的子序列的和的最大值</li>
+</ol>
+<img src="/2019/Max-Subsequence-Sum/dup-sum-2.svg" class="" title="Duplicated Calculation 2">
+<p>则其实我们要求的结果就是这三个值的最大值。上图中，我们不会去计算和对比子序列 <code>[i, m]</code> 的值，因为它也包含 x 元素，所以必然小于 <code>[i, n]</code>。因此减少了一些不必要的计算。代码如下：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">solution3</span><span class="params">(A)</span>:</span></span><br><span class="line">    <span class="comment"># 基准情形</span></span><br><span class="line">    <span class="keyword">if</span> len(A) == <span class="number">0</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line">    <span class="keyword">elif</span> len(A) == <span class="number">1</span>:</span><br><span class="line">        <span class="keyword">return</span> max(<span class="number">0</span>, A[<span class="number">0</span>])</span><br><span class="line"></span><br><span class="line">    mid = len(A)//<span class="number">2</span></span><br><span class="line">    left_part = A[:mid]</span><br><span class="line">    right_part = A[mid:]</span><br><span class="line"></span><br><span class="line">    max_left_sum = solution3(left_part)</span><br><span class="line">    max_right_sum = solution3(right_part)</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 计算包含 mid 的子序列和的最大值</span></span><br><span class="line">    <span class="comment"># = 以 mid 结尾的子序列的和的最大值 + 以 mid+1 开头的子序列的和的最大值</span></span><br><span class="line"></span><br><span class="line">    max_left_border_sum = <span class="number">0</span></span><br><span class="line">    left_sum = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> v <span class="keyword">in</span> reversed(left_part):</span><br><span class="line">        left_sum += v</span><br><span class="line">        max_left_border_sum = max(left_sum, max_left_border_sum)</span><br><span class="line"></span><br><span class="line">    max_right_border_sum = <span class="number">0</span></span><br><span class="line">    right_sum = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> v <span class="keyword">in</span> right_part:</span><br><span class="line">        right_sum += v</span><br><span class="line">        max_right_border_sum = max(right_sum, max_right_border_sum)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> max(max_left_sum, max_right_sum, max_left_border_sum + max_right_border_sum)</span><br><span class="line"></span><br><span class="line">solution3([<span class="number">-2</span>, <span class="number">11</span>, <span class="number">-4</span>, <span class="number">13</span>, <span class="number">-5</span>, <span class="number">-2</span>]) <span class="comment"># =&gt; 20</span></span><br><span class="line">solution3([<span class="number">4</span>, <span class="number">-3</span>, <span class="number">5</span>, <span class="number">-2</span>, <span class="number">-1</span>, <span class="number">2</span>, <span class="number">6</span>, <span class="number">-2</span>]) <span class="comment"># =&gt; 11</span></span><br></pre></td></tr></table></figure>
+<p>该解法的时间复杂度为 $O(n\log n)$。计算法复杂度为 $T(n)$，则依据代码我们有</p>
+<p>$$
+\begin{align}
+T(1) &amp;= 1  \\
+T(n) &amp;= 2T(n/2) + O(n)
+\end{align}
+$$</p>
+<p>可以最终推出 $T(n) = O(n \log n)$。这个复杂度对于 10 万的数据量可以轻松得到结果，甚至对于 100 万的数据量也能很快得到结果。</p>
+<h2 id="解法四"><a class="header-anchor" href="#解法四"></a>解法四</h2>
+<p>通常情况下，得到一个 $O(n \log n)$ 的算法已经能应付绝大多数现实情况下的问题了。但难以置信的是，对于这个问题而言，算法还可以继续优化。代码如下：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">solution4</span><span class="params">(A)</span>:</span></span><br><span class="line">    max_sum = <span class="number">0</span></span><br><span class="line">    this_sum = <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> x <span class="keyword">in</span> A:</span><br><span class="line">        this_sum += x</span><br><span class="line">        <span class="keyword">if</span> this_sum &gt; max_sum:</span><br><span class="line">            max_sum = this_sum</span><br><span class="line">        <span class="keyword">elif</span> this_sum &lt; <span class="number">0</span>:</span><br><span class="line">            this_sum = <span class="number">0</span></span><br><span class="line">    <span class="keyword">return</span> max_sum</span><br><span class="line">solution4([<span class="number">-2</span>, <span class="number">11</span>, <span class="number">-4</span>, <span class="number">13</span>, <span class="number">-5</span>, <span class="number">-2</span>]) <span class="comment"># =&gt; 20</span></span><br></pre></td></tr></table></figure>
+<p>这个方法比起上一个算法减少了哪些不必要的计算？考虑下面的示例：</p>
+<img src="/2019/Max-Subsequence-Sum/dup-sum-3.svg" class="" title="Duplicated Calculation 3">
+<p>解法三在计算包含中间元素的子序列的最大值时，会向左求和，直到 <code>-2</code> 为止。但之后在求左边元素的子序列最大值时，又要重复计算 <code>-2, -3</code> 的和，尽管我们已经知道最大和的子序列肯定不会以 <code>-2</code> 开头。</p>
+<p>马后炮地说，上面这个算法代码简洁，性能又高，是因为我们充分分析了问题的特点，注意到：</p>
+<ol>
+<li>注意到我们只需要知道最大的子序列和，并不关心具体是哪个子序列得到了最大值。</li>
+<li>如果 <code>A[i]</code> 为负数，则最大和肯定不会以它为起点</li>
+<li>类似的，如果一个子序列的和为负数，则它不会是最大和子序列的前缀。</li>
+</ol>
+<p>因此当累加和得到负数时，我们可以立马抛弃它，而不需要再考虑这个子序列与后续子序列的组合。这个解法的时间复杂度是 $O(n)$，几乎是你能得到的最好的复杂度。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>在思考这个题目的时候，我怎么也想不出来解法三和解法四。归根结底，还是对题目的分析不够透彻，对题目隐含的条件挖掘不够深入。而对我的启示则是：复杂度的提升根本在于减少不必要的计算，而这依赖于问题/输入本身的约束。就像通过两两对比的排序理论的最好复杂度是 $O(N \log N)$，而桶排序却可以通过其它的约束达到 $O(N)$。</p></div></div><script type="text/x-mathjax-config">
+   MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    }); 
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2019/Max-Subsequence-Sum/';
+var disqus_title = '精秒的算法──最大子序列和';
+var disqus_url = 'https://lotabout.me/2019/Max-Subsequence-Sum/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="使用 Linux 开发时最常见的问题是：我的内存呢？怎么只剩这么点了？这是怎么回事了呢？"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>我的内存呢？Linux MemAvailable 如何计算 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Linux/" rel="tag">Linux</a><a class="post-tag-link" href="/tags/Memory/" rel="tag">Memory</a></div><div class="post-time">2021-05-20</div></div></div><div class="container post-header"><h1>我的内存呢？Linux MemAvailable 如何计算</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#消失的内存"><span class="toc-number">1.</span> <span class="toc-text">消失的内存</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#memavailable-估算"><span class="toc-number">2.</span> <span class="toc-text">MemAvailable 估算</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#详细逻辑与样例"><span class="toc-number">3.</span> <span class="toc-text">详细逻辑与样例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#补充：进程内存"><span class="toc-number">4.</span> <span class="toc-text">补充：进程内存</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">5.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">6.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>使用 Linux 开发时最常见的问题是：我的内存呢？怎么只剩这么点了？这是怎么回事了呢？</p>
+<h2 id="消失的内存"><a class="header-anchor" href="#消失的内存"></a>消失的内存</h2>
+<p>通常我们会用 <code>free</code> 命令（如下）或 Node Exporter + Prometheus 来监控系统的内存。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ free -h</span><br><span class="line">              total        used        free      shared  buff&#x2F;cache   available</span><br><span class="line">Mem:           31Gi        13Gi       8.0Gi       747Mi        10Gi        16Gi</span><br><span class="line">Swap:         2.0Gi       321Mi       1.7Gi</span><br></pre></td></tr></table></figure>
+<p>上面的输出中，我们很自然地以为 <code>free</code> 代表可以内存，所以经常会发现这个值特别低，造成“系统的内存用光了”的错觉。在比较新的内核里，<strong>会有 <code>available</code> 一项，它才是“可用内存”</strong>。</p>
+<p>这里有个小知识，<code>free</code> 指的是完全没有被用到的内存，而 Linux 认为内存不用也是浪费，因此会尽量“多”地把内存用来做各种缓存，提高系统的性能。在内存不够用时，它会释放缓存腾出空间给应用程序。因此早期没有 <code>available</code> 这项指标时，一般会认为
+<code>free + buff/cache</code> 是系统当前的可用内存。那么现在的 <code>available</code> 是如何计算得到的？</p>
+<h2 id="memavailable-估算"><a class="header-anchor" href="#memavailable-估算"></a>MemAvailable 估算</h2>
+<p><code>free</code> 命令只输出简单几项指标，更详细的指标可以用 <code>cat /proc/meminfo</code> 得到：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">MemTotal:       32729276 kB</span><br><span class="line">MemFree:         8348128 kB</span><br><span class="line">MemAvailable:   17735588 kB</span><br><span class="line">Active:         13969564 kB</span><br><span class="line">Inactive:        8494392 kB</span><br><span class="line">Active(anon):   10878224 kB</span><br><span class="line">Inactive(anon):  2218284 kB</span><br><span class="line">Active(file):    3091340 kB</span><br><span class="line">Inactive(file):  6276108 kB</span><br><span class="line">Unevictable:      212164 kB</span><br><span class="line">Slab:            1293804 kB</span><br><span class="line">SReclaimable:     487588 kB</span><br><span class="line">SUnreclaim:       806216 kB</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>指标非常多，一般需要对内核有一定了解才能看懂。这些指标的基础上，有
+<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">MemAvailable &lt;&#x3D; MemFree + Active(file) + Inactive(file) + SReclaimable</span><br><span class="line">17735588 kB  &lt;&#x3D; 8348128 + 3091340 + 6276108 + 487588 &#x3D; 18203164 kB</span><br></pre></td></tr></table></figure>
+<p>要理解这个公式，需要了解 Linux 是如何管理内存的。Linux 对内存的管理有多种视角。</p>
+<ul>
+<li>系统内存 = 空闲内存 + 内核内存 + 用户内存</li>
+<li>内核内存<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup> = Slab + VmallocUsed + PageTables + KernelStack + HardwareCorrupted + Bounce + X
+<ul>
+<li>Slab = SUnreclaim + SReclaimable，其中 <code>SReclaimable</code> 指可回收部分</li>
+</ul>
+</li>
+<li>用户内存有两个视角：
+<ul>
+<li>LRU 视角 = Active + Inactive + Unevictable + (HugePages_Total * Hugepagesize)
+<ul>
+<li>Active 与 Inactive 内存指的是活跃程度，如果内存紧张，会优先释放
+Inactive 的内存</li>
+<li>Active = Active(File) + Inactive(Anon)</li>
+<li>Inactive = Inactive(File) + Inactive(Anon)</li>
+<li>File-Backend 内存会与磁盘中的文件关联，于是如果内存不足时可以先写回磁盘释放内存；Anonymous 内存不与文件关联，因此除非有 swap 文件，否则无法释放</li>
+</ul>
+</li>
+<li>缓存视角 = Cached + AnonPages + Buffers + (HugePages_Total * Hugepagesize)</li>
+</ul>
+</li>
+</ul>
+<p>结合上述信息，可以看到可以释放的部分有：</p>
+<ul>
+<li>Slab 的 <code>SReclaimable</code>，是内核可释放的部分</li>
+<li>所有的 File-Backend 内存 = Active(File) + Inactive(File)</li>
+</ul>
+<p>MemAvailable 公式的由来就很自然而然了。等等！？公式里的符号为什么是小于等于，不是等于？</p>
+<h2 id="详细逻辑与样例"><a class="header-anchor" href="#详细逻辑与样例"></a>详细逻辑与样例</h2>
+<p>上面的公式在详细计算时，并没有考虑 <code>watermark</code>（虽然代码里有），并且最新的内核已经修改了计算的公式<sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup>，考虑了更多的内容。</p>
+<ol>
+<li>
+<p>计算 <code>wmark_low</code>。low watermark，当系统可用内存小于 low watermark 时，
+<code>kswapd</code> 进程会开始尝试释放内存页。首先收集需要的信息：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># cat &#x2F;proc&#x2F;zoneinfo | grep min</span><br><span class="line">        min      1</span><br><span class="line">        min      184</span><br><span class="line">        min      16710</span><br></pre></td></tr></table></figure>
+<p>每个 ZONE 都有自己的 low watermark（单位为页，页大小为 4K），计算如下</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">wmark_low &#x3D; (1 + 230 + 20887) * 4</span><br><span class="line">          &#x3D; 84472 (KB)</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>计算空闲页 <code>free_pages</code>，可以直接由 <code>/proc/zoneinfo</code> 中获取：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># cat &#x2F;proc&#x2F;zoneinfo |grep &#39;free &#39;</span><br><span class="line">    nr_free_pages 3969</span><br><span class="line">    nr_free_pages 611300</span><br><span class="line">    nr_free_pages 59976587</span><br></pre></td></tr></table></figure>
+<p>加总即得到 <code>free_pages</code>:</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">free_pages &#x3D; (3969 + 611300 + 59976587) * 4</span><br><span class="line">           &#x3D; 242367424 (KB)</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>计算保留内存<sup class="footnote-ref"><a href="#fn4" id="fnref4">[4]</a></sup>。保留内存需要综合考虑各项指标：</p>
+<ol>
+<li>
+<p><code>lowmem_reserve_ratio</code> ZONE<sup class="footnote-ref"><a href="#fn5" id="fnref5">[5]</a></sup> 是逻辑上的划分，lowmem 是指低位的 ZONE 为高位 ZONE 预留的内存<sup class="footnote-ref"><a href="#fn6" id="fnref6">[6]</a></sup>。每个 ZONE 都会为更高位的 ZONE 做预留，因此结果是个矩阵：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># cat &#x2F;proc&#x2F;zoneinfo | grep &#39;protection&#39;</span><br><span class="line">        protection: (0, 2815, 257771, 257771)</span><br><span class="line">        protection: (0, 0, 254955, 254955)</span><br><span class="line">        protection: (0, 0, 0, 0)</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>high watermark。高水位线，可用内存超出它时，<code>kswapd</code> 会暂停工作。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># cat &#x2F;proc&#x2F;zoneinfo | grep &#39;high &#39;</span><br><span class="line">        high     1</span><br><span class="line">        high     276</span><br><span class="line">        high     25065</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>managed 内存，没查到出处，大概指可被使用的内存。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># cat &#x2F;proc&#x2F;zoneinfo | grep &#39;managed&#39;</span><br><span class="line">        managed  3977</span><br><span class="line">        managed  720847</span><br><span class="line">        managed  65268660</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>计算如下：<code>total_reserved = Σ(min((max(lowmem) + high_watermark), managed))</code></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">total_reserved &#x3D; Σ(min((max(lowmem) + high_watermark), managed))</span><br><span class="line">               &#x3D;   min(max(0, 2815, 257771, 257771) + 1,     3977)</span><br><span class="line">                 + min(max(0, 0, 254955, 254955)    + 276,   720847)</span><br><span class="line">                 + min(max(0, 0, 0, 0)              + 25065, 65268660)</span><br><span class="line">               &#x3D; 3977 + 255231 + 25065</span><br><span class="line">               &#x3D; 284273  (page)</span><br><span class="line">               &#x3D; 1137092 (kB)</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+</li>
+</ol>
+<ol start="4">
+<li>
+<p>计算 <code>pagecache = active file + inactive file</code>，File Backend 的内存可以被释放。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># cat &#x2F;proc&#x2F;zoneinfo |grep nr_active_file</span><br><span class="line">    nr_active_file 0</span><br><span class="line">    nr_active_file 6032</span><br><span class="line">    nr_active_file 168031</span><br><span class="line"># cat &#x2F;proc&#x2F;zoneinfo | grep nr_inactive_file</span><br><span class="line">    nr_inactive_file 0</span><br><span class="line">    nr_inactive_file 1833</span><br><span class="line">    nr_inactive_file 50064</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pagecache &#x3D; active file + inactive file</span><br><span class="line">          &#x3D; (0 + 6032 + 168031) + (0 + 1833 + 50064)</span><br><span class="line">          &#x3D; 225960 (page)</span><br><span class="line">          &#x3D; 903840 (kB)</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><code>pagecache -= min(pagecache / 2, wmark_low)</code>，并不是所有的 pagecache 都被认为是可用的：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">pagecache -&#x3D; min(pagecache &#x2F; 2, wmark_low)</span><br><span class="line">          -&#x3D; min(903840&#x2F;2, 84472)</span><br><span class="line">          -&#x3D; 84472</span><br><span class="line">           &#x3D; 903840 - 84472</span><br><span class="line">           &#x3D; 819368 (KB)</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>计算 <code>SReclaimable</code></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># cat &#x2F;proc&#x2F;zoneinfo | grep nr_slab_reclaimable</span><br><span class="line">    nr_slab_reclaimable 0</span><br><span class="line">    nr_slab_reclaimable 428</span><br><span class="line">    nr_slab_reclaimable 36989</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">SReclaimable &#x3D; (0 + 428 + 36989) * 4</span><br><span class="line">             &#x3D; 149668 (kB)</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><code>SReclaimable -= min(SReclaimable/2, wmark_low)</code>，和 pagecache 相似，不能全用。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">SReclaimable -&#x3D; min(SReclaimable&#x2F;2, wmark_low)</span><br><span class="line">             -&#x3D; min(149668 &#x2F; 2, 84472)</span><br><span class="line">             -&#x3D; 74834</span><br><span class="line">              &#x3D; 149668 - 74834</span><br><span class="line">              &#x3D; 74834 (kB)</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p><code>available = free_pages - total_reserved + pagecache + SReclaimable</code></p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">available &#x3D; 242367424 - 1137092 + 819368 + 74834</span><br><span class="line">          &#x3D; 242124534 (kB)</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>最终的结果与 <code>/proc/meminfo</code> 的输出（和上小节的数据不同）只有细微的区别：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># cat &#x2F;proc&#x2F;meminfo</span><br><span class="line">MemFree:        242385648 kB</span><br><span class="line">MemAvailable:   242137968 kB</span><br><span class="line">Active(file):     689852 kB</span><br><span class="line">Inactive(file):   209196 kB</span><br><span class="line">SReclaimable:     149668 kB</span><br></pre></td></tr></table></figure>
+<p>实际上差了约 13MB 左右，不过 zoneinfo 和 meminfo 的输出中间有少许的时间间隔，不确定是不是中间内存有了变化。</p>
+<h2 id="补充：进程内存"><a class="header-anchor" href="#补充：进程内存"></a>补充：进程内存</h2>
+<p>知道了系统级别的统计方法，自然会想和进程级别的统计做个对应关系。虽然有不少统计进程内存使用的方法，但基本上没办法精确地和系统统计对应。进程的统计指标一般有这几个：</p>
+<ul>
+<li><code>VSZ</code>：虚拟内存，不直接对应到物理内存</li>
+<li><code>RSS</code>：常驻内存，可以理解成映射的内存的总和。注意进程间有共享的内存页（如
+libc 库），不同进程加总时会重复计算这部分</li>
+<li><code>PSS</code>：与 <code>RSS</code> 几乎相同，区别在计算时进程共享的内存时，除于了共享的进程数量，因此可以用来加总</li>
+<li><code>USS</code>：该进程独立占用的内存，即扣除了共享的内存页</li>
+</ul>
+<p><code>VSZ</code> 和 <code>RSS</code> 可以直接通过 <code>ps aux</code> 输出：</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">$ ps aux|head</span><br><span class="line">USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</span><br><span class="line">root           1  0.0  0.0 169416 13364 ?        Ss   May11   0:15 /sbin/init splash</span><br><span class="line">root           2  0.0  0.0      0     0 ?        S    May11   0:00 [kthreadd]</span><br><span class="line">root           3  0.0  0.0      0     0 ?        I&lt;   May11   0:00 [rcu_gp]</span><br></pre></td></tr></table></figure>
+<p><code>PSS</code> 和 <code>USS</code> 可以通过 <code>/proc/&lt;pid&gt;/smaps</code> 中的字段统计得到。也可以用工具
+<a href="https://www.selenic.com/smem/" target="_blank" rel="noopener">smem</a> 直接输出和统计。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line"># PSS：通过 Pss 字段相加得到</span><br><span class="line">cat &#x2F;proc&#x2F;&lt;PID&gt;&#x2F;smaps | awk &#39;BEGIN &#123;i&#x3D;0&#125; &#x2F;^Pss&#x2F; &#123;i &#x3D; i + $2&#125; END &#123;print i&#125;&#39;</span><br><span class="line"></span><br><span class="line"># USS：通过 Private_Clean 和 Private_Dirty 相加得到</span><br><span class="line">cat &#x2F;proc&#x2F;&lt;PID&gt;&#x2F;smaps | awk &#39;BEGIN &#123;i&#x3D;0&#125; &#x2F;^Private&#x2F; &#123;i &#x3D; i + $2&#125; END &#123;print i&#125;&#39;</span><br></pre></td></tr></table></figure>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>介绍了几个知识点：</p>
+<ol>
+<li><code>free</code> 中的 <code>available</code> 才是可用内存/剩余内存</li>
+<li><code>MemAvailable &lt;= MemFree + Active(file) + Inactive(file) + SReclaimable</code></li>
+<li>MemAvailable 具体的计算方式，涉及到 ZONE, lowmem, watermark 等知识</li>
+<li>补充了进程内存的一些统计方式（RSS、PSS、USS）</li>
+</ol>
+<p>好吧，对写业务的我其实也没什么用。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://access.redhat.com/solutions/22177" target="_blank" rel="noopener">https://access.redhat.com/solutions/22177</a> RedHat 对 <code>/proc/meminfo</code> 的解释</li>
+<li><a href="https://access.redhat.com/sites/default/files/attachments/memory_usage.pdf" target="_blank" rel="noopener">Analyzing Memory Usage in Red Hat Enterprise
+Linux</a>
+对进程内存和物理内存映射关系的讲解</li>
+<li><a href="https://fritshoogland.files.wordpress.com/2018/02/linux-memory-explained.pdf" target="_blank" rel="noopener">LINUX MEMORY EXPLAINED</a>
+对进程的 VSZ、RSS、PSS、USS 有详细讲解</li>
+<li><a href="http://linuxperf.com/?cat=7" target="_blank" rel="noopener">/PROC/MEMINFO之谜</a> 讲解了 meminfo 中一些“加起来不刚好”的项的原理</li>
+<li><a href="https://man7.org/linux/man-pages/man5/proc.5.html" target="_blank" rel="noopener">https://man7.org/linux/man-pages/man5/proc.5.html</a> <code>/proc/smaps</code> 文件格式</li>
+<li><a href="https://www.kernel.org/doc/Documentation/vm/pagemap.txt" target="_blank" rel="noopener">https://www.kernel.org/doc/Documentation/vm/pagemap.txt</a> <code>/proc/pagemap</code> 文件格式，内容上可以理解为是 smaps 的数据来源</li>
+</ul>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>这也是早期的大致计算逻辑：
+<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=34e431b0ae398fc54ea" target="_blank" rel="noopener">https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=34e431b0ae398fc54ea</a> <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p><a href="https://segmentfault.com/a/1190000022518282" target="_blank" rel="noopener">linux内存占用分析之meminfo</a> <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn3" class="footnote-item"><p>MemAvailable 计算的源码入口：<a href="https://elixir.bootlin.com/linux/v4.6/source/mm/page_alloc.c#L3732" target="_blank" rel="noopener">https://elixir.bootlin.com/linux/v4.6/source/mm/page_alloc.c#L3732</a> <a href="#fnref3" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn4" class="footnote-item"><p>保留内存的计算源码入口：<a href="https://elixir.bootlin.com/linux/v4.6/source/mm/page_alloc.c#L6248" target="_blank" rel="noopener">https://elixir.bootlin.com/linux/v4.6/source/mm/page_alloc.c#L6248</a> <a href="#fnref4" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn5" class="footnote-item"><p>Linux 会将物理内存切分成几个 ZONE，在 64 位机器上，一般有 <code>ZONE_DMA</code>,
+<code>ZONE_DMA32</code> 和<code>ZONE_NORMAL</code>，是为了兼容早期的硬件设计而划分的。 <a href="#fnref5" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn6" class="footnote-item"><p>关于 lowmem 和 ZONE 的细致讲解：<a href="https://zhuanlan.zhihu.com/p/68465952" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/68465952</a> <a href="#fnref6" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2021/Linux-Available-Memory/';
+var disqus_title = '我的内存呢？Linux MemAvailable 如何计算';
+var disqus_url = 'https://lotabout.me/2021/Linux-Available-Memory/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

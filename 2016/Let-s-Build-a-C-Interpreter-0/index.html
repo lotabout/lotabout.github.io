@@ -1,0 +1,111 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;em&gt;EDIT&lt;/em&gt;: Note that I’ve include the full tutorial in the project &lt;a href=&quot;https://github.com/lotabout/write-a-C-interpreter/tree/master/tutorial/en&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;write-a-C-interpreter&lt;/a&gt;. Please check that instead."><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Let's Build a C Compiler(0) -- Preface | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/C/" rel="tag">C</a><a class="post-tag-link" href="/tags/compiler/" rel="tag">compiler</a></div><div class="post-time">2016-02-06</div></div></div><div class="container post-header"><h1>Let's Build a C Compiler(0) -- Preface</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#why-compiler-theory"><span class="toc-number">1.</span> <span class="toc-text">Why Compiler Theory</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#hard-to-understand-hard-to-implement"><span class="toc-number">2.</span> <span class="toc-text">Hard to understand, hard to implement?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#original-intention-is-for-self-practicing"><span class="toc-number">3.</span> <span class="toc-text">Original intention is for self-practicing</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#caution"><span class="toc-number">4.</span> <span class="toc-text">Caution</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#references"><span class="toc-number">5.</span> <span class="toc-text">References</span></a></li></ol></details></div><div class="container post-content"><p><em>EDIT</em>: Note that I’ve include the full tutorial in the project <a href="https://github.com/lotabout/write-a-C-interpreter/tree/master/tutorial/en" target="_blank" rel="noopener">write-a-C-interpreter</a>. Please check that instead.</p>
+<p>In “Let’s Build a C Compiler” series, we will build a compiler from scratch
+for C programming language. I hope you will get some understanding of compiler
+construction by the end of this tutorial. At the same time we will build a
+usable compiler of C though some syntaxes are not supported.</p>
+<p>Note that it is actually an Interpreter and can interpret itself. I use the
+word “compiler” because it is more attractive, but we did more than that. Also
+this series is actually written in Chinese in the first place, If you are
+confused by my English, please leave some comments.</p>
+<p>In this very first chapter there will not be any code. If you are those that
+likes code instead of texts, please skip. I’ll talk about the intention of
+this series.</p>
+<h2 id="why-compiler-theory"><a class="header-anchor" href="#why-compiler-theory"></a>Why Compiler Theory</h2>
+<p>What is the most important courses in computer science? I would give “Data
+Structure”, “Algorithm” and “Compiler Theory”. In my point of view,
+understanding <strong>recursion</strong> is the first level for programmers, and <strong>writing
+a compiler</strong> is the next one.</p>
+<p>(Of course, there exists a lot of excellent programmers that don’t write a
+compiler, but at least writing one is a big challenge)</p>
+<p>People used to say that you can write more efficient code if you know how the
+compiler works. But who cares when the modern computers have performance so
+high that we can hardly imagine before? Then why bother with compiler theory?</p>
+<p>Because it is cool!</p>
+<p>OK, admit it, you are still reading mainly because you are curious how far
+would I go with this tutorial. But be careful, it will go quite far.</p>
+<p>No? You just want to know how to build a compiler? OK then… my mistake.</p>
+<h2 id="hard-to-understand-hard-to-implement"><a class="header-anchor" href="#hard-to-understand-hard-to-implement"></a>Hard to understand, hard to implement?</h2>
+<p>I have always been in awe of compiler. So when I went to college and they taught
+compiler theory, I was so enthusiastic! And then… then I quit, because I
+could not understand a single part.</p>
+<p>Normally a course about compiler will cover:</p>
+<ol>
+<li>How to represent syntax (such as BNF, etc.)</li>
+<li>Lexer, with somewhat NFA(nondeterministic finite automata),
+DFA(deterministic finite automata).</li>
+<li>Parser, such as recursive descent, LL(k), LALR, etc.</li>
+<li>Intermediate Languages.</li>
+<li>Code generation.</li>
+<li>Code optimization.</li>
+</ol>
+<p>I believe that most(98%) students will not care anything beyond parser(at
+least in my school). And the most important thing is: we still don’t know how
+to build a compiler! Even after all these theories. The main reason is that
+what “Compiler Theory” try to teach is actually “how to build a parser
+generator”, namely a tool that consumes syntax grammar and generates compiler
+(such as lex/yacc).</p>
+<p>These theories try to taught us how to solve problems in a common way
+automatically. That means once you master them, you are able to deal with all
+kinds of grammars. They are indeed useful in industry. Nevertheless they are
+too powerful and too complicate for students and most programmers. You will be
+convinced if you read the source code of lex/yacc (or flex/bison).</p>
+<p>The good news is, building a compiler is far simpler than you’d ever imagined.
+I won’t lie, it is not easy, but not that hard.</p>
+<h2 id="original-intention-is-for-self-practicing"><a class="header-anchor" href="#original-intention-is-for-self-practicing"></a>Original intention is for self-practicing</h2>
+<p>I saw <a href="https://github.com/rswier/c4" target="_blank" rel="noopener">c4</a> on Github. It is a small C
+interpreter which is claimed to be implemented by only 4 functions. The most
+amazing part is that it is bootstrapping (that interpret itself). Also it is
+done with about 500 lines!</p>
+<p>Existing tutorials is either very simple(such as implementing a simple
+calculator) or using automation tools(such as flex/bison). c4 is implemented
+all on its own. The bad thing is that it try to be minimal, so the code is
+quite a mess, hard to understand. So I started a new project that:</p>
+<ol>
+<li>implement a working C compiler(interpreter actually)</li>
+<li>Writing this tutorial to show how to do it.</li>
+</ol>
+<p>c4 is about 500 Lines, it took 1 week for me to re-write it, resulting 1400
+lines including comments. The project is hosted on Github: <a href="https://github.com/lotabout/write-a-C-interpreter" target="_blank" rel="noopener">Write a C Interpreter</a></p>
+<p>Note: Almost all logic of this project is taken from c4. So the original
+author(rswier) takes credit.</p>
+<h2 id="caution"><a class="header-anchor" href="#caution"></a>Caution</h2>
+<p>Two major problem I met when I working with this project are:</p>
+<ol>
+<li>boring, there will be codes that are almost identical.</li>
+<li>hard to debug. We don’t have good test cases. On the other hand if the
+output is wrong, I could only follow the generated code all by myself to
+debug.</li>
+</ol>
+<p>So I hope you’ll take out enough time and patience for studying, cause I am
+sure that you will feel a great sense of accomplishment just like I do.</p>
+<h2 id="references"><a class="header-anchor" href="#references"></a>References</h2>
+<ol>
+<li><a href="http://compilers.iecc.com/crenshaw/" target="_blank" rel="noopener">Let’s Build a Compiler</a>: a very good
+tutorial of building a compiler for fresh starters.</li>
+<li><a href="http://www.hwaci.com/sw/lemon/" target="_blank" rel="noopener">Lemon Parser Generator</a>: the parser
+generator that is used in SQLite. Good to read if you won’t to understand
+compiler theory in code.</li>
+</ol>
+<p>In the end, I am human with a general level, there will be inevitably wrong
+with the articles and codes(also my English). Feel free to correct me!</p>
+<p>Hope you enjoy it.</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2016/Let-s-Build-a-C-Interpreter-0/';
+var disqus_title = 'Let's Build a C Compiler(0) -- Preface';
+var disqus_url = 'https://lotabout.me/2016/Let-s-Build-a-C-Interpreter-0/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

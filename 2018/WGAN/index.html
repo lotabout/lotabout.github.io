@@ -1,0 +1,98 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="Wasserstein GAN(WGAN) 解决传统 GAN 的训练难，训练过程不稳定等问题了。WGAN 的背后有强劲的数学支撑，因此要想理解这它的原理，需要理解许多数学公式的推导。这个笔记尽量尝试从直觉的角度来理解 WGAN 背后的原理。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>WGAN 笔记 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/GAN/" rel="tag">GAN</a><a class="post-tag-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a><a class="post-tag-link" href="/tags/WGAN/" rel="tag">WGAN</a></div><div class="post-time">2018-03-29</div></div></div><div class="container post-header"><h1>WGAN 笔记</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#gan-的问题"><span class="toc-number">1.</span> <span class="toc-text">GAN 的问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#wasserstein-gan"><span class="toc-number">2.</span> <span class="toc-text">Wasserstein GAN</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#weight-clipping"><span class="toc-number">3.</span> <span class="toc-text">Weight Clipping</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#gradient-penalty"><span class="toc-number">4.</span> <span class="toc-text">Gradient Penalty</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">5.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">6.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>Wasserstein GAN(WGAN) 解决传统 GAN 的训练难，训练过程不稳定等问题了。WGAN 的背后有强劲的数学支撑，因此要想理解这它的原理，需要理解许多数学公式的推导。这个笔记尽量尝试从直觉的角度来理解 WGAN 背后的原理。</p>
+<h2 id="gan-的问题"><a class="header-anchor" href="#gan-的问题"></a>GAN 的问题</h2>
+<p>我们知道，GAN 的目的是训练一个生成器 G，使生成的数据的分布 $P_G$ 与真实数据的分布 $P_{data}$ 尽可能接近。为了衡量接近程度，GAN 使用 <a href="https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence" target="_blank" rel="noopener">JS
+Divergence</a>来衡量。</p>
+<p>从应用的角度，我们甚至不需要知道它是什么，我们只要知道，对于两个分布 $P_r$ 和
+$P_g$，如果它们不重合或重合的部分可以忽略，则它们的 JS 距离 $JS(P_r, P_g) =
+\log 2$ 是常数，用梯度下降时，产生的梯度会（近似）为 $0$。而在 GAN 的训练中，两个分布不重合或重合可忽略的情况 <strong>几乎总是出现</strong>，因此导致 GAN 的训练中</p>
+<h2 id="wasserstein-gan"><a class="header-anchor" href="#wasserstein-gan"></a>Wasserstein GAN</h2>
+<p>依旧地，我们甚至不需要知道 <a href="https://en.wikipedia.org/wiki/Wasserstein_metric" target="_blank" rel="noopener">Wasserstein
+Distance</a> 是什么，只需要知道它有着很好的性质，两个分布的差异都会反应在 Wasserstein Distance 上，因此，不会出现梯度消失的问题。</p>
+<p>现在的问题是怎么计算它？答曰无法计算，但在 <a href="https://arxiv.org/pdf/1701.07875.pdf" target="_blank" rel="noopener">Wasserstein
+GAN</a> 论文里证明了如下的事实：</p>
+<p>$$W(P_{data},P_G)=\max_{D\in \text{1-Lipschitz}}\{E_{x\sim P_{data}}[D(x)]-E_{x\sim P_G}[D(x)]\}$$</p>
+<p>在接下去之前我们先说说什么是 $\text{1-Lipschitz}$。如果一个函数 $f$ 满足下面式子：</p>
+<p>$$||f(x_1)-f(x_2)||\le K||x_1-x_2||$$</p>
+<p>我们就称它为 $K\text{-Lipschitz}$，当 $K=1$时，就是 $\text{1-Lipschitz}$。</p>
+<p>在图像生成的 GAN 中，上式中的 $D(x)$ 可以认为是以图像为输入，输出图像的质量（是否接近真实图像）。那么我们可以找到两种类型的 $D$，一类变化剧烈，即赋予真实图像很大的值，而其它图像的值就很小（下图蓝色）；另一类则变化平缓（下图绿色）。相像一下，如果用变化剧烈的 D 作为判别器去训练生成器，则会倾向于生成和真实图像一模一样的图片，导致多样性不高。而 $\text{1-Lipschitz}$ 的作用就是限制 D 的变化要更平缓一些，是符合直觉的。</p>
+<p><img src="http://friskit-blog.qiniudn.com/c/6c/2753647abb8b644a0720a17810f30.png" alt="Intuition for 1-Lipschitz"></p>
+<p>于是我们现在的目标是找到一个函数 $D$ 满足 $\text{1-Lipschitz}$ 且让上面的式子最大。“最大化”倒是好说，我们不断用梯度上升，但怎么保证我们的判别器 D 满足
+$\text{1-Lipschitz}$ 呢？还是没有办法，但我们可以做一些 workaround。</p>
+<h2 id="weight-clipping"><a class="header-anchor" href="#weight-clipping"></a>Weight Clipping</h2>
+<p>对于神经网络中的所有权重，在更新梯度后，我们事先选中某个常数 $c$， 做下面的操作：</p>
+<ul>
+<li>如果权重 $w &gt; c$，则赋值 $ w \leftarrow c$</li>
+<li>如果权重 $w &lt; -c$，则赋值 $ w \leftarrow -c$</li>
+</ul>
+<p>直觉上，如果神经网络的权重都限制在一定的范围内，那么网络的输出也会被限定在一定范围内。换句话说，这个网络会属于某个 $K\text{-Lipschitz}$。当然，我们并不确定K
+是多少，并且这样的函数也不一定能使 $E_{x\sim P_{data}}[D(x)]-E_{x\sim
+P_G}[D(x)]$ 最大化。</p>
+<p>不管怎么说吧，这就是原版 WGAN 的方法，对 GAN 的具大提升。</p>
+<h2 id="gradient-penalty"><a class="header-anchor" href="#gradient-penalty"></a>Gradient Penalty</h2>
+<p>新版的 WGAN 提出了不用 weight clipping，而用加惩罚项的方式，我们去优化下面这个目标：</p>
+<p>$$W(P_{data},P_G)=\max_{D}\{E_{x\sim P_{data}}[D(x)]-E_{x\sim P_G}[D(x)]\underbrace{-\lambda\int_x\max(0,||\nabla_xD(x)||-1)dx}_{\text{regularization}}\}$$</p>
+<p>为什么呢？因为如果 $D\in \text{1-Lipschitz}$，显然对于所有 $x$，我们有
+$||\nabla_xD(x)|| \le 1$。但同之前一样，我们无法穷举所有 $x$ 求积分，于是我们又用期望来近似它，于是有：</p>
+<p>$$W(P_{data},P_G)=\max_{D}\{E_{x\sim P_{data}}[D(x)]-E_{x\sim P_G}[D(x)]\underbrace{-\lambda E_{x\sim P_{penalty}}[\max(0,||\nabla_xD(x)||-1)]}_{regularization}\}$$</p>
+<p>那这里的 $P_{penalty}$ 又是什么？它代表的是输入 $x$ 的分布，那具体如何采样呢？新版 WGAN 是这样设计的：</p>
+<ol>
+<li>从真实数据 $P_{data}$ 中采样得到一个点</li>
+<li>从生成器生成的数据 $P_G$ 中采样得到一个点</li>
+<li>为这两个点连线</li>
+<li>在线上随机采样得到一个点作为 $P_{penalty}$ 的点。</li>
+</ol>
+<p><img src="http://friskit-blog.qiniudn.com/2/32/1b101dceaaea8b8ccfd174b077713.png" alt="How to sample P_penalty"></p>
+<p>为什么这么采样？直觉上，我们想将 $P_G$ “拉”向 $P_{data}$，于是希望 $D$ 在它们之间的这些数据上能更平缓地变化。而惩罚项就是为了保证 $D$ “平缓变化”的，于是正则项中的 $P_{penalty}$ 就在这些数据点上进行采样。</p>
+<p>最后，实际中我们其实并不是用 $\max(0,||\nabla_xD(x)||-1)$ 这个惩罚项，而是用
+$(||\nabla_xD(x)||-1)^2$。也就是说，我们惩罚的目的不是让 $||\nabla_xD(x)||$
+尽可能小于1，而是要让它尽可能 <strong>等于</strong> 1。想象一个完美的判别器 $D$ 满足优化的目标，则在 $P_{data}$ 附近它要尽可能大，而在 $P_G$ 附近要尽可能小，也就是说
+$D$ 越斜越好，但由于 $||\nabla_xD(x)|| \le 1$，那么 $||\nabla_xD(x)||$ 只能是 1。所以，真正的优化目标如下：</p>
+<p>$$W(P_{data},P_G)=\max_{D}\{E_{x\sim P_{data}}[D(x)]-E_{x\sim P_G}[D(x)]-\lambda E_{x\sim P_{penalty}}[(||\nabla_xD(x)||-1)^2]\}$$</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>GAN 的优化目标是 JS Divergence，它有许多缺点不利于 GAN 的训练。Wasserstein
+Distance 是一个更好的距离度量，它最终可以转化为优化问题，我们需要找出一个判别器 $D$，并要求它满足 $\text{1-Lipschitz}$。实际使用时我们并做不到这一点，于是有两种方法来近似：weight clipping 和 gradient penalty。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://www.youtube.com/watch?v=KSN4QYgAtao&amp;lc=z13kz1nqvuqsipqfn23phthasre4evrdo" target="_blank" rel="noopener">Improving GAN</a> 李宏毅老师的教学视频，深入浅出</li>
+<li><a href="http://friskit.me/2017/07/10/ntu-gan-wgan/" target="_blank" rel="noopener">再读WGAN</a> 对李宏毅老师视频的文字总结，本文的一些公式和图的来源。</li>
+<li><a href="https://zhuanlan.zhihu.com/p/25071913" target="_blank" rel="noopener">令人拍案叫绝的Wasserstein GAN</a> 知乎神文，出色的 WGAN 总结</li>
+<li><a href="https://vincentherrmann.github.io/blog/wasserstein/" target="_blank" rel="noopener">Wasserstein GAN and the Kantorovich-Rubinstein Duality</a> 图文并茂带你理解 Wasserstein Distance</li>
+<li><a href="https://arxiv.org/pdf/1701.07875.pdf" target="_blank" rel="noopener">Wasserstein GAN</a> WGAN 原版论文，weight clipping 方法</li>
+<li><a href="https://arxiv.org/pdf/1704.00028.pdf" target="_blank" rel="noopener">Improved Training of Wasserstein GANs</a> WGAN 新版论文，
+Gradient Penalty 方法</li>
+</ul></div></div><script type="text/x-mathjax-config">
+   MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    }); 
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/WGAN/';
+var disqus_title = 'WGAN 笔记';
+var disqus_url = 'https://lotabout.me/2018/WGAN/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

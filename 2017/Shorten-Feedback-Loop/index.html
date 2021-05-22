@@ -1,0 +1,92 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="最近发现自己及整个团队的开发效率低下，思前想后认为跟反馈链太长脱不了干系，于是思考及时反馈的重要性，以及它如何影响我们的效率。这里做一个小结。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>及时获取反馈以提升工作效率 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/efficiency/" rel="tag">efficiency</a><a class="post-tag-link" href="/tags/feedback/" rel="tag">feedback</a></div><div class="post-time">2017-11-19</div></div></div><div class="container post-header"><h1>及时获取反馈以提升工作效率</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#及时反馈为何重要"><span class="toc-number">1.</span> <span class="toc-text">及时反馈为何重要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#在工作流程上的体现"><span class="toc-number">2.</span> <span class="toc-text">在工作流程上的体现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#敏捷开发首先要说的是-敏捷开发-相信现在几乎所有软件开发人员都听说过这个词语-可是它的内涵究竟是什么呢？"><span class="toc-number">2.1.</span> <span class="toc-text">敏捷开发首先要说的是“敏捷开发”，相信现在几乎所有软件开发人员都听说过这个词语，可是它的内涵究竟是什么呢？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#design-thinking"><span class="toc-number">2.2.</span> <span class="toc-text">Design Thinking</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#在编程中的体现"><span class="toc-number">3.</span> <span class="toc-text">在编程中的体现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#repl"><span class="toc-number">3.1.</span> <span class="toc-text">REPL</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#null-检查"><span class="toc-number">3.2.</span> <span class="toc-text">Null 检查</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#现实中的无奈与突破"><span class="toc-number">4.</span> <span class="toc-text">现实中的无奈与突破</span></a></li></ol></details></div><div class="container post-content"><p>最近发现自己及整个团队的开发效率低下，思前想后认为跟反馈链太长脱不了干系，于是思考及时反馈的重要性，以及它如何影响我们的效率。这里做一个小结。</p>
+<h2 id="及时反馈为何重要"><a class="header-anchor" href="#及时反馈为何重要"></a>及时反馈为何重要</h2>
+<ol>
+<li>能减少返工的成本</li>
+<li>能减少等待的时间</li>
+</ol>
+<p>一般情况下，我们并不知道自己前进的方向是否正确，而及时的反馈能让我们迅速调整自己的方向。如果反馈不及时，那到时候返工的成本就大大增加了。</p>
+<img src="/2017/Shorten-Feedback-Loop/feedback-quick-slow.png" class="" title="Feedback Quick or Slow">
+<p>例如原型设计，其目的就是在于快速得到（客户）对产品功能的反馈。如果已经到达产品阶段再让客户反馈，而客户一旦否决某项功能，则开发该功能的所有花费都将付之一炬。反之如果是原型阶段就被否决，则损失的成本就小得多。</p>
+<p>在另一些情况下，我们会很自觉地等待反馈。例如修改了几行代码，需要运行看看到底改得对不对，这时我们需要得到“正确”的反馈后才能继续前进。这时，得到反馈的快与慢直接就影响了我们等待的时间，从而影响工作的效率。</p>
+<img src="/2017/Shorten-Feedback-Loop/feedback-waiting.png" class="" title="Feedback Waiting">
+<h2 id="在工作流程上的体现"><a class="header-anchor" href="#在工作流程上的体现"></a>在工作流程上的体现</h2>
+<h3 id="敏捷开发首先要说的是-敏捷开发-相信现在几乎所有软件开发人员都听说过这个词语-可是它的内涵究竟是什么呢？"><a class="header-anchor" href="#敏捷开发首先要说的是-敏捷开发-相信现在几乎所有软件开发人员都听说过这个词语-可是它的内涵究竟是什么呢？"></a>敏捷开发首先要说的是“<a href="https://zh.wikipedia.org/wiki/%E6%95%8F%E6%8D%B7%E8%BD%AF%E4%BB%B6%E5%BC%80%E5%8F%91" target="_blank" rel="noopener">敏捷开发</a>”，相信现在几乎所有软件开发人员都听说过这个词语，可是它的内涵究竟是什么呢？</h3>
+<p>敏捷开发有许多特点（宣言）、方法和工具，这里我要讨论的是它的一些特点：</p>
+<blockquote>
+<p>对我们而言，最重要的是通过 <em>尽早</em> 和 <em>不断交付</em> 有价值的软件满足客户需要。
+我们欢迎需求的变化，即使在开发后期。敏捷过程能够驾驭变化，保持客户的竞争优势。
+经常交付可以工作的软件，从几星期到几个月，时间尺度越短越好。</p>
+</blockquote>
+<p>这里敏捷开发的原则中的前 3 项，是要缩短迭代周期，持续交付软件给客户，并拥抱客户的需求变化。那么这些“原则”或“价值观”背后的动机是什么呢？我给自己的答案便是要得到“及时”的反馈。</p>
+<p>而为什么“及时”反馈如此重要？是因为绝大多数时候，客户并无法描述自己的需求，也因此瀑布开发流程越发地无力。客户并没有办法在计划阶段完整地、准确地描述需求，所以往往在交付的时候会与自己的预期出入很大。这也是持续交付和及时反馈的必要性，目的是为了矫正对客户与开发双方对需求的理解。</p>
+<p>现在我认为这些“对外”（客户）的内容比一些“对内”（团队）的方法和工具更加地重要。例如缩短迭代周 期，但产品并没有快速交付给客户，那下个迭代开始时，团队并无法得到客户的反馈，那缩短迭代周期的意义何在？</p>
+<p>也就是说我认为及时反馈就是敏捷开发的核心内涵。</p>
+<h3 id="design-thinking"><a class="header-anchor" href="#design-thinking"></a>Design Thinking</h3>
+<p>中文译为 <a href="https://zh.wikipedia.org/wiki/%E8%A8%AD%E8%A8%88%E6%80%9D%E8%80%83" target="_blank" rel="noopener">设计思考</a>，它是一个方法论，“透过从人的需求出发，为各种议题寻求创新解决方案，并创造更多的可能性”。</p>
+<p>例如你需要设计一个产品，但却无从下手，那么可以应用 desgin thinking 的方法/流程来按步就班地得到结果：</p>
+<ol>
+<li>Empathy （同理心）：去了解产品的用户，包括体验、问卷、采访等方法来寻找用户的真正需求。</li>
+<li>Define （需求定义）：利用前面收集到的知识做更深入的挖掘，确认用户的真正需求。</li>
+<li>Ideate（创意动脑）：发散思维，找出尽可能多的解决方案，例如头脑风暴，并最终透过不同的投票标准来找出真正合适的解决方案。</li>
+<li>Prototype（制作原型）：制作原型，来将解决方案以某种形式呈现出来，既用作内部交流，之后也会用作测试。</li>
+<li>Test （实际测试）：利用原型与用户沟通，通过情景模拟，测试解决方案是否可用。通过用户的使用，回应等等，重新定义需求或改进解决方案，同时更深入了解使用者。</li>
+</ol>
+<p><img src="https://media.nngroup.com/media/editor/2016/07/29/designthinking_illustration_final-01-01.png" alt="">
+（上图来来自 <a href="https://www.nngroup.com/articles/design-thinking/" target="_blank" rel="noopener">Design Thinking 101</a>）</p>
+<p>可以看到，Design Thinking 的整个流程就是构建了一个环，一个从定义用户需求，找出解决方案，制作原型并得到用户反馈的环。而我们也可以看到它与“敏捷开发”也有相似的地方，例如制作原型并得到反馈。</p>
+<p>Design Thinking 并不是关于设计，而是解决问题的思维，可以并已经应用到多个领域中，如果读者感兴趣，不妨多做了解。</p>
+<p>当然，仅从上面的流程并看不出 Design Thinking 鼓励“及时”的反馈，但它也有类似敏捷开发的“原则”：</p>
+<blockquote>
+<ol start="2">
+<li>及早失败：设计思考鼓励及早失败的心态，宁可在早期成本与时间投入相对较少的
+状况，早点知道失败，并作相对应的修正。如此一来，损失会较已完成一定程度，投入巨
+大资本的状况更不严重。</li>
+</ol>
+</blockquote>
+<p>这就是及时反馈的其中一个优点，减少返工的成本。</p>
+<h2 id="在编程中的体现"><a class="header-anchor" href="#在编程中的体现"></a>在编程中的体现</h2>
+<p>上面讲到的工作流程方面的反映，更多是鼓励及早失败。而在实际编程时我们希望的是减少等待反馈的时间。因为等待时间变长，不仅浪费等待的时间，程序员也需要更多的时间恢复（开始等待时）脑中的状态。</p>
+<h3 id="repl"><a class="header-anchor" href="#repl"></a>REPL</h3>
+<p>如果用到动态语言应该对 REPL 不陌生，例如浏览器的 Console，Python 的命令行解释器，更别提 REPL 始祖 Lisp 的 REPL 了。</p>
+<p>REPL 指的是 Read-Eval-Print-Loop，是一个循环，指的是解释器读入（Read）代码，解释执行（Eval）并打印（Print）出结果这样一个循环。而进一步扩展，可以认为是我们编辑代码(Read)，部署代码(Eval)，并查看结果(Print)的循环。</p>
+<p>一般来说，解释型的语言（如 js/python/ruby/lua）通常提供 REPL，让我们能快速地写一些代码并测试是否可用。而相应的，编译型语言（如 C/C++/Java）则还需要写一些测试用例，编译，运行等等。明显动态语言的反馈更为及时。</p>
+<p>另一方面，相像我们在运行一个 web 程序，现在我们修改了其中的一小段代码，我们需要 确认代码是否正确，怎么做呢？很正常的一个步骤是关掉正在运行的程序，编译修改后的代码，重新启动修改后的程序，再打开对应的网页确认结果。这整个流程是很耗时间的， 所以一些 IDE 就提供了热部署(Hot Swap)的功能，能将修改后的一些类动态地替换到正在运行的 web 程序上，就大大地缩小了反馈的时间，提高工作的效率。</p>
+<p>无独有偶，<a href="https://github.com/bhauman/lein-figwheel" target="_blank" rel="noopener">figwheel</a> 是
+ClojureScript 的一个库，它可以在前端开发中提供“热部署”的功能。相像你在用 js 写一个 PPT。发现第 10 页的图片位置不对，于是在后台修改了位置。现在想看看结果，于是在浏览器中刷新页面，结果又从第 1 页开始显示，于是需要连点 10 下才能看到结果正确与否。而 figwheel 则支持修改后，切换到浏览器，甚至不需要手工刷新，就能把修改后的结果反映出来。</p>
+<p>我认为这些工具的本质都是在缩短反馈的时间，从而提高效率。换句话说，要想进一步提高效率，可以从缩短反馈时间入手。</p>
+<p>想想我们公司一次测试环境的部署要花近两个小时，无言以对……</p>
+<h3 id="null-检查"><a class="header-anchor" href="#null-检查"></a>Null 检查</h3>
+<p>这里要讲到另一种反馈，编程中的静态检查。在 Java 开发中，有许多的 bug 是源于没有正确地检查变量是否为 null。甚至它的发明者都说它是 <a href="https://www.infoq.com/presentations/Null-References-The-Billion-Dollar-Mistake-Tony-Hoare" target="_blank" rel="noopener">值 10 亿美元的错误</a>。</p>
+<p>但我们这里不讲语言的设计，而是说我们如何对待它。在工作中，一般我们都是等到测试出错时才发现有什么地方忘了判断，这对于程序员来说可能没什么，不过是一时不小心，但一般 null 未检查会很严重地影响产品的功能，例如某个功能可能就直接无法使用。</p>
+<p>一些 IDE（如 Intellij）可以对某些情形做些判断并提示变量没有做 null 检查，但多数情况是无法提示的；Kotlin 语言要求使用不同的变量类型来表示某个变量可以为
+null，如 <code>String</code> 不可为 null，而 <code>String?</code> 则可以为 null，这样就能在编译时给出 error；最后像 Rust 语言在语言层面上去除了 null, 而用标准类型 <code>Option</code> 来指代可以为 <code>None</code> 的类型。</p>
+<p>这里重要的内容是，语言的设计让程序员能在编译期就得到“代码有错”的反馈，而通常如果是在运行时去检查的话，需要花费很多时间才能定位到 bug 所在，特别浪费时间。</p>
+<p>也因此我认为编译期的错误提示是缩短反馈时间的一种体现，并且是提高开发效率的一种很好的方式。再贴一句<a href="https://www.ibm.com/developerworks/community/blogs/beingagile/entry/short_feedback_loops_everywhere?lang=en" target="_blank" rel="noopener">引用</a>：</p>
+<blockquote>
+<p>It has been well understood in software development that the cost to fix a
+defect increases and in many cases increases dramatically the longer you wait
+to fix it.</p>
+</blockquote>
+<h2 id="现实中的无奈与突破"><a class="header-anchor" href="#现实中的无奈与突破"></a>现实中的无奈与突破</h2>
+<p>例如公司如果采用敏捷开发，可能是想利用它能更好应对需求改变的特点，当然也可能是想理所当然压榨员工的时间。但如果是想应对需求改变，那么客户的反馈就是很重要的一环。而现实中想得到客户/用户的反馈也是有很大成本的，例如客户不愿意花时间看成品并填调查问卷。这就是现实中的无奈。</p>
+<p>只是如果一个方法论中的重要一环已经被破除，还有意义继续执行其它的部分吗？</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2017/Shorten-Feedback-Loop/';
+var disqus_title = '及时获取反馈以提升工作效率';
+var disqus_url = 'https://lotabout.me/2017/Shorten-Feedback-Loop/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

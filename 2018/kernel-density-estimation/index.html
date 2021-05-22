@@ -1,0 +1,67 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="有一些数据，想“看看”它长什么样，我们一般会画直方图（Histogram）。现在你也可以用核密度估计。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>核密度估计（kernel density estimation） | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/KDE/" rel="tag">KDE</a><a class="post-tag-link" href="/tags/Statistics/" rel="tag">Statistics</a></div><div class="post-time">2018-02-27</div></div></div><div class="container post-header"><h1>核密度估计（kernel density estimation）</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是-核"><span class="toc-number">1.</span> <span class="toc-text">什么是“核”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#核密度估计"><span class="toc-number">2.</span> <span class="toc-text">核密度估计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#选择合适的带宽"><span class="toc-number">3.</span> <span class="toc-text">选择合适的带宽</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>有一些数据，想“看看”它长什么样，我们一般会画直方图（Histogram）。现在你也可以用核密度估计。</p>
+<h2 id="什么是-核"><a class="header-anchor" href="#什么是-核"></a>什么是“核”</h2>
+<p>如果不了解背景，看到“核密度估计”这个概念基本上就是一脸懵逼。我们先说说这个核
+(<a href="https://en.wikipedia.org/wiki/Kernel_(statistics)" target="_blank" rel="noopener">kernel</a>) 是什么。</p>
+<p>首先，“核”在不同的语境下的含义是不同的，例如在模式识别里，它的含义就和这里不同。在“非参数估计”的语境下，“核”是一个函数，用来提供权重。例如高斯函数
+(Gaussian) 就是一个常用的核函数。</p>
+<p>让我们举个例子，假设我们现在想买房，钱不够要找亲戚朋友借，我们用一个数组来表示
+5 个亲戚的财产状况： <code>[8, 2, 5, 6, 4]</code>。我们是中间这个数 <code>5</code>。“核”可以类比 成朋友圈，但不同的亲戚朋友亲疏有别，在借钱的时候，关系好的朋友出力多，关系不好的朋友出力少，于是我们可以用权重来表示。总共能借到的钱是： <code>8*0.1 + 2*0.4 + 5 + 6*0.3 + 4*0.2 = 9.2</code>。</p>
+<p>那么“核”的作用就是用来决定权重，例如高斯函数（即正态分布）：</p>
+<p><img src="https://upload.wikimedia.org/wikipedia/commons/0/0f/Kernel_exponential.svg" alt="Kernel Exponential"></p>
+<p>如果还套用上面的例子的话，可以认为在 3 代血亲之外的亲戚就基本不会借钱给你了。</p>
+<p>最后呢，一般要求核函数有下面两个性质：</p>
+<ul>
+<li>归一化：$\int_{- \infty}^{+ \infty}{K(u) du} = 1$</li>
+<li>对称性：对所有 $u$ 要求 $K(-u) = K(u)$</li>
+</ul>
+<p>最后的最后： <a href="https://en.wikipedia.org/wiki/Kernel_(statistics)#Kernel_functions_in_common_use" target="_blank" rel="noopener">一些常用的核</a></p>
+<h2 id="核密度估计"><a class="header-anchor" href="#核密度估计"></a>核密度估计</h2>
+<p>理解了“核”，核密度估计就容易理解了。</p>
+<p>如果我们画直方图，其实目的是画出“概率密度函数”，而直方图本质上是认为频率等于概率。但这种假设不是必然的。核密度函数就是一种“平滑(smooth)”的手段。相当于是“我说我很牛逼你可能不信，但你可以听听我的朋友们是怎么评价我的，加权平均下就能更好地了解我了”。于是乎：</p>
+<p>设 $(x_1, x_2, …, x_n)$ 是独立同分布的 n 个样本点，它的概率密度函数是 $f$，于是我们的估计：</p>
+<p>$$\hat{f_h}(x) = \frac{1}{n}\sum_{i=1}^{n}{K_h(x - x_i)} = \frac{1}{nh}\sum_{i=1}^{n}{K(\frac{x-x_i}{h})}$$</p>
+<p>上面式子中 <code>h</code> 是人为指定的，代表“朋友圈”的大小，正式的叫法是“带宽”(bandwidth)
+。而 $x-x_i$ 就是自己与朋友的亲疏程度，当然最后要正归化到 <code>[-1, 1]</code> 之间。下图是直方图和核密度估计的一个对比：</p>
+<p><img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Comparison_of_1D_histogram_and_KDE.png" alt="Comparison_of_1D_histogram_and_KDE"></p>
+<h2 id="选择合适的带宽"><a class="header-anchor" href="#选择合适的带宽"></a>选择合适的带宽</h2>
+<p>选择不同的带宽，核密度估计的结果也大不相同，因此人们研究了一些算法来选择带宽。这方面对理解 KDE 本身没有什么太重要的意义，并且常见的算法在 scipy 里也已经都实现了，这里就不细说了，有兴趣的看看 <a href="https://en.wikipedia.org/wiki/Kernel_density_estimation#Bandwidth_selection" target="_blank" rel="noopener">wiki</a> 吧。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="%E9%9D%9E%E5%8F%82%E6%95%B0%E4%BC%B0%E8%AE%A1%EF%BC%9A%E6%A0%B8%E5%AF%86%E5%BA%A6%E4%BC%B0%E8%AE%A1KDE">http://blog.csdn.net/pipisorry/article/details/53635895</a></li>
+<li><a href="http://blog.shaochuancs.com/statistics-kde/" target="_blank" rel="noopener">一维数据可视化：核密度估计(Kernel Density Estimates)</a></li>
+</ul></div></div><script type="text/x-mathjax-config">
+   MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    }); 
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/kernel-density-estimation/';
+var disqus_title = '核密度估计（kernel density estimation）';
+var disqus_url = 'https://lotabout.me/2018/kernel-density-estimation/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

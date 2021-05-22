@@ -1,0 +1,90 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="分布式系统中，我们熟悉强一致性、弱一致性和最终一致性等等一致性，但 Zookeeper
+又说自己是“顺序一致性”，又是什么意思呢？"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>什么是顺序一致性(Sequential Consistency) | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/QQA/" rel="tag">QQA</a><a class="post-tag-link" href="/tags/consistency/" rel="tag">consistency</a><a class="post-tag-link" href="/tags/sequential/" rel="tag">sequential</a><a class="post-tag-link" href="/tags/zookeeper/" rel="tag">zookeeper</a></div><div class="post-time">2019-08-10</div></div></div><div class="container post-header"><h1>什么是顺序一致性(Sequential Consistency)</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是一致性？"><span class="toc-number">1.</span> <span class="toc-text">什么是一致性？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是顺序一致性？"><span class="toc-number">2.</span> <span class="toc-text">什么是顺序一致性？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#更多正反例"><span class="toc-number">3.</span> <span class="toc-text">更多正反例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#顺序一致性难吗？"><span class="toc-number">4.</span> <span class="toc-text">顺序一致性难吗？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#zookeeper-中的顺序一致性"><span class="toc-number">5.</span> <span class="toc-text">Zookeeper 中的顺序一致性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">6.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">7.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>分布式系统中，我们熟悉强一致性、弱一致性和最终一致性等等一致性，但 Zookeeper
+又说自己是“顺序一致性”，又是什么意思呢？</p>
+<p>我们来看看那些研究理论的大佬们是如何看待一致性的。</p>
+<h2 id="什么是一致性？"><a class="header-anchor" href="#什么是一致性？"></a>什么是一致性？</h2>
+<p>一般我们会说“A 和 B 是一致的”，在分布式系统中，一致性指的是程序员对系统的预期和系统的实际行为是一致的。举例来说，我们首先发送写请求 <code>W(X, 2)</code>，再尝试读取该变量<code>R(X)</code>，如果预期是 <code>R(X)=2</code>，而系统的实际上返回 <code>R(X)=0</code>，则说我们对系统的预期和实际的行为不一致。</p>
+<p>而当我们说 “XX 一致性” 实际上描述的系统能对我们提供的 XX 保证。例如最终一致性保证的是对系统中的某一项数据，如果经过足够长的时间没有新的修改发生，则所有对它的访问都将返回最后一次修改的值，而对于“不够长”的时间内的访问情况它却没有做任何保证。</p>
+<h2 id="什么是顺序一致性？"><a class="header-anchor" href="#什么是顺序一致性？"></a>什么是顺序一致性？</h2>
+<p>顺序一致性最早是用来描述多核 CPU 的行为的，定义如下：</p>
+<blockquote>
+<p>… the result of any execution is the same as if the operations of all the
+processors were executed in some sequential order, and the operations of
+each individual processor appear in this sequence in the order specified by
+its program.</p>
+</blockquote>
+<p>如果可以找到一个所有 CPU 执行指令的排序，该排序中每个 CPU 要执行指令的顺序得以保持，且实际的 CPU 执行结果与该指令排序的执行结果一致，则称该次执行达到了顺序一致性。例如：</p>
+<img src="/2019/QQA-What-is-Sequential-Consistency/Sequential-Consistency.svg" class="" title="Sequential Consistency">
+<p>图中 <code>W(X, 1)</code> 代表将 1 写入变量 X；<code>R(X, 1)</code> 代表读取变量 X，值为 1；横轴代表时间；矩形的长短代表指令持续的时间长短，所以上图其实表示的是多核 CPU 的一次执行结果。</p>
+<p>我们找到了指令的一个排序，排序中各个 CPU 的指令顺序得以保持（如 <code>C: R(X, 1)</code> 在 <code>C: R(X, 2)</code> 之前），这个排序的执行结果与 CPU 分开执行的结果一致，因此该 CPU 的执行是满足顺序一致性的。</p>
+<p>注意到顺序一致性关心的是 CPU 内部执行指令的顺序，而不关心 CPU 之间的相对顺序。</p>
+<h2 id="更多正反例"><a class="header-anchor" href="#更多正反例"></a>更多正反例</h2>
+<p>考虑将上图的 <code>C:R(X, 1)</code> 与 <code>D:R(X, 2)</code> 替换一下呢？如下图：</p>
+<img src="/2019/QQA-What-is-Sequential-Consistency/Sequential-Consistency-swap-1.svg" class="" title="Sequential Consistency Swap 1">
+<p>可以看到我们依然可以找到一个满足要求的全局排序，所以系统依旧满足顺序一致性。那如果我们只是将原图的 <code>D:R(X, 1)</code> 和 <code>D:R(X, 2)</code> 互换呢？如下图：</p>
+<img src="/2019/QQA-What-is-Sequential-Consistency/Sequential-Consistency-swap-2.svg" class="" title="Sequential Consistency Swap 2">
+<p>对于上图的系统，实际上是找不到一个全局的排序来满足顺序一致性的需求的。根本上，从 C 的顺序推导出 X 的写入顺序为 <code>1 -&gt; 2</code>，而同时由 D 推出写入顺序为 <code>2 -&gt; 1</code>
+，二者矛盾。那如果只有 A 在写入呢？</p>
+<img src="/2019/QQA-What-is-Sequential-Consistency/Sequential-Consistency-swap-3.svg" class="" title="Sequential Consistency Swap 3">
+<p>上图也不满足顺序一致性，由 C、D 推导出写入顺序为 <code>1 -&gt; 2</code>，而由 A 推出顺序为
+<code>2 -&gt; 1</code>，矛盾。</p>
+<h2 id="顺序一致性难吗？"><a class="header-anchor" href="#顺序一致性难吗？"></a>顺序一致性难吗？</h2>
+<p>难，现代的多核 CPU 依然达不到顺序一致性。</p>
+<p>我们知道 CPU 执行的主要瓶颈其实是在与内存交互，工程师为了让 CPU 能高速执行，在
+CPU 内部使用了多级缓存。它的存在，使得即使 CPU 内部顺序执行指令，指令的结果也可能不满足顺序一致性：</p>
+<img src="/2019/QQA-What-is-Sequential-Consistency/CPU-Cache.svg" class="" title="CPU Cache and Sequential Consistency">
+<p>上图中 <code>(n)</code> 代表数据的读写步骤。如果 CPU 如上图执行，则得到的结果不满足顺序一致性。</p>
+<p>另外 CPU 执行时会乱序执行指令。例如在一些情况下 CPU 会将数据写入的指令提前执行，因为写入内存是很耗时的。同样的，编译器在编译代码时也会重排代码中的指令的顺序，以提升整体的性能。</p>
+<p>难以想象，没有了顺序一致性的保证，程序居然还能正确执行。其实，现代硬件体系遵循的其实是:</p>
+<blockquote>
+<p>sequential consistency for data race free programs</p>
+</blockquote>
+<p>即如果程序没有数据竞争，则 CPU 可以保证顺序一致性，而如果遇到数据竞争，就需要程序里手工使用一些数据同步的机制（如锁）。</p>
+<p>工程领域总是伴随着各种权衡(trade-off)，显然保证顺序一致性对 CPU 的性能优化有太多的阻碍，而 CPU 的高性能又是我们所追求的，两害相权取其轻。</p>
+<h2 id="zookeeper-中的顺序一致性"><a class="header-anchor" href="#zookeeper-中的顺序一致性"></a>Zookeeper 中的顺序一致性</h2>
+<p>Zookeeper 的一致性保证第一条是：</p>
+<blockquote>
+<p>Sequential Consistency : Updates from a client will be applied in the order that they were sent.</p>
+</blockquote>
+<p>顺序一致性：客户端发送的更新命令，服务端会按它们发送的顺序执行。</p>
+<p>（其实 zookeeper 文档里描述的顺序一致性和本文描述的不太一样）</p>
+<p>Zookeeper 的所有写操作都通过主节点进行，从节点复制修改操作，这样所有节点的更新顺序都和主节点相同，不会出现某个节点的更新顺序与其它节点不同的情况。</p>
+<p>但是Zookeeper 允许客户端从从节点读取数据，因此如果客户端在读取过程中连接了不同的节点，则顺序一致性就得不到保证了。</p>
+<img src="/2019/QQA-What-is-Sequential-Consistency/Zookeeper-Inconsistency.svg" class="" title="Zookeeper Inconsistency">
+<p>如上图，主节点的 <code>X=2</code> 消息还没有同步到 Follower 2，此时如果有两个客户端：</p>
+<ul>
+<li>A: 先后连接到 Follower 1 和 Follower 2，则读到 X 的值为 <code>2 -&gt; 1</code></li>
+<li>B: 先后连接到 Follower 2 和 Follower 1，则读到 X 的值为 <code>1 -&gt; 2</code></li>
+</ul>
+<p>显然不满足顺序一致性，因此 zookeeper 又有“单一视图”的保证，保证在连接到
+Follower 2 后，不会连上状态更老的 Follower 1。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>文中试图描述什么是“顺序一致性”，并给出了几个正反例；之后说明了 CPU 达不到顺序一致性的几个原因；最后简单地说明了 zookeeper 为什么能保证顺序一致性。水平有限，只能点到为止了。</p>
+<p>最后感叹下，设计里一切都是 trade off 啊。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://wudaijun.com/2018/09/distributed-consistency/" target="_blank" rel="noopener">https://wudaijun.com/2018/09/distributed-consistency/</a> 清晰讲解了顺序一致性及线性一致性等概念</li>
+<li><a href="https://www.cs.princeton.edu/courses/archive/fall16/cos418/docs/L13-strong-cap.pdf" target="_blank" rel="noopener">https://www.cs.princeton.edu/courses/archive/fall16/cos418/docs/L13-strong-cap.pdf</a>
+关于强一致性与 CAP 理论的 PPT</li>
+<li><a href="https://snarfed.org/transactions_across_datacenters_io.html" target="_blank" rel="noopener">https://snarfed.org/transactions_across_datacenters_io.html</a> Google 2009 年的一个分享，总结了业内一致性协议的一些实践</li>
+</ul></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2019/QQA-What-is-Sequential-Consistency/';
+var disqus_title = '什么是顺序一致性(Sequential Consistency)';
+var disqus_url = 'https://lotabout.me/2019/QQA-What-is-Sequential-Consistency/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

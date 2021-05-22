@@ -1,0 +1,95 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="数据库的事务有哪些隔离级别，它们解决了哪些问题？"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>事务隔离级别备忘 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Database/" rel="tag">Database</a><a class="post-tag-link" href="/tags/consistency/" rel="tag">consistency</a><a class="post-tag-link" href="/tags/isolation-level/" rel="tag">isolation level</a></div><div class="post-time">2020-04-17</div></div></div><div class="container post-header"><h1>事务隔离级别备忘</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#并发问题"><span class="toc-number">1.</span> <span class="toc-text">并发问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#p0-dirty-write"><span class="toc-number">1.1.</span> <span class="toc-text">P0: Dirty Write</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#p1-dirty-read"><span class="toc-number">1.2.</span> <span class="toc-text">P1: Dirty Read</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#p2-fuzzy-read-non-repeatable-read"><span class="toc-number">1.3.</span> <span class="toc-text">P2: Fuzzy Read | Non-repeatable Read</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#p3-phantom"><span class="toc-number">1.4.</span> <span class="toc-text">P3: Phantom</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#p4-lost-update"><span class="toc-number">1.5.</span> <span class="toc-text">P4: Lost Update</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#a5-data-item-constraint-violation"><span class="toc-number">1.6.</span> <span class="toc-text">A5: Data Item Constraint Violation</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#a5a-read-skew"><span class="toc-number">1.6.1.</span> <span class="toc-text">A5A: Read Skew</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#a5b-write-skew"><span class="toc-number">1.6.2.</span> <span class="toc-text">A5B: Write Skew</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#隔离级别"><span class="toc-number">2.</span> <span class="toc-text">隔离级别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">3.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>数据库的事务有哪些隔离级别，它们解决了哪些问题？</p>
+<h2 id="并发问题"><a class="header-anchor" href="#并发问题"></a>并发问题</h2>
+<p>隔离级别解决的事务的并发问题。当两个事务同时发生时，数据库最终的执行结果可以等价将事务里的各个操作排序后执行<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>，不过不是任意排序都可以，有些排序的结果不符合业务的预期。本节会列举其中的一些“错误”，而“隔离级别”就是一种约定，告诉我们数据库不会出现哪些“错误”。</p>
+<p>记号：<code>w1[x]</code> 代表事务 1 写入行 x，<code>r1[x]</code> 代表事务 1 读取行 x, <code>c1</code> 代表提交事务 1, <code>a1</code> 代表回滚事务 1.</p>
+<h3 id="p0-dirty-write"><a class="header-anchor" href="#p0-dirty-write"></a>P0: Dirty Write</h3>
+<p>问题时序P0：<code>w1[x]...w2[x]...(c1 or a1)</code></p>
+<p>两个事务分别写入，然后两个事务分别提交或回滚，则事务的结果无法确定。考虑下图：</p>
+<img src="/2020/QQA-Isolation-Level-of-Database/P0-dirty-write.svg" class="" title="P0 Dirty Write">
+<p>图中假设在一个事务里，满足约束 <code>x == y</code>，如果不做隔离，则事务结束后，数据库中的值不满足约束。</p>
+<p>当前支持事务的数据库都可以避免上述时序。例如在 MySQL 中，如果两个事务写入同一行，后写入的事务会等待直到前一个事务结束或超时。</p>
+<h3 id="p1-dirty-read"><a class="header-anchor" href="#p1-dirty-read"></a>P1: Dirty Read</h3>
+<p>问题时序P1：<code>w1[x]...r2[x]...(c1 or a1)</code></p>
+<p>即 r2 能读取未提交的事务的修改 w1。这会导致 t2 事务过程中的约束被打破，如下图：</p>
+<img src="/2020/QQA-Isolation-Level-of-Database/P1-dirty-read.svg" class="" title="P1 Dirty Read">
+<p>该时序下，在 t2 事务内部，原本的约束 <code>x+y==100</code> 由于 t1 的写入被打破了。</p>
+<p>隔离级别 READ COMMITTED 的目的就是阻止该时序的发生。即在 t1 未提交时，它的修改对 t2 不可见。</p>
+<h3 id="p2-fuzzy-read-non-repeatable-read"><a class="header-anchor" href="#p2-fuzzy-read-non-repeatable-read"></a>P2: Fuzzy Read | Non-repeatable Read</h3>
+<ul>
+<li>典型时序A2：<code>r1[x]...w2[x]...c2...r1[x]...c1</code></li>
+<li>问题时序P2：<code>r1[x]...w2[x]...(c1 or a1)</code> 是 A2 的扩展</li>
+</ul>
+<p>在事务 t1 读取数据后，另一个事务 t2 提交的修改对 t1 后续的读可见，则会造成不一致，如下图(A2)：</p>
+<img src="/2020/QQA-Isolation-Level-of-Database/A2-fuzzy-read.svg" class="" title="A2 Fuzzy Read">
+<p>而 P2 是对 A2 的扩展，下例虽然不违反 A2，实际使用时也有问题：</p>
+<img src="/2020/QQA-Isolation-Level-of-Database/P2-fuzzy-read.svg" class="" title="P2 Fuzzy Read">
+<p>事务 t2 提交后的修改对 t1 可见，导致 t1 内部的约束失效。</p>
+<p>一般数据库的隔离级别 REPEATABLE READ 能阻止 A2 的发生，但不一定能完全支持 P2。</p>
+<h3 id="p3-phantom"><a class="header-anchor" href="#p3-phantom"></a>P3: Phantom</h3>
+<ul>
+<li>典型时序A3：<code>r1[P]...w2[y in P]...c2...r1[P]...c1</code></li>
+<li>问题时序P3：<code>r1[P]...w2[y in P]...(c1 or a1)</code></li>
+</ul>
+<p>与 Fuzzy Read 不同，Phantom（幻读）涉及的不是单个数据行，而是查询（如 <code>SELECT ... WHERE P</code>）。</p>
+<img src="/2020/QQA-Isolation-Level-of-Database/A3-phantom.svg" class="" title="A3 Phanom">
+<p>而 P3 是对 A3 的扩展，下例(H3)虽然不违反 A3，实际使用时也有问题：</p>
+<img src="/2020/QQA-Isolation-Level-of-Database/P3-phantom.svg" class="" title="P3 Phanom">
+<p>Phantom 问题在于，查询条件隐含要求了范围数据的可重复读。需要 SERIALIZABLE 隔离级别才能防止。</p>
+<h3 id="p4-lost-update"><a class="header-anchor" href="#p4-lost-update"></a>P4: Lost Update</h3>
+<p>问题时序：<code>r1[x]...w2[x]...w1[x]...c1</code></p>
+<p>该时序下，事务 t1 的修改 w1 将被 t2 的修改覆盖而丢失，如下图：</p>
+<img src="/2020/QQA-Isolation-Level-of-Database/P4-Lost-Update.svg" class="" title="P4 Lost Update">
+<p>注意的是，禁用 P1 依旧会出现 P4，而禁用 P2 后就不会出现 P4，可以说 P4 是 P2 的一个子模式。</p>
+<p>在 MySQL 中，需要使用 <code>SELECT ... FOR UPDATE</code> 来锁住对应的行，阻止其它事务对选中行的读写，来防止 P4 的发生。</p>
+<h3 id="a5-data-item-constraint-violation"><a class="header-anchor" href="#a5-data-item-constraint-violation"></a>A5: Data Item Constraint Violation</h3>
+<p>我们隐式地对数据的两行数据有约束，下面是两种破坏约束的情形：</p>
+<h4 id="a5a-read-skew"><a class="header-anchor" href="#a5a-read-skew"></a>A5A: Read Skew</h4>
+<p>问题时序：<code>r1[x]...w2[x]...w2[y]...c2...r1[y]...(c1 or a1)</code>，示例：</p>
+<img src="/2020/QQA-Isolation-Level-of-Database/A5A-Read-Skew.svg" class="" title="A5A Read Skew">
+<h4 id="a5b-write-skew"><a class="header-anchor" href="#a5b-write-skew"></a>A5B: Write Skew</h4>
+<p>问题时序：<code>r1[x]...r2[y]...w1[y]...w2[x]...(c1 and c2 occur)</code>，示例：</p>
+<img src="/2020/QQA-Isolation-Level-of-Database/A5B-Write-Skew.svg" class="" title="A5B Write Skew">
+<p>A5A 和 A5B 在 P2(Fuzzy Read) 的加强版被禁止的情况下是不会出现的，不过仅在 ANSI
+版本(A2) 被禁止的情况下依然可能出现。</p>
+<h2 id="隔离级别"><a class="header-anchor" href="#隔离级别"></a>隔离级别</h2>
+<p>从原论文摘抄如下（省略了 P4C）：</p>
+<p>（注意的是，下图假设 REPEATABLE READ 是支持了 P2 扩展的，而许多数据库的实现并不支持）</p>
+<img src="/2020/QQA-Isolation-Level-of-Database/Isolation.svg" class="" title="Isolation">
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>有时候更重要的不是解决问题的方法，而是认识到问题是什么。</p>
+<p>文章里介绍了并发事务可能出现的多种问题。</p>
+<ul>
+<li>主要注意 <code>P1: Dirty Read</code>、<code>P2: Fuzzy Read</code> 和 <code>P3: Phantom</code></li>
+<li><code>P4: Lost Update</code> 和 <code>A5: Constraint Violation</code> 都是 P2 的变种。</li>
+<li>不过真正的实现上，P2 并没有被良好的支持，所以了解 P4、A5A、A5B 都是挺重要的</li>
+</ul>
+<p>文章本来是阅读《Design Data-Intensive Applications》后想做个备忘，在给各个问题举例时发现了论文《A Critique of ANSI SQL Isolation Levels》，结果花了很长时间来理解论文里的各种情形。本文也算是另一种形式的备忘吧，只不过更“学术”了，不“实用”了。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://arxiv.org/pdf/cs/0701157.pdf" target="_blank" rel="noopener">A Critique of ANSI SQL Isolation Levels</a> 论文，本文的主要来源</li>
+<li>《Design Data-Intensive Applications》第7章的小结部分，有相似的讨论，不那么学术，更实用</li>
+<li><a href="https://blog.pythian.com/understanding-mysql-isolation-levels-repeatable-read/" target="_blank" rel="noopener">Understanding MySQL Isolation Levels: Repeatable-Read</a> MySQL 中的 RR 隔离级别的实际表现，包括幻读</li>
+<li><a href="https://blog.acolyer.org/2016/02/24/a-critique-of-ansi-sql-isolation-levels/" target="_blank" rel="noopener">A Critique of ANSI SQL Isolation Levels</a> 论文的图文版博客，参考了文章里的图</li>
+<li><a href="http://www.adp-gmbh.ch/ora/misc/isolation_level.html" target="_blank" rel="noopener">ANSI isolation levels</a> ANSI 规定的 4 种隔离级别</li>
+</ul>
+<div id="footnotes"><hr><div id="footnotelist"><ol style="list-style:none; padding-left: 0"><li id="fn:1"><span style="display: inline-block; vertical-align: top; padding-right: 10px">1.</span><span style="display: inline-block; vertical-align: top">并发的一致性可以参考另一篇文章 <a href="http://localhost:4000/2019/QQA-What-is-Sequential-Consistency/" target="_blank" rel="noopener">什么是顺序一致性</a></span><a href="#fnref:1" rev="footnote"> ↩</a></li></ol></div></div></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2020/QQA-Isolation-Level-of-Database/';
+var disqus_title = '事务隔离级别备忘';
+var disqus_url = 'https://lotabout.me/2020/QQA-Isolation-Level-of-Database/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="JSONP 不是 JSON，它是跨域访问的一种机制。那么什么是跨域访问？什么是 JSONP？如果你不清楚的话，不妨点开看看吧。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>JSONP 简介 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/ajax/" rel="tag">ajax</a><a class="post-tag-link" href="/tags/cross-domain/" rel="tag">cross-domain</a><a class="post-tag-link" href="/tags/jsonp/" rel="tag">jsonp</a></div><div class="post-time">2016-03-21</div></div></div><div class="container post-header"><h1>JSONP 简介</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#跨域访问"><span class="toc-number">1.</span> <span class="toc-text">跨域访问</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#jsonp-如何跨域"><span class="toc-number">2.</span> <span class="toc-text">JSONP 如何跨域</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#其它相关问题"><span class="toc-number">3.</span> <span class="toc-text">其它相关问题</span></a></li></ol></details></div><div class="container post-content"><p>JSONP 不是 JSON，它是跨域访问的一种机制。那么什么是跨域访问？什么是 JSONP？如果你不清楚的话，不妨点开看看吧。</p>
+<h2 id="跨域访问"><a class="header-anchor" href="#跨域访问"></a>跨域访问</h2>
+<p>曾经想做一个“豆瓣FM”的第三方客户端，用的是 node-webkit，即可以用 HTML+CSS+JS
+写桌面客户端。网上已经有人分析出了 豆瓣FM 的 API，理论上只需要乖乖调用便可。但当我把其中用到的页面在浏览器打开的时候，却什么都加载不出来。</p>
+<p>后来查看 console 才发现原来 JQuery 的 <code>$.get()</code> 是不支持跨域访问的。那什么什么是跨域访问呢？</p>
+<p>用前面的例子，假如我做了一个网页，最终放在了自己的域名
+<a href="http://lotabout.me/">lotabout.me</a> 下，那么这个网页里的 JS 代码，如果试图访问除了域名 ‘<a href="http://lotabout.me">lotabout.me</a>’ 外的其它域名的内容，就称为跨域访问。</p>
+<p>传统上，浏览器的实现禁止 XMLHttpRequest 请求跨域访问，因为这样会引发安全问题。</p>
+<p>具体会引发什么安全问题，可以参考 <a href="http://stackoverflow.com/questions/466737/why-the-cross-domain-ajax-is-a-security-concern" target="_blank" rel="noopener">Stackoverflow: Why the cross domain ajax is
+a security
+concern</a>。</p>
+<p>这里举一个例子：<a href="https://zh.wikipedia.org/wiki/%E8%B7%A8%E7%AB%99%E8%AF%B7%E6%B1%82%E4%BC%AA%E9%80%A0" target="_blank" rel="noopener">跨站请求伪造</a>。如下图：</p>
+<p><img src="attack.png" alt="CSRF Attack"></p>
+<p>即当你打开一个网站(例如 <a href="http://baidx.com" target="_blank" rel="noopener">baidx.com</a>)时，网站上可以嵌入一些 Javascript 代码，在你没有注意到的时候向银行的网站发送请求，而你之前登陆过银行的网站，所以银行的服务器就认为是你在做操作，所以在你不注意的时候可能就向别人转帐了。</p>
+<p>现在防止跨站请求伪造的方法是银行在自己的页面里嵌入一个随机数，用户正常访问时连同这个随机数一起提交，而伪造的请求得不到这个随机数，因此银行就不响应它。但如果允许的跨域访问，‘<a href="http://baidx.com" target="_blank" rel="noopener">baidx.com</a>’ 网页上的脚本就可以向银行另外发出请求，得到一个新的随机数，从而绕过随机数这个保护措施。</p>
+<p>总而言之，跨域访问并不是为了阻挡开发者，而是为了保证安全。</p>
+<h2 id="jsonp-如何跨域"><a class="header-anchor" href="#jsonp-如何跨域"></a>JSONP 如何跨域</h2>
+<p>我们知道，HTML 中的 <code>&lt;script&gt;</code> 标签是可以访问别的域名的，JSONP 就是利用
+<code>&lt;script&gt;</code> 标签进行跨域访问的，那么具体是如何做到的呢？（下例修改自 <a href="https://en.wikipedia.org/wiki/JSONP" target="_blank" rel="noopener">wikipedia</a>）</p>
+<p>考虑我们通过 XMLHttpRequest 向服务器发送请求：
+<code>http://server.example.com/Users/1234</code>，将用户 ID：1234 作为参数传给服务器，服务器返回一个 JSON 对象，如下：</p>
+<figure class="highlight json"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"Name"</span>: <span class="string">"Foo"</span>,</span><br><span class="line">    <span class="attr">"Id"</span>: <span class="number">1234</span>,</span><br><span class="line">    <span class="attr">"Rank"</span>: <span class="number">7</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><img src="ajax-json.png" alt="AJAX JSON"></p>
+<p>但是浏览器拒绝了这个跨域请求，所以我们要另寻它法，方法就是利用 <code>&lt;script&gt;</code>
+标签，如下：</p>
+<figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">type</span>=<span class="string">"application/javascript"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">src</span>=<span class="string">"http://server.example.com/Users/1234"</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>上述这段代码会从服务器 <code>http://server.example.com/Users/1234</code> 上获取相应的内容，并将它作为 Javascript 执行。</p>
+<p>然而我们知道，服务器返回的是一个 JSON 格式的数据，如果把这段代码作为
+Javascript 执行则浏览器会报语法错误 <code>SyntaxError: missing ; before statement</code>。因此，这个技巧想要成功的话，还需要目标服务器帮忙。</p>
+<p>如果目标服务器对返回的 JSON 数据进行一下包装：</p>
+<figure class="highlight js"><table><tr><td class="code"><pre><span class="line">parseResponse(&#123;<span class="string">"Name"</span>: <span class="string">"Foo"</span>, <span class="string">"Id"</span>: <span class="number">1234</span>, <span class="string">"Rank"</span>: <span class="number">7</span>&#125;);</span><br></pre></td></tr></table></figure>
+<p>那么我们只要事先定义好 <code>parseResponse</code> 函数，就可以对返回的数据进行处理了：</p>
+<p><img src="jsonp.png" alt="JSONP"></p>
+<p>综上，JSONP 有如下要点：</p>
+<ol>
+<li>利用了 <code>&lt;script&gt;</code> 标签允许跨域访问的特点。</li>
+<li>需要服务器对返回的 JSON 进行包裹，即需要其它域的服务器的支持。</li>
+</ol>
+<h2 id="其它相关问题"><a class="header-anchor" href="#其它相关问题"></a>其它相关问题</h2>
+<p>还有其它一些解决跨域访问需求的方法：</p>
+<ol>
+<li>有自己的域名下建立一台代理服务器，将网页中需要跨域的请求发往代理服务器，再由服务器转发得到的结果。</li>
+<li>较新的浏览器支持
+<a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS" target="_blank" rel="noopener">CORS</a>，能让服务器有选择性地支持跨域访问。</li>
+<li>参考 <a href="https://en.wikipedia.org/wiki/Same-origin_policy#Relaxing_the_same-origin_policy" target="_blank" rel="noopener">wikipedia: Same-origin Policy</a>。</li>
+</ol>
+<p>启用 JSONP 也会引发其它的安全问题，可以参考 <a href="https://en.wikipedia.org/wiki/JSONP#Security_concerns" target="_blank" rel="noopener">wikipedia:JSONP</a>。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2016/JSONP/';
+var disqus_title = 'JSONP 简介';
+var disqus_url = 'https://lotabout.me/2016/JSONP/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

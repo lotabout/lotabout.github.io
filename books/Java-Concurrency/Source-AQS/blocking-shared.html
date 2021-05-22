@@ -1,0 +1,398 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>共享锁 - Java 并发知识</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+        <link rel="stylesheet" href="../css/lotabout.css">
+        
+
+        
+        <!-- MathJax -->
+        <script async type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Java 并发知识</a></li><li class="chapter-item expanded affix "><li class="part-title">理解线程安全</li><li class="chapter-item expanded "><a href="../Ideal-World/index.html"><strong aria-hidden="true">1.</strong> 理想的并发世界</a></li><li class="chapter-item expanded "><a href="../Cruel-World/index.html"><strong aria-hidden="true">2.</strong> 残酷的现实</a></li><li class="chapter-item expanded "><a href="../Happens-Before/index.html"><strong aria-hidden="true">3.</strong> Happens Before</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/index.html"><strong aria-hidden="true">4.</strong> 常见线程安全问题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/TOCTOU.html"><strong aria-hidden="true">4.1.</strong> TOCTOU</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Double-Checked-Locking.html"><strong aria-hidden="true">4.2.</strong> Double Checked Locking</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Compound-Actions.html"><strong aria-hidden="true">4.3.</strong> 复合操作</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Summary.html"><strong aria-hidden="true">4.4.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Best-Practice/index.html"><strong aria-hidden="true">5.</strong> 良好的并发编程习惯</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Best-Practice/Confinement.html"><strong aria-hidden="true">5.1.</strong> 封闭</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Immutability.html"><strong aria-hidden="true">5.2.</strong> 不可变</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Threadsafe-Data-Types.html"><strong aria-hidden="true">5.3.</strong> 利用线程安全类</a></li></ol></li><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/index.html"><strong aria-hidden="true">6.</strong> 思考题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/Spring-Bean-Initialization.html"><strong aria-hidden="true">6.1.</strong> Spring Bean 初始化如何线程安全</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">线程与线程池</li><li class="chapter-item expanded "><a href="../Amdahl-Law/index.html"><strong aria-hidden="true">7.</strong> Amdahl 定律</a></li><li class="chapter-item expanded "><a href="../Cost-of-Thread/index.html"><strong aria-hidden="true">8.</strong> 线程的代价</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/index.html"><strong aria-hidden="true">9.</strong> 线程池</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Pool/Concepts.html"><strong aria-hidden="true">9.1.</strong> 线程池相关概念</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Predefined.html"><strong aria-hidden="true">9.2.</strong> 预定义的线程池</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Usage.html"><strong aria-hidden="true">9.3.</strong> 线程池使用</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Interrupt.html"><strong aria-hidden="true">9.4.</strong> 线程的中断</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Shutdown.html"><strong aria-hidden="true">9.5.</strong> 如何优雅退出</a></li></ol></li><li class="chapter-item expanded "><strong aria-hidden="true">10.</strong> 线程调度</li><li class="chapter-item expanded affix "><li class="part-title">源码分析</li><li class="chapter-item expanded "><a href="../Source-Unsafe/index.html"><strong aria-hidden="true">11.</strong> Unsafe</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/index.html"><strong aria-hidden="true">12.</strong> Atomic</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicInteger.html"><strong aria-hidden="true">12.1.</strong> AtomicInteger</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicIntegerArray.html"><strong aria-hidden="true">12.2.</strong> AtomicIntegerArray</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Striped64.html"><strong aria-hidden="true">12.3.</strong> Striped64</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Adder.html"><strong aria-hidden="true">12.4.</strong> Adder</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/FieldUpdater.html"><strong aria-hidden="true">12.5.</strong> FieldUpdater</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/StampedReference.html"><strong aria-hidden="true">12.6.</strong> StampedReference</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-AQS/AQS.html"><strong aria-hidden="true">13.</strong> AbstractQueuedSynchronizer</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-AQS/blocking-exclusive.html"><strong aria-hidden="true">13.1.</strong> 互斥锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/blocking-shared.html" class="active"><strong aria-hidden="true">13.2.</strong> 共享锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/timeout.html"><strong aria-hidden="true">13.3.</strong> 超时</a></li><li class="chapter-item expanded "><a href="../Source-AQS/interrupt.html"><strong aria-hidden="true">13.4.</strong> 中断</a></li><li class="chapter-item expanded "><a href="../Source-AQS/cancellation.html"><strong aria-hidden="true">13.5.</strong> 取消</a></li><li class="chapter-item expanded "><a href="../Source-AQS/condition.html"><strong aria-hidden="true">13.6.</strong> 条件变量</a></li><li class="chapter-item expanded "><a href="../Source-AQS/Summary.html"><strong aria-hidden="true">13.7.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-Lock/Lock.html"><strong aria-hidden="true">14.</strong> Lock</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantLock.html"><strong aria-hidden="true">14.1.</strong> ReentrantLock</a></li><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantReadWriteLock.html"><strong aria-hidden="true">14.2.</strong> ReentrantReadWriteLock</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Java 并发知识</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#共享锁" id="共享锁">共享锁</a></h1>
+<p>共享锁与互斥锁的区别在于，共享锁在同一时间能被多个线程持有，不过 AQS 中加锁条件的判断已经抽象成 <code>tryAcquireShared</code> 操作了，由具体的实现类实现。AQS 只负责唤醒等待共享锁的线程。</p>
+<p>为了标识一个节点是在哪种模式（互斥/共享）下工作，<code>Node</code> 类需要增加额外的标识：</p>
+<pre><code class="language-java">static final class Node {
+    static final Node SHARED = new Node();
+    static final Node EXCLUSIVE = null;
+
+    static final int CANCELLED =  1;
+    static final int SIGNAL    = -1;
+    static final int CONDITION = -2;
+    static final int PROPAGATE = -3;
+
+
+    volatile int waitStatus;
+    Node nextWaiter;
+    // ...
+}
+</code></pre>
+<p>当 <code>nextWaiter</code> 等于预定义的 <code>SHARED</code> 时认为是在共享模式下工作，后续也被用在条件变量的等待队列中。共享锁模式下节点有多种状态，用 <code>waitStatus</code> 存储，跟共享锁有关的主要有：</p>
+<ul>
+<li><code>SIGNAL</code>，代表后继节点被阻塞了，当前节点释放后需要唤醒后继节点
+<ul>
+<li>为了避免竞态条件，抢锁时应先把 prev 节点的状态改成 SIGNAL，尝试抢锁，失败时再阻塞</li>
+</ul>
+</li>
+<li><code>PROPAGATE</code>，只在 head 节点设置，代表有共享锁释放，需要唤醒后续共享节点</li>
+<li><code>CANCELLED</code>，用于取消等待，抢锁出错或线程中断时使用</li>
+</ul>
+<h2><a class="header" href="#调用关系" id="调用关系">调用关系</a></h2>
+<p>粗粒度的调用关系如下：</p>
+<p><img src="Blocking-Shared-Calls.svg" alt="Blocking Shared Calls" /></p>
+<h2><a class="header" href="#抢共享锁" id="抢共享锁">抢共享锁</a></h2>
+<p>抢共享锁的操作由 <code>doAcquireShared</code> 方法完成，它和互斥锁的 <code>acquireQueued</code> 的主要结构类似：</p>
+<pre><code class="language-java">private void doAcquireShared(int arg) {
+    // 创建一个共享模式的节点并加入等待队列
+    final Node node = addWaiter(Node.SHARED);
+    boolean failed = true;
+    try {
+        boolean interrupted = false;
+        for (;;) {
+            final Node p = node.predecessor();
+            if (p == head) { // 当前节点为 head 的后继时才尝试抢锁
+                int r = tryAcquireShared(arg);
+                if (r &gt;= 0) {
+                    // 抢锁成功，需要释放 head 节点
+                    // 需要看情况唤醒后续的节点，如还有其它可用共享锁
+                    setHeadAndPropagate(node, r);
+                    p.next = null; // help GC
+                    if (interrupted)
+                        selfInterrupt();
+                    failed = false;
+                    return;
+                }
+            }
+
+            // 看情况休眠，可能会在锁释放或接收到中断时被唤醒
+            if (shouldParkAfterFailedAcquire(p, node) &amp;&amp;
+                parkAndCheckInterrupt())
+                interrupted = true;
+        }
+    } finally {
+        if (failed)
+            cancelAcquire(node); // 失败时需要取消操作，此处先省略不谈
+    }
+}
+</code></pre>
+<p><code>doAcquireShared</code> 和 <code>acquireQueued</code> 整体逻辑结构判别不大，都是在循环里抢锁，成功则释放 head 节点，失败则进入休眠。不过有一个区别是是 <code>doAcquireShared</code> 使用了 <code>tryAcquireShared</code> 抢共享锁，返回负值代表抢锁失败，正值代表剩余多少锁。</p>
+<h2><a class="header" href="#唤醒后继节点" id="唤醒后继节点">唤醒后继节点</a></h2>
+<p>在行为上 <code>doAcquireShared</code> 与 <code>acquireQueued</code> 不同的一点是成功抢锁后，调用的是
+<code>setHeadAndPropagate</code> 方法，除了释放当前的 head 节点，还会看情况唤醒后续的节点，这样才能保证多余的锁也能被等待线程抢到。</p>
+<pre><code class="language-java">private void setHeadAndPropagate(Node node, int propagate) {
+    Node h = head; // Record old head for check below
+    setHead(node);
+    if (propagate &gt; 0                                // ① 明确知道还有锁可用
+        || h == null || h.waitStatus &lt; 0             // ② 老 head 处于特殊状态
+        || (h = head) == null || h.waitStatus &lt; 0) { // ③ 新 head 处于特殊状态
+        Node s = node.next;
+        if (s == null || s.isShared())               // ④ 后继节点是共享模式
+            doReleaseShared();
+    }
+}
+</code></pre>
+<p><code>doReleaseShared</code> 方法用来释放共享锁，在锁释放时也会被调用，它会根据 head 节点的状态来唤醒后继节点。我们看看 <code>doReleaseShared</code> 的具体实现：</p>
+<pre><code class="language-java">private void doReleaseShared() {
+    for (;;) {
+        Node h = head;
+        if (h != null &amp;&amp; h != tail) {
+            int ws = h.waitStatus;
+            if (ws == Node.SIGNAL) {     // ① 正常唤醒后继节点
+                if (!compareAndSetWaitStatus(h, Node.SIGNAL, 0)) // 清除 SIGNAL 状态
+                    continue;            // CAS 修改状态失败，重试
+                unparkSuccessor(h);
+            }
+            else if (ws == 0 &amp;&amp;          // ② 设置成 PROPAGATE，确保唤醒操作能传播
+                     !compareAndSetWaitStatus(h, 0, Node.PROPAGATE))
+                continue;                // CAS 修改状态失败，重试
+        }
+        if (h == head)                   // 如果 head 节点变化了，则继续循环
+            break;
+    }
+}
+</code></pre>
+<p>代码 ① 处判断 <code>head</code> 节点处于 <code>SIGNAL</code> 状态，说明后继节点在等待唤醒，于是调用
+<code>unparkSuccessor</code> 唤醒节点。② 处则是将节点设置成 <code>PROPAGATE</code> 状态后退出。那么
+<code>PROPAGATE</code> 状态有什么用呢？</p>
+<h2><a class="header" href="#propagate-状态的作用" id="propagate-状态的作用">PROPAGATE 状态的作用</a></h2>
+<p>跟释放互斥锁一样，释放共享锁时需要唤醒后继的节点，不同的是同一时间可能有多个共享锁被释放，但唤醒操作只能一个一个进行。需要唤醒多少线程由
+<code>tryAcquireShared</code> 的返回值指定，且由下一个尝试抢锁的线程在
+<code>setHeadAndPropagate</code> 方法中通过调用 <code>doReleaseShared</code> 执行唤醒操作。</p>
+<p>但是被唤醒的线程 T 调用 <code>tryAcquireShared</code> 方法得知需要唤醒多少个线程，与执行唤醒操作之间有延迟，如果这个过程中有其它的锁释放了，则线程 T 执行唤醒时无法知晓，就会造成逻辑错误。在<a href="https://github.com/openjdk/jdk/commit/b63d6d68d93ebc34f8b4091a752eba86ff575fc2#diff-a231009cfe9653cf84d38447c04c56dfL659">早期的实现</a>中，<code>setHeadAndPropagate</code> 并没有 <code>PROPAGATE</code> 状态，就会有这个问题。早期实现的代码如下：</p>
+<pre><code class="language-java">private void setHeadAndPropagate(Node node, int propagate) {
+    setHead(node);
+    if (propagate &gt; 0 &amp;&amp; node.waitStatus != 0) {
+        Node s = node.next;
+        if (s == null || s.isShared())
+            unparkSuccessor(node);
+    }
+}
+</code></pre>
+<p>对应的，
+<a href="https://github.com/openjdk/jdk/commit/b63d6d68d93ebc34f8b4091a752eba86ff575fc2#diff-fb9d12ce13e1294839ef2d3c0db53bf9L1047">releaseShared</a>
+方法中也没有 PROPAGATE 的相关判断：</p>
+<pre><code class="language-java">public final boolean releaseShared(int arg) {
+    if (tryReleaseShared(arg)) {
+        Node h = head;
+        if (h != null &amp;&amp; h.waitStatus != 0)
+            unparkSuccessor(h);
+        return true;
+    }
+    return false;
+}
+</code></pre>
+<p>在这种实现下，考虑队列中有 <code>t3(head) -&gt; t1 -&gt; t2(tail)</code> 三个节点，<code>t3</code> 与不在队列中的 <code>t4</code>拥有锁，<code>t3</code> 与 <code>t4</code> 先后释放锁，则在下面的时序里，<code>t1</code> 和 <code>t4</code>
+都不会尝试唤醒<code>t2</code>：</p>
+<p><img src="Without-Propagate.svg" alt="Race without propagate" /></p>
+<p>问题时序如下<sup class="footnote-reference"><a href="#ref-propagate-race">1</a></sup>：</p>
+<ol>
+<li><code>t3</code> 锁释放，调用 <code>releaseShared</code> 后调用 <code>unparkSuccessor</code> 将 <code>head</code> 的状态置为 <code>0</code></li>
+<li><code>t1</code> 被唤醒，调用 <code>tryAcquireShared</code> 尝试抢锁，返回 <code>0</code>，代表无多余的锁</li>
+<li><code>t4</code> 释放锁，调用 <code>releaseShared</code>，读到 <code>head.waitStatus == 0</code>（与 #1 中
+head 相同），不满足 <code>waitStatus != 0</code> 的条件，不做唤醒操作。</li>
+<li><code>t1</code> 抢锁成功，调用 <code>setHeadAndPropagate</code>，此时 <code>propagate == 0</code>，没有多余的锁，于是也不做唤醒操作</li>
+</ol>
+<p>最终结果是 <code>t4</code> 的锁释放了，却不唤醒任何后续节点，锁释放了，却没有线程被唤醒抢锁。</p>
+<p>因此，在 t1 的 <code>setHeadAndPropagate</code> 要唤醒后续节点时，不能只依赖 <code>propagate</code>
+的值，这个值可能是旧的数据。在调用 <code>tryAcquireShared</code> 到释放 head 节点这断期间里释放锁的线程，需要“告知”被唤醒的线程，不管 <code>propagate</code> 的值是什么，都要尝试唤醒后面的线程，因为有新的锁被释放了。这也就是当前的 <code>setHeadAndPropagate</code> 逻辑中复杂的 <code>if</code> 条件的来由了。</p>
+<hr />
+<div class="footnote-definition" id="ref-propagate-race"><sup class="footnote-definition-label">1</sup>
+<p>参考 <a href="https://www.cnblogs.com/micrari/p/6937995.html">AbstractQueuedSynchronizer源码解读</a></p>
+</div>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../Source-AQS/blocking-exclusive.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../Source-AQS/timeout.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../Source-AQS/blocking-exclusive.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="../Source-AQS/timeout.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+        <!-- Google Analytics Tag -->
+        <script type="text/javascript">
+            var localAddrs = ["localhost", "127.0.0.1", ""];
+
+            // make sure we don't activate google analytics if the developer is
+            // inspecting the book locally...
+            if (localAddrs.indexOf(document.location.hostname) === -1) {
+                (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+                ga('create', 'UA-39956831-2', 'auto');
+                ga('send', 'pageview');
+            }
+        </script>
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

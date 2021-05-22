@@ -1,0 +1,77 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;p&gt;整个编译器还剩下最后两个部分：语句和表达式的解析。它们的内容比较多，主要涉及如何将语句和表达式编译成汇编代码。这章讲解语句的解析，相对于表达式来说它还是较为容易的。&lt;/p&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>手把手教你构建 C 语言编译器（7）- 语句 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/C/" rel="tag">C</a><a class="post-tag-link" href="/tags/compiler/" rel="tag">compiler</a></div><div class="post-time">2016-01-04</div></div></div><div class="container post-header"><h1>手把手教你构建 C 语言编译器（7）- 语句</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#语句"><span class="toc-number">1.</span> <span class="toc-text">语句</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#if-语句"><span class="toc-number">1.1.</span> <span class="toc-text">IF 语句</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#while-语句"><span class="toc-number">1.2.</span> <span class="toc-text">While 语句</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#return-语句"><span class="toc-number">1.3.</span> <span class="toc-text">Return 语句</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#其它语句"><span class="toc-number">1.4.</span> <span class="toc-text">其它语句</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#代码"><span class="toc-number">2.</span> <span class="toc-text">代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">3.</span> <span class="toc-text">小结</span></a></li></ol></details></div><div class="container post-content"><p>整个编译器还剩下最后两个部分：语句和表达式的解析。它们的内容比较多，主要涉及如何将语句和表达式编译成汇编代码。这章讲解语句的解析，相对于表达式来说它还是较为容易的。</p>
+<a id="more"></a>
+<p>手把手教你构建 C 语言编译器系列共有10个部分：</p>
+<ol>
+<li><a href="http://lotabout.me/2015/write-a-C-interpreter-0/">手把手教你构建 C 语言编译器（0）——前言</a></li>
+<li><a href="http://lotabout.me/2015/write-a-C-interpreter-1/">手把手教你构建 C 语言编译器（1）——设计</a></li>
+<li><a href="http://lotabout.me/2015/write-a-C-interpreter-2/">手把手教你构建 C 语言编译器（2）——虚拟机</a></li>
+<li><a href="http://lotabout.me/2015/write-a-C-interpreter-3/">手把手教你构建 C 语言编译器（3）——词法分析器</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-4/">手把手教你构建 C 语言编译器（4）——递归下降</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-5/">手把手教你构建 C 语言编译器（5）——变量定义</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-6/">手把手教你构建 C 语言编译器（6）——函数定义</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-7/">手把手教你构建 C 语言编译器（7）——语句</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-8/">手把手教你构建 C 语言编译器（8）——表达式</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-9/">手把手教你构建 C 语言编译器（9）——总结</a></li>
+</ol>
+<h2 id="语句"><a class="header-anchor" href="#语句"></a>语句</h2>
+<p>C 语言区分“语句”（statement）和“表达式”（expression）两个概念。简单地说，可以认为语句就是表达式加上末尾的分号。</p>
+<p>在我们的编译器中共识别 6 种语句：</p>
+<ol>
+<li><code>if (...) &lt;statement&gt; [else &lt;statement&gt;]</code></li>
+<li><code>while (...) &lt;statement&gt;</code></li>
+<li><code>{ &lt;statement&gt; }</code></li>
+<li><code>return xxx;</code></li>
+<li><code>&lt;empty statement&gt;</code>;</li>
+<li><code>expression;</code> (expression end with semicolon)</li>
+</ol>
+<p>它们的语法分析都相对容易，重要的是去理解如何将这些语句编译成汇编代码，下面我们逐一解释。</p>
+<h3 id="if-语句"><a class="header-anchor" href="#if-语句"></a>IF 语句</h3>
+<p>IF 语句的作用是跳转，跟据条件表达式决定跳转的位置。我们看看下面的伪代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">if (...) &lt;statement&gt; [else &lt;statement&gt;]</span><br><span class="line"></span><br><span class="line">  if (&lt;cond&gt;)                   &lt;cond&gt;</span><br><span class="line">                                JZ a</span><br><span class="line">    &lt;true_statement&gt;   &#x3D;&#x3D;&#x3D;&gt;     &lt;true_statement&gt;</span><br><span class="line">  else:                         JMP b</span><br><span class="line">a:                           a:</span><br><span class="line">    &lt;false_statement&gt;           &lt;false_statement&gt;</span><br><span class="line">b:                           b:</span><br></pre></td></tr></table></figure>
+<p>对应的汇编代码流程为：</p>
+<ol>
+<li>执行条件表达式 <code>&lt;cond&gt;</code>。</li>
+<li>如果条件失败，则跳转到 <code>a</code> 的位置，执行 <code>else</code> 语句。这里 <code>else</code> 语句是可以省略的，此时 <code>a</code> 和 <code>b</code> 都指向 IF 语句后方的代码。</li>
+<li>因为汇编代码是顺序排列的，所以如果执行了 <code>true_statement</code>，为了防止因为顺序排列而执行了 <code>false_statement</code>，所以需要无条件跳转 <code>JMP b</code>。</li>
+</ol>
+<p>对应的 C 代码如下：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (token == If) &#123;</span><br><span class="line">    match(If);</span><br><span class="line">    match(<span class="string">'('</span>);</span><br><span class="line">    expression(Assign);  <span class="comment">// parse condition</span></span><br><span class="line">    match(<span class="string">')'</span>);</span><br><span class="line"></span><br><span class="line">    *++<span class="built_in">text</span> = JZ;</span><br><span class="line">    b = ++<span class="built_in">text</span>;</span><br><span class="line"></span><br><span class="line">    statement();         <span class="comment">// parse statement</span></span><br><span class="line">    <span class="keyword">if</span> (token == Else) &#123; <span class="comment">// parse else</span></span><br><span class="line">        match(Else);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// emit code for JMP B</span></span><br><span class="line">        *b = (<span class="keyword">int</span>)(<span class="built_in">text</span> + <span class="number">3</span>);</span><br><span class="line">        *++<span class="built_in">text</span> = JMP;</span><br><span class="line">        b = ++<span class="built_in">text</span>;</span><br><span class="line"></span><br><span class="line">        statement();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    *b = (<span class="keyword">int</span>)(<span class="built_in">text</span> + <span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="while-语句"><a class="header-anchor" href="#while-语句"></a>While 语句</h3>
+<p>While 语句比 If 语句简单，它对应的汇编代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">a:                     a:</span><br><span class="line">   while (&lt;cond&gt;)        &lt;cond&gt;</span><br><span class="line">                         JZ b</span><br><span class="line">    &lt;statement&gt;          &lt;statement&gt;</span><br><span class="line">                         JMP a</span><br><span class="line">b:                     b:</span><br></pre></td></tr></table></figure>
+<p>没有什么值得说明的内容，它的 C 代码如下：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (token == While) &#123;</span><br><span class="line">    match(While);</span><br><span class="line"></span><br><span class="line">    a = <span class="built_in">text</span> + <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    match(<span class="string">'('</span>);</span><br><span class="line">    expression(Assign);</span><br><span class="line">    match(<span class="string">')'</span>);</span><br><span class="line"></span><br><span class="line">    *++<span class="built_in">text</span> = JZ;</span><br><span class="line">    b = ++<span class="built_in">text</span>;</span><br><span class="line"></span><br><span class="line">    statement();</span><br><span class="line"></span><br><span class="line">    *++<span class="built_in">text</span> = JMP;</span><br><span class="line">    *++<span class="built_in">text</span> = (<span class="keyword">int</span>)a;</span><br><span class="line">    *b = (<span class="keyword">int</span>)(<span class="built_in">text</span> + <span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="return-语句"><a class="header-anchor" href="#return-语句"></a>Return 语句</h3>
+<p>Return 唯一特殊的地方是：一旦遇到了 Return 语句，则意味着函数要退出了，所以需要生成汇编代码 <code>LEV</code> 来表示退出。</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (token == Return) &#123;</span><br><span class="line">    <span class="comment">// return [expression];</span></span><br><span class="line">    match(Return);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (token != <span class="string">';'</span>) &#123;</span><br><span class="line">        expression(Assign);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    match(<span class="string">';'</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// emit code for return</span></span><br><span class="line">    *++<span class="built_in">text</span> = LEV;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="其它语句"><a class="header-anchor" href="#其它语句"></a>其它语句</h3>
+<p>其它语句并不直接生成汇编代码，所以不多做说明，代码如下：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (token == <span class="string">'&#123;'</span>) &#123;</span><br><span class="line">    <span class="comment">// &#123; &lt;statement&gt; ... &#125;</span></span><br><span class="line">    match(<span class="string">'&#123;'</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (token != <span class="string">'&#125;'</span>) &#123;</span><br><span class="line">        statement();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    match(<span class="string">'&#125;'</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (token == <span class="string">';'</span>) &#123;</span><br><span class="line">    <span class="comment">// empty statement</span></span><br><span class="line">    match(<span class="string">';'</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// a = b; or function_call();</span></span><br><span class="line">    expression(Assign);</span><br><span class="line">    match(<span class="string">';'</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="代码"><a class="header-anchor" href="#代码"></a>代码</h2>
+<p>本章的代码可以在 <a href="https://github.com/lotabout/write-a-C-interpreter/tree/step-5" target="_blank" rel="noopener">Github</a> 上下载，也可以直接 clone</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git clone -b step-5 https:&#x2F;&#x2F;github.com&#x2F;lotabout&#x2F;write-a-C-interpreter</span><br></pre></td></tr></table></figure>
+<p>本章的代码依旧无法运行，还剩最后一部分没有完成：<code>expression</code>。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>本章讲解了如何将语句编译成汇编代码，内容相对容易一些，关键就是去理解汇编代码的执行原理。</p>
+<p>同时值得一提的是，编译器的语法分析部分其实是很简单的，而真正的难点是如何在语法分析时收集足够多的信息，最终把源代码转换成目标代码（汇编）。我认为这也是初学者实现编译器的一大难点，往往比词法分析/语法分析更困难。</p>
+<p>所以建议如果没有学过汇编，可以学习学习，它本身不难，但对理解计算机的原理有很大帮助。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2016/write-a-C-interpreter-7/';
+var disqus_title = '手把手教你构建 C 语言编译器（7）- 语句';
+var disqus_url = 'https://lotabout.me/2016/write-a-C-interpreter-7/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

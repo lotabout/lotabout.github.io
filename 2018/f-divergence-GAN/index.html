@@ -1,0 +1,183 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;p&gt;f-divergence GAN 是对 GAN 框架的理论统一，本文学习过程中的一些笔记，包括基本公式的推导和重要概念的理解。&lt;/p&gt;
+&lt;p&gt;学习资料是李宏毅老师 &lt;a href=&quot;https://www.youtube.com/watch?v=KSN4QYgAtao&amp;amp;lc=z13kz1nqvuqsipqfn23phthasre4evrdo&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;关于 WGAN 的教学视频
+&lt;/a&gt;
+视频里深入浅出地介绍了许多 GAN 的相关知识。不需要太多的数学基础就能听懂，强力推荐。&lt;/p&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>ƒ-divergence GAN 笔记 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/GAN/" rel="tag">GAN</a><a class="post-tag-link" href="/tags/Machine-Learning/" rel="tag">Machine Learning</a></div><div class="post-time">2018-03-29</div></div></div><div class="container post-header"><h1>ƒ-divergence GAN 笔记</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#gan-的基本思想"><span class="toc-number">1.</span> <span class="toc-text">GAN 的基本思想</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#gan-的算法"><span class="toc-number">2.</span> <span class="toc-text">GAN 的算法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ƒ-divergence"><span class="toc-number">3.</span> <span class="toc-text">ƒ-divergence</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#为什么-d-f-可以衡量距离？"><span class="toc-number">3.1.</span> <span class="toc-text">为什么 $D_f$ 可以衡量距离？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#一些-ƒ-divergence"><span class="toc-number">3.2.</span> <span class="toc-text">一些 ƒ-divergence</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ƒ-divergence-不是距离"><span class="toc-number">3.3.</span> <span class="toc-text">ƒ-divergence 不是距离</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#fenchel-conjugate"><span class="toc-number">4.</span> <span class="toc-text">Fenchel Conjugate</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ƒ-divergence-与-gan"><span class="toc-number">5.</span> <span class="toc-text">ƒ-divergence 与 GAN</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">6.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">7.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>f-divergence GAN 是对 GAN 框架的理论统一，本文学习过程中的一些笔记，包括基本公式的推导和重要概念的理解。</p>
+<p>学习资料是李宏毅老师 <a href="https://www.youtube.com/watch?v=KSN4QYgAtao&amp;lc=z13kz1nqvuqsipqfn23phthasre4evrdo" target="_blank" rel="noopener">关于 WGAN 的教学视频
+</a>
+视频里深入浅出地介绍了许多 GAN 的相关知识。不需要太多的数学基础就能听懂，强力推荐。</p>
+<a id="more"></a>
+<h2 id="gan-的基本思想"><a class="header-anchor" href="#gan-的基本思想"></a>GAN 的基本思想</h2>
+<p>有这样一个 GAN 的应用，它能用机器生成 <a href="https://qiita.com/mattya/items/e5bfe5e04b9d2f0bbd47" target="_blank" rel="noopener">动漫头像</a>。我们需要事先收集一些人类画师画的动漫头像，它们可以认为是图像空间(image page)里的某个分布 $P_{data}$。之后我们会尝试训练一个生成器 G，它能以随机噪声 $z$ 为输入，生成动漫头像，我们认为生成的头像满足分布 $P_G$。而训练的目标就是让 $P_G$
+尽可能地接近 $P_{data}$。换言之，我们希望机器生成的头像尽可能像人画出来的。</p>
+<p><img src="https://blog.openai.com/content/images/2017/02/gen_models_diag_2.svg" alt="GAN Model">
+(图片来源：<a href="https://blog.openai.com/generative-models/" target="_blank" rel="noopener">https://blog.openai.com/generative-models/</a>)</p>
+<p>理论上，如果我们有完美的 loss 函数，则训练生成器 G 和普通的神经网络没有任何区别。很可惜，我们并没有办法真正求出 $P_{data}$ 和 $P_G$，也因此我们不可能找到一个完美的 loss 函数来衡量“$P_{data}$ 与 $P_G$ 是否接近”。于是 GAN 的想法是，我们再训练一个判别器(Discriminator) 来尽量近似这个完美的 loss 函数。GAN 的基本结构如下：</p>
+<img src="/2018/f-divergence-GAN/GAN.svg" class="" title="GAN Model">
+<p>为了训练判别器 D，我们需要有正样本（动漫头像），也需要有负样本（非动漫头像）。正样本已经收集完毕，负样本哪里来呢？这就是 GAN 犀利的地方，它用生成器 G 生成的数据来作为负样本，用于训练判别器 D。而后我们得到一个更好的判别器 D 后，再用这个新的判别器 D 作为 loss 函数来训练 G 。于是我们能得到更好的生成器 G 以及判别器 D。</p>
+<h2 id="gan-的算法"><a class="header-anchor" href="#gan-的算法"></a>GAN 的算法</h2>
+<p>算法的伪代码如下：</p>
+<ul>
+<li>初始化 D, G 的参数 $\theta_d$ 和 $\theta_g$</li>
+<li>每一个迭代中：
+<ul>
+<li>从真实数据的分布 $P_{data}(x)$ 中采样 $m$ 个样本 $\{x^1, x^2, \dots, x^m\}$</li>
+<li>从先验的噪声分布 $P_{prior}(z)$ 中采样 $m$ 个样本 $\{z^1, z^2, \dots, z^m\}$</li>
+<li>将噪声输入生成器 G，生成样本 $\{\tilde{x}^1, \tilde{x}^2, \dots, \tilde{x}^m\}, \tilde{x}^i = G(z^i)$</li>
+<li>更新判别器 D 的参数，即最大化：
+<ul>
+<li>$\tilde{V} = \frac{1}{m}\sum_{i=1}^m{\log D(x^i)} + \frac{1}{m}\sum_{i=1}^m{\log (1-D(\tilde{x}^i))}$</li>
+<li>$\theta_d\leftarrow\theta_d+\eta\nabla\tilde{V}(\theta_d)$</li>
+</ul>
+</li>
+<li>从先验的噪声分布 $P_{prior}(z)$ 中 <strong>再</strong> 采样 $m$ 个样本 $\{z^1, z^2, \dots, z^m\}$</li>
+<li>更新生成器 D 的参数，即最小化：
+<ul>
+<li>$\require{cancel}\tilde{V} = \cancel{\frac{1}{m}\sum_{i=1}^m\log D(x^i)} + \frac{1}{m}\sum_{i=1}^m\log (1-D(G(z^i)))$</li>
+<li>$\theta_d\leftarrow\theta_d-\eta\nabla\tilde{V}(\theta_d)$</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>这里的疑问是，为什么要最大化 $\tilde{V}$ 呢？换成其它的 $\tilde{V}$ 行不行？其实 ƒ-divergence GAN 就是要告诉我们，这么设计 $\tilde{V}$ 是有道理的，并且换成其它的 ƒ-divergence 也没有问题。</p>
+<h2 id="ƒ-divergence"><a class="header-anchor" href="#ƒ-divergence"></a>ƒ-divergence</h2>
+<blockquote>
+<p>In probability theory, an <a href="https://en.wikipedia.org/wiki/F-divergence" target="_blank" rel="noopener">ƒ-divergence</a> is a function
+$D_f(P||Q)$ that measures the difference between two probability
+distributions $P$ and $Q$. It
+helps the intuition to think of the divergence as an average, weighted by
+the function f, of the odds ratio given by $P$ and $Q$.</p>
+</blockquote>
+<p>给定两个分布 $P$ 和 $Q$，$p(x)$ 和 $q(x)$ 分别为对应样本的概率，ƒ-divergence 是一个这样的函数：</p>
+<p>$$D_f(P||Q)=\int_xq(x)f(\frac{p(x)}{q(x)})dx$$</p>
+<p>其中 $f$ 可以认为是 $D_f(P||Q)$ 的超参数，我们要求 $f$ 满足两点：(a) $f$ 是凸函数 (b) $f(1) = 0$</p>
+<h3 id="为什么-d-f-可以衡量距离？"><a class="header-anchor" href="#为什么-d-f-可以衡量距离？"></a>为什么 $D_f$ 可以衡量距离？</h3>
+<p>如果 $P = Q$，则 $D_f(P||Q) = 0$。证明很简单，我们知道 $f(1) = 0$，所以当 $p(x) = q(x)$ 时，有：</p>
+<p>$$D_f(P||Q)=\int_xq(x)\underbrace{f(\overbrace{\frac{p(x)}{q(x)}}^{=1})}_{=0}dx=0$$</p>
+<p>而如果 $P \neq Q$，有 $D_f(P||Q) &gt; 0$。由于 $f$ 是凸函数，所以有：</p>
+<p>$$
+\require{cancel}
+\begin{eqnarray}
+D_f(P||Q) &amp;=&amp; \int_xq(x)f(\frac{p(x)}{q(x)})dx \\
+&amp;\ge&amp; f(\int_x\cancel{q(x)}\frac{p(x)}{\cancel{q(x)}}dx)=f(1)=0
+\end{eqnarray}
+$$</p>
+<p>因此，我们可以用 ƒ-divergence 来衡量两个分布的距离，如果两个分布相同，则 ƒ
+-divergence 为 0，而若分布不同，则 ƒ-divergence 大于 0。</p>
+<h3 id="一些-ƒ-divergence"><a class="header-anchor" href="#一些-ƒ-divergence"></a>一些 ƒ-divergence</h3>
+<p>这里介绍的这些 divergence 我不知道是干什么用的。从应用的角度来说，似乎不明白也没什么关系。</p>
+<p>当取 $f(x) = x \log x$ 时，我们就得到了 <a href="https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence" target="_blank" rel="noopener">KL divergence</a>：</p>
+<p>$$D_f(P||Q)=\int_x q(x)\frac{p(x)}{q(x)}\log(\frac{p(x)}{q(x)})dx=\int_xp(x)\log(\frac{p(x)}{q(x)})dx$$</p>
+<p>取 $f(x) = - \log x$ 时，我们就得到了 reverse KL-divergence:</p>
+<p>$$D_f(P||Q)=\int_xq(x)(-\log(\frac{p(x)}{q(x)}))dx=\int_xq(x)\log(\frac{q(x)}{p(x)})dx$$</p>
+<p>而取 $f(x) = (x-1)^2$ 时，得到的是 Chi Square divergence:</p>
+<p>$$D_f(P||Q)=\int_x q(x)(\frac{p(x)}{q(x)}-1)^2dx = \int_x\frac{(p(x)-q(x))^2}{q(x)}dx$$</p>
+<h3 id="ƒ-divergence-不是距离"><a class="header-anchor" href="#ƒ-divergence-不是距离"></a>ƒ-divergence 不是距离</h3>
+<p>很重要的一点 f-divergence 不是“距离”
+(<a href="https://en.wikipedia.org/wiki/Metric_(mathematics)" target="_blank" rel="noopener">metric</a>)，因为距离需要满足四个条件：</p>
+<ol>
+<li>$d(x, y) \ge 0$ 非负性</li>
+<li>$d(x, y) = 0$ 当且仅当 $x = y$</li>
+<li>$d(x, y) = d(y, x)$ 对称性</li>
+<li>$d(x, z) \le d(x, y) + d (y, z)$ 三角不等式</li>
+</ol>
+<p>上面我们看到它满足前两个条件（严格来说 $D_f(P||Q) = 0$ 能不能推出 $P = Q$ 还不知道）。对剩下的条件，不同的 ƒ-divergence 有不同的情况。</p>
+<p>例如 KL divergence 并不满足后对称性： $D_f(P||Q) \ne D_f(Q||P)$，也不满足三角不等式。证明我是肯定不会的，大家参考 <a href="https://en.wikipedia.org/wiki/Kullback%E2%80%93Leibler_divergence#Relation_to_metrics" target="_blank" rel="noopener">维基百科
+</a>
+。</p>
+<p>而 <a href="https://en.wikipedia.org/wiki/Jensen%E2%80%93Shannon_divergence" target="_blank" rel="noopener">Jensen–Shannon (JS)
+Divergence</a>就满足所有条件。一如既往，想看证明，请查看 <a href="http://www.math.ku.dk/~topsoe/ISIT2004JSD.pdf" target="_blank" rel="noopener">原论文
+</a>。</p>
+<h2 id="fenchel-conjugate"><a class="header-anchor" href="#fenchel-conjugate"></a>Fenchel Conjugate</h2>
+<p>Conjugate 翻译是“共轭”，不明觉厉。对于每个凸函数，我们都可以 <strong>定义</strong> 一个它的共轭函数：</p>
+<p>$$f^*(t) = \max_{x\in \mathbf{dom}(f)}\{xt-f(x)\}$$</p>
+<p>对于理解 ƒ-divergence GAN 我们只需要知道对于常见常用的 $f$，我们可以定义并求出
+$f^*$ 的表达式就行了。但尝试理解 $f^*$ 涵义对我们还是有帮助的。</p>
+<p>我们看到，当 $x$ 取特定值 $x_0$ 时 $g(t) = x_0t - f(x_0)$ 是一条直线。我们取
+$f(x) = x \log x$，x 取不同值时画出 $g(t)$ 的图像，如下所示：</p>
+<img src="/2018/f-divergence-GAN/conjugate.png" class="" title="Conjugate">
+<p>注意到 $f^*(t)$ 的定义为当 t 取某个值时，所有 $g(t)$ 的最大值。例如上图中，当 $t = 2$ 时，它与各直线的交点即为 $g(t)$ 的值，所以 $f^*(t)$ 的取值就是图点最高的点的值。</p>
+<p>可以理解为，取不同的 x 值画出无穷多条直线 $g(t)$，这些直线的上边缘（上图红线）就是 $f^*(t)$。</p>
+<p>最后，共轭函数有一个性质： $(f^* )^* = f$，也就是说：</p>
+<p>$$f^*(t) = \max_{x\in \mathbf{dom}(f)}\{xt-f(x)\}
+\Longleftrightarrow
+f(x) = \max_{t\in \mathbf{dom}(f^*)} \{xt-f^*(x)\}$$</p>
+<h2 id="ƒ-divergence-与-gan"><a class="header-anchor" href="#ƒ-divergence-与-gan"></a>ƒ-divergence 与 GAN</h2>
+<p>我们知道，GAN 的目的是训练生成器 G，使其产生的数据分布 $P_G$ 与真实数据的分布
+$P_{data}$ 尽可能小。换言之，如果我们用 ƒ-divergence 来表达 $P_G$ 与
+$P_{data}$ 的差异，则希望最小化 $D_f(P_{data}||P_G)$。注意到：</p>
+<p>\begin{eqnarray}
+D_f(P||Q) &amp;=&amp; \int_xq(x)f(\frac{p(x)}{q(x)})dx \\
+&amp;=&amp; \int_xq(x)\left(\max_{t\in\mathbf{dom}(x^* )} \left\{\frac{p(x)}{q(x)}t-f^*(t)\right\}\right)dx
+\end{eqnarray}</p>
+<p>于是乎，如果我们构造一个函数 $D(x) \in \mathbf{dom}(f^*)$，输入为 $x$，输出为
+$t$，则我们可以把上式的 $t$ 用 $D(x)$ 替代。但由于函数 $D$ 输出的 $x$ 不一定能使 $f$ 最大，所以有：</p>
+<p>\begin{eqnarray}
+D_f(P||Q) &amp;\ge&amp; \int_xq(x)\left(\frac{p(x)}{q(x)}D(x)-f^*(D(x))\right)dx \\
+&amp;=&amp; \underbrace{\int_xq(x)D(x)dx - \int_xq(x)f^*(D(x))dx}_{M}
+\end{eqnarray}</p>
+<p>因此，我们可以把求 $D_f(P||Q)$ 转化成一个最优化的问题：</p>
+<p>\begin{eqnarray}
+D_f(P||Q) &amp;\approx&amp; \max_D\int_xp(x)D(x)dx-\int_xq(x)f^*(D(x))dx \\
+&amp;=&amp; \max_D\left\{\underbrace{E_{x\sim P}[D(x)]}_{\text{Samples from P}}
+- \underbrace{E_{x\sim Q}[f^*(D(x))]}_{\text{Samples from Q}} \right\}
+\end{eqnarray}</p>
+<p>上面做了这一系列的转换，归根结底是因为实际总是中，我们并没办法求出 $p(x)$ 或
+$q(x)$，也没有办法穷举所有的 $x$，只能退而求其次求近似解。最终，我们把 GAN 的模型用数学公式表达即为：</p>
+<p>$$
+\begin{align}
+G^*&amp;=\arg\min_GD_f(P_{data}||P_G) \\
+&amp;=\arg\min_G\max_D{E_{x\sim P_{data}}[D(x)]-E_{x\sim P_G}[f^*(D(x))]} \\
+&amp;= \arg\min_G\max_DV(G, D)
+\end{align}
+$$</p>
+<p>当然，上面式子中的 $D$ 和我们在 GAN 模型里的判别器 D 还不一样。而且这个式子和我们之前说的 GAN 算法中的 $\tilde(V)$ 也是不同的。这是因为式子中的 $D$ 需要
+$D(x) \in \mathbf{dom}(f^*)$。所以我们需要选择合适的 $D$ 才能满足上式。这里我就不推导了，大家有兴趣可以看 <a href="https://arxiv.org/pdf/1606.00709.pdf" target="_blank" rel="noopener">原文</a>。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>ƒ-divergence GAN 是对 GAN 模型的统一，对任意满足条件的 $f$ 都可以构造一个对应的 GAN。</p>
+<p>GAN 的目的是训练生成器 D 使之生成的数据对应的分布 $P_G$ 与真实数据的分布
+$P_{data}$ 尽可能接近，即最小化 $D_f(P||Q)$。然而我们无法确切算出 $p(x)$ 及
+$q(x)$，因此我们通过 Conjugate 将求 $D_f(P||Q)$ 转变成一个优化问题，于是我们的目标变成找到一个合适的函数 $D$ 来逼近 $D_f(P||Q)$。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://www.youtube.com/watch?v=KSN4QYgAtao&amp;lc=z13kz1nqvuqsipqfn23phthasre4evrdo" target="_blank" rel="noopener">Improving GAN</a> 李宏毅老师的教学视频，深入浅出</li>
+<li><a href="https://arxiv.org/pdf/1606.00709.pdf" target="_blank" rel="noopener">f-GAN: Training Generative Neural Samplers using Variational Divergence Minimization</a> f-GAN 原版论文</li>
+<li><a href="http://friskit.me/2017/07/06/ntu-gan-basic/" target="_blank" rel="noopener">再读GAN</a> 对李宏毅老师视频的文字总结，包含对原版 GAN 的数学分析</li>
+<li><a href="http://friskit.me/2017/07/10/ntu-gan-wgan/" target="_blank" rel="noopener">再读WGAN</a> 对李宏毅老师视频的文字总结，本文的很多公式的来源</li>
+<li><a href="https://lilianweng.github.io/lil-log/2017/08/20/from-GAN-to-WGAN.html#what-is-the-optimal-value-for-d" target="_blank" rel="noopener">From GAN to WGAN</a> 其中对 GAN 的一些问题有很好的阐述</li>
+</ul></div></div><script type="text/x-mathjax-config">
+   MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    }); 
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/f-divergence-GAN/';
+var disqus_title = 'ƒ-divergence GAN 笔记';
+var disqus_url = 'https://lotabout.me/2018/f-divergence-GAN/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;p&gt;这是“手把手教你构建 C 语言编译器”系列的第二篇，我们要从整体上讲解如何设计我们的 C 语言编译器。&lt;/p&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>手把手教你构建 C 语言编译器（1）- 设计 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/C/" rel="tag">C</a><a class="post-tag-link" href="/tags/compiler/" rel="tag">compiler</a></div><div class="post-time">2015-12-22</div></div></div><div class="container post-header"><h1>手把手教你构建 C 语言编译器（1）- 设计</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#编译器的构建流程"><span class="toc-number">1.</span> <span class="toc-text">编译器的构建流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#编译器框架"><span class="toc-number">2.</span> <span class="toc-text">编译器框架</span></a></li></ol></details></div><div class="container post-content"><p>这是“手把手教你构建 C 语言编译器”系列的第二篇，我们要从整体上讲解如何设计我们的 C 语言编译器。</p>
+<a id="more"></a>
+<p>手把手教你构建 C 语言编译器系列共有10个部分：</p>
+<ol>
+<li><a href="http://lotabout.me/2015/write-a-C-interpreter-0/">手把手教你构建 C 语言编译器（0）——前言</a></li>
+<li><a href="http://lotabout.me/2015/write-a-C-interpreter-1/">手把手教你构建 C 语言编译器（1）——设计</a></li>
+<li><a href="http://lotabout.me/2015/write-a-C-interpreter-2/">手把手教你构建 C 语言编译器（2）——虚拟机</a></li>
+<li><a href="http://lotabout.me/2015/write-a-C-interpreter-3/">手把手教你构建 C 语言编译器（3）——词法分析器</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-4/">手把手教你构建 C 语言编译器（4）——递归下降</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-5/">手把手教你构建 C 语言编译器（5）——变量定义</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-6/">手把手教你构建 C 语言编译器（6）——函数定义</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-7/">手把手教你构建 C 语言编译器（7）——语句</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-8/">手把手教你构建 C 语言编译器（8）——表达式</a></li>
+<li><a href="http://lotabout.me/2016/write-a-C-interpreter-9/">手把手教你构建 C 语言编译器（9）——总结</a></li>
+</ol>
+<p>首先要说明的是，虽然标题是编译器，但实际上我们构建的是 C 语言的解释器，这意味着我们可以像运行脚本一样去运行 C 语言的源代码文件。这么做的理由有两点：</p>
+<ol>
+<li>解释器与编译器仅在代码生成阶段有区别，而其它方面如词法分析、语法分析是一样的。</li>
+<li>解释器需要我们实现自己的虚拟机与指令集，而这部分能帮助我们了解计算机的工作原理。</li>
+</ol>
+<h2 id="编译器的构建流程"><a class="header-anchor" href="#编译器的构建流程"></a>编译器的构建流程</h2>
+<p>一般而言，编译器的编写分为 3 个步骤：</p>
+<ol>
+<li>词法分析器，用于将字符串转化成内部的表示结构。</li>
+<li>语法分析器，将词法分析得到的标记流（token）生成一棵语法树。</li>
+<li>目标代码的生成，将语法树转化成目标代码。</li>
+</ol>
+<p>已经有许多工具能帮助我们处理阶段1和2，如 flex 用于词法分析，bison 用于语法分析。只是它们的功能都过于强大，屏蔽了许多实现上的细节，对于学习构建编译器帮助不大。所以我们要完全手写这些功能。</p>
+<p>所以我们会依照以下步骤来构建我们的编译器：</p>
+<ol>
+<li>构建我们自己的虚拟机以及指令集。这后生成的目标代码便是我们的指令集。</li>
+<li>构建我们的词法分析器</li>
+<li>构建语法分析器</li>
+</ol>
+<h2 id="编译器框架"><a class="header-anchor" href="#编译器框架"></a>编译器框架</h2>
+<p>我们的编译器主要包括 4 个函数：</p>
+<ol>
+<li><code>next()</code> 用于词法分析，获取下一个标记，它将自动忽略空白字符。</li>
+<li><code>program()</code> 语法分析的入口，分析整个 C 语言程序。</li>
+<li><code>expression(level)</code> 用于解析一个表达式。</li>
+<li><code>eval()</code> 虚拟机的入口，用于解释目标代码。</li>
+</ol>
+<p>这里有一个单独用于解析“表达式”的函数 <code>expression</code> 是因为表达式在语法分析中相对独立并且比较复杂，所以我们将它单独作为一个模块（函数）。下面是相应的源代码：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;memory.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> token;            <span class="comment">// current token</span></span><br><span class="line"><span class="keyword">char</span> *src, *old_src;  <span class="comment">// pointer to source code string;</span></span><br><span class="line"><span class="keyword">int</span> poolsize;         <span class="comment">// default size of text/data/stack</span></span><br><span class="line"><span class="keyword">int</span> <span class="built_in">line</span>;             <span class="comment">// line number</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">next</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    token = *src++;</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">expression</span><span class="params">(<span class="keyword">int</span> level)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// do nothing</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">program</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    next();                  <span class="comment">// get next token</span></span><br><span class="line">    <span class="keyword">while</span> (token &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"token is: %c\n"</span>, token);</span><br><span class="line">        next();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">eval</span><span class="params">()</span> </span>&#123; <span class="comment">// do nothing yet</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i, fd;</span><br><span class="line"></span><br><span class="line">    argc--;</span><br><span class="line">    argv++;</span><br><span class="line"></span><br><span class="line">    poolsize = <span class="number">256</span> * <span class="number">1024</span>; <span class="comment">// arbitrary size</span></span><br><span class="line">    <span class="built_in">line</span> = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((fd = <span class="built_in">open</span>(*argv, <span class="number">0</span>)) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"could not open(%s)\n"</span>, *argv);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!(src = old_src = <span class="built_in">malloc</span>(poolsize))) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"could not malloc(%d) for source area\n"</span>, poolsize);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// read the source file</span></span><br><span class="line">    <span class="keyword">if</span> ((i = <span class="built_in">read</span>(fd, src, poolsize<span class="number">-1</span>)) &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"read() returned %d\n"</span>, i);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    src[i] = <span class="number">0</span>; <span class="comment">// add EOF character</span></span><br><span class="line">    <span class="built_in">close</span>(fd);</span><br><span class="line"></span><br><span class="line">    program();</span><br><span class="line">    <span class="keyword">return</span> eval();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的代码看上去挺复杂，但其实内容不多。它的流程为：读取一个文件（内容为 C 语言代码），逐个读取文件中的字符，并输出。这里需要的是注意每个函数的作用，后面的文章中，我们将逐个填充每个函数的功能，最终构建起我们的编译器。</p>
+<p>本节的代码可以在 <a href="https://github.com/lotabout/write-a-C-interpreter/tree/step-0" target="_blank" rel="noopener">Github</a> 上下载，也可以直接 clone</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git clone -b step-0 https:&#x2F;&#x2F;github.com&#x2F;lotabout&#x2F;write-a-C-interpreter</span><br></pre></td></tr></table></figure>
+<p>这样我们就有了一个最简单的编译器：什么都不干的编译器，下一章中，我们将实现其中的<code>eval</code>函数，即我们自己的虚拟机。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2015/write-a-C-interpreter-1/';
+var disqus_title = '手把手教你构建 C 语言编译器（1）- 设计';
+var disqus_url = 'https://lotabout.me/2015/write-a-C-interpreter-1/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

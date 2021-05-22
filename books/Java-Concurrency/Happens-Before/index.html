@@ -1,0 +1,362 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Happens Before - Java 并发知识</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+        <link rel="stylesheet" href="../css/lotabout.css">
+        
+
+        
+        <!-- MathJax -->
+        <script async type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Java 并发知识</a></li><li class="chapter-item expanded affix "><li class="part-title">理解线程安全</li><li class="chapter-item expanded "><a href="../Ideal-World/index.html"><strong aria-hidden="true">1.</strong> 理想的并发世界</a></li><li class="chapter-item expanded "><a href="../Cruel-World/index.html"><strong aria-hidden="true">2.</strong> 残酷的现实</a></li><li class="chapter-item expanded "><a href="../Happens-Before/index.html" class="active"><strong aria-hidden="true">3.</strong> Happens Before</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/index.html"><strong aria-hidden="true">4.</strong> 常见线程安全问题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/TOCTOU.html"><strong aria-hidden="true">4.1.</strong> TOCTOU</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Double-Checked-Locking.html"><strong aria-hidden="true">4.2.</strong> Double Checked Locking</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Compound-Actions.html"><strong aria-hidden="true">4.3.</strong> 复合操作</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Summary.html"><strong aria-hidden="true">4.4.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Best-Practice/index.html"><strong aria-hidden="true">5.</strong> 良好的并发编程习惯</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Best-Practice/Confinement.html"><strong aria-hidden="true">5.1.</strong> 封闭</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Immutability.html"><strong aria-hidden="true">5.2.</strong> 不可变</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Threadsafe-Data-Types.html"><strong aria-hidden="true">5.3.</strong> 利用线程安全类</a></li></ol></li><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/index.html"><strong aria-hidden="true">6.</strong> 思考题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/Spring-Bean-Initialization.html"><strong aria-hidden="true">6.1.</strong> Spring Bean 初始化如何线程安全</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">线程与线程池</li><li class="chapter-item expanded "><a href="../Amdahl-Law/index.html"><strong aria-hidden="true">7.</strong> Amdahl 定律</a></li><li class="chapter-item expanded "><a href="../Cost-of-Thread/index.html"><strong aria-hidden="true">8.</strong> 线程的代价</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/index.html"><strong aria-hidden="true">9.</strong> 线程池</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Pool/Concepts.html"><strong aria-hidden="true">9.1.</strong> 线程池相关概念</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Predefined.html"><strong aria-hidden="true">9.2.</strong> 预定义的线程池</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Usage.html"><strong aria-hidden="true">9.3.</strong> 线程池使用</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Interrupt.html"><strong aria-hidden="true">9.4.</strong> 线程的中断</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Shutdown.html"><strong aria-hidden="true">9.5.</strong> 如何优雅退出</a></li></ol></li><li class="chapter-item expanded "><strong aria-hidden="true">10.</strong> 线程调度</li><li class="chapter-item expanded affix "><li class="part-title">源码分析</li><li class="chapter-item expanded "><a href="../Source-Unsafe/index.html"><strong aria-hidden="true">11.</strong> Unsafe</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/index.html"><strong aria-hidden="true">12.</strong> Atomic</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicInteger.html"><strong aria-hidden="true">12.1.</strong> AtomicInteger</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicIntegerArray.html"><strong aria-hidden="true">12.2.</strong> AtomicIntegerArray</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Striped64.html"><strong aria-hidden="true">12.3.</strong> Striped64</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Adder.html"><strong aria-hidden="true">12.4.</strong> Adder</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/FieldUpdater.html"><strong aria-hidden="true">12.5.</strong> FieldUpdater</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/StampedReference.html"><strong aria-hidden="true">12.6.</strong> StampedReference</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-AQS/AQS.html"><strong aria-hidden="true">13.</strong> AbstractQueuedSynchronizer</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-AQS/blocking-exclusive.html"><strong aria-hidden="true">13.1.</strong> 互斥锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/blocking-shared.html"><strong aria-hidden="true">13.2.</strong> 共享锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/timeout.html"><strong aria-hidden="true">13.3.</strong> 超时</a></li><li class="chapter-item expanded "><a href="../Source-AQS/interrupt.html"><strong aria-hidden="true">13.4.</strong> 中断</a></li><li class="chapter-item expanded "><a href="../Source-AQS/cancellation.html"><strong aria-hidden="true">13.5.</strong> 取消</a></li><li class="chapter-item expanded "><a href="../Source-AQS/condition.html"><strong aria-hidden="true">13.6.</strong> 条件变量</a></li><li class="chapter-item expanded "><a href="../Source-AQS/Summary.html"><strong aria-hidden="true">13.7.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-Lock/Lock.html"><strong aria-hidden="true">14.</strong> Lock</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantLock.html"><strong aria-hidden="true">14.1.</strong> ReentrantLock</a></li><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantReadWriteLock.html"><strong aria-hidden="true">14.2.</strong> ReentrantReadWriteLock</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Java 并发知识</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#happens-before" id="happens-before">Happens Before</a></h1>
+<p>前文描述了 Sequential Consistency，它是并发下我们对程序运行顺序的合理预期，也描述了底层结构为了提升效率，打破了原子性、可见性、顺序性。而之所以在单线程下没有这些问题，在并发下就会有线程安全的问题，是因为从编写的代码中，编译器无法对线程间执行顺序的相互依赖做出推断。</p>
+<p>本章我们会看到，Java 中提供了哪些机制，让我们人工地指定线程间的相对执行顺序。</p>
+<h2><a class="header" href="#共享可变状态shared-mutable-state" id="共享可变状态shared-mutable-state">共享可变状态(Shared Mutable State)</a></h2>
+<p>如果两个线程毫无交集，我们还会关心执行的先后顺序吗？谁先谁后都不影响最终的结果。如果两个线程多次读取了同一个变量，但从来不修改它，执行的先后有关系吗？这种情况下谁先谁后都不影响最终的结果。</p>
+<p>线程安全问题发生的前提是：线程间存在着共享可变状态的行为。</p>
+<p>直白地说，同一个变量，有的线程写入，有的线程读取，那么谁先执行谁后执行就会影响最终的执行结果。</p>
+<h2><a class="header" href="#java-的多线程原语" id="java-的多线程原语">Java 的多线程原语</a></h2>
+<p>说了这么久并发问题，我们还是没有说 Java 的内容，这里先简单提一提 Java 的同步原语，大家先有个印象。Java 语言提供的同步原语主要有三种：<code>synchronized</code> 和
+<code>volatile</code> 关键字，还有JUC 包中的其它工具，如原子类<code>AtomicInteger</code> 等。而语法层面提供的只有 <code>synchronized</code> 和 <code>volatile</code><sup class="footnote-reference"><a href="#final">1</a></sup>。</p>
+<p>这些高层的原语通常都会起到多个作用，如 synchronized 同时保证了原子性、可见性、和顺序性，如 volatile 保证了可见性和顺序性。</p>
+<h3><a class="header" href="#synchronized" id="synchronized">synchronized</a></h3>
+<p>Java 会为每个对象都生成一个监视器 monitor，可以用来 lock 或 unlock（通常也称为
+moniter enter 和 moniter exit），JVM 保证同一时刻只有一个线程能拿到锁。其它获取锁的线程会被阻塞，直到该锁被释放。另外这个锁是“可重入”的，即一个线程可以获取锁多次，这种机制有有效减少死锁发生（但注意 Java 不保证检测死锁）。</p>
+<p><code>synchronized</code> 语句需要给定一个要上锁的对象，后面跟一个代码块代表临界区，代表需要同步执行的代码整体。如：</p>
+<pre><code class="language-java">public withdraw(int x) {
+    synchronized (account) {
+        account.setBalance(account.balance - x);
+    }
+}
+</code></pre>
+<p>也可以直接用来修饰函数：</p>
+<pre><code class="language-java">public synchronized withdraw(int x) {
+    this.setBalance(this.balance - x);
+}
+</code></pre>
+<p>如果不指定“上锁对象”，则默认使用 <code>this</code>，如果是静态方法，则默认使用类对象
+(Class Object)。</p>
+<p><code>synchronized</code> 在执行时，会先拿到上锁对象的引用，然后尝试对该对象的监视器执行
+lock 操作，得到锁后开始执行代码块里的操作，代码块执行结束后（不管是正常结束还是抛异常），会在同样的监视器上执行 unlock 操作释放锁。</p>
+<p>这里只提到了锁的“原子性”，下面的 Happens Before 会定义 lock/unlock 的可见性和顺序性。</p>
+<h3><a class="header" href="#volatile" id="volatile">volatile</a></h3>
+<p><code>volatile</code> 关键词在语法上比较简单，用来修饰变量：</p>
+<pre><code class="language-java">private volatile balance;
+</code></pre>
+<p>直觉上，它说明一个变量是“易变的”，这意味着读写该变量的时候，缓存上的数据都不可靠，得从内存中读写。这个关键词语义主要关心的是可见性，不过下面的 Happens
+Before 除了会定义它的可见性，还会定义它的顺序性语义。</p>
+<h2><a class="header" href="#跨线程操作" id="跨线程操作">跨线程操作</a></h2>
+<p>在 <a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-17.html#jls-17.4.2">Java 语言规范</a>里说明了有哪些跨线程的操作(inter-thread actions)会影响线程安全，为了完整性这里全文列出：</p>
+<ul>
+<li>Read(normal, non-volatile)，读取一个非 volatile 变量</li>
+<li>Write(normal, non-volatile)，写入一个非 volatile 变量</li>
+<li>同步操作
+<ul>
+<li>volatile read: 读取一个 volatile 变量</li>
+<li>volatile write: 写入一个 volatile 变量</li>
+<li>lock: 给一个监视器(monitor)上锁</li>
+<li>unlock: 给一个监视器(monitor)解锁</li>
+<li>线程的开始和结束（Java 会生成一个相应的操作）</li>
+<li>启动线程和判断线程结束的操作</li>
+</ul>
+</li>
+<li>外部操作(External Actions)，与外部世界交互的动作(可以简单理解成 native 方法)</li>
+<li>线程分散操作(Thread Divergence Action)，导致线程无限循环的操作</li>
+</ul>
+<p>对我们来说，通常只关心 (volatile) read/write, lock/unlock。其它操作对于想实现
+JVM 的同学们比较重要，对使用者来说，通常它们的行为符合直觉。</p>
+<h2><a class="header" href="#happens-before-1" id="happens-before-1">Happens Before</a></h2>
+<p>（注：初次看不太懂没关系，但建议后面再复习复习，HB 规则对深刻理解线程安全问题很有帮助）</p>
+<p>Java Memory Model(JMM) 里定义了一些跨线程操作的 Happens Before(HB) 关系<sup class="footnote-reference"><a href="#partial-order">2</a></sup>，并据此来决定线程间一些操作的相对顺序。如果说操作 A &quot;Happens
+Before&quot; B，则有两个含义：</p>
+<ol>
+<li>可见性：A 的操作对 B 可见</li>
+<li>顺序性：A 要在 B 之前执行</li>
+</ol>
+<p>我们把 Happens Before 关系记为 <code>hb(A, B)</code>，本文也经常记为 <code>A &gt; B</code>。</p>
+<p>Happens-Before 规则包括<sup class="footnote-reference"><a href="#java-concurrency-book">3</a></sup>：</p>
+<ul>
+<li><strong>程序顺序规则</strong>：如果程序中操作 A 在操作 B 之前，那么在线程中操作 A Happens
+Before 操作 B</li>
+<li><strong>监视器锁规则</strong>：监视器上的 unlock 操作 Happens Before 同一个监视器的 lock 操作</li>
+<li><strong>volatile 变量规则</strong>：写入 volatile 变量 Happens Before 读取该变量</li>
+<li><strong>线程启动规则</strong>：对线程 <code>Thread.start</code> 方法的调用 Happens Before 线程内的所有操作</li>
+<li><strong>线程结束规则</strong>：线程中的任何操作 Happens Before 其它线程中检测到该线程的结束操作，要么是调用 <code>join</code> 方法成功返回，要么是调用 <code>Thread.isAlive</code> 时返回 <code>false</code></li>
+<li><strong>中断规则</strong>：一个线程在另一个线程上调用 interrupt Happens Before 被中断线程检测到 interrupt 调用（通过抛出 InterruptedExceptioin 或调用 isInterrupted
+和 interrupted)</li>
+<li><strong>finalizer 规则</strong>：对象的构造函数 Happens Before 该对象的 finalizer</li>
+<li><strong>传递性</strong>：如果 <code>hb(A, B)</code> 且 <code>hb(B, C)</code>，则 <code>hb(A, C)</code></li>
+</ul>
+<p>有了这些规则，加上在代码里使用正确的原语，编译器就能正确地在多线程语境下为我们的代码排序，如下例中使用了 <code>synchronized</code> 在同一对象上同步，如下图<sup class="footnote-reference"><a href="#lock-and-visibility">4</a></sup>：</p>
+<p><img src="Happens-Before-lock.svg" alt="Happens Before Lock" /></p>
+<p>Java 并没有定义两个 lock 操作的先后顺序，这意味着上图中编译器无法确定哪个线程先进入临界区，但如果如图左边线程先进入，我们就可以通过 unlock 和 lock 的 HB 关系做出一些推论：</p>
+<ol>
+<li>可见性：右边线程在执行时，可以确定 <code>x = 1</code>, <code>y = 1</code>，因为左边线程 unlock
+前的修改必须可见</li>
+<li>顺序性：右边线程对 <code>i, j</code> 的赋值不能先于右边线程对 <code>x, y</code> 的赋值</li>
+</ol>
+<p>两者一起让我们可以推断出，右边线程执行后，结果一定是 <code>i = 1</code>, <code>j = 1</code>。</p>
+<h2><a class="header" href="#参考" id="参考">参考</a></h2>
+<p>HB 规则很重要，本身也不复杂，但需要较多的背景知识，这里推荐一些读物</p>
+<ul>
+<li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-17.html">JSL Chapter 17</a> Java 语言规范，第 17 章专门讲并发问题</li>
+<li><a href="https://www.javadoop.com/post/Threads-And-Locks-md">深入分析 java 8 编程语言规范：Threads and Locks</a> 对上面这篇规范的讲解，对其中一些关键点的分析很不错</li>
+<li><a href="http://www.cs.umd.edu/%7Epugh/java/memoryModel/CommunityReview.pdf">JSR 133</a> 正式和学术的文档，可以先看看其中非学习证明的部分。</li>
+<li>书《Java 并发编程实战》，不多说了，必看书籍</li>
+</ul>
+<h2><a class="header" href="#小结" id="小结">小结</a></h2>
+<p>我们的理想是 Sequential Consistency，只可惜由于现实原因 JVM 无法为我们提供这样的保证，因此我们一直努力寻找多线程下的合理顺序保证。</p>
+<p>本章中我们了解了只有“共享可变状态”的情形下，多线程间的先后顺序才会引发线程安全问题，之后列出了 Java 中的跨线程操作，最后学习了 Happens Before 的（非正式）的规则，以及 HB 规则如何帮助我们对程序运行结果做出推论。</p>
+<p>现在，只要我们能正确地使用这些同步的原语，我们就能写出正确的（符合与 JVM 预期）的代码了。下一章我们来实战看看一些并发问题，以及如何 HB 关系来解决这些问题。</p>
+<p>另外，对于想深入了解的同学，Happens Before 这个保证对于 JVM 而言还是太弱了，所以 JSR 133 里又提到了 Causality Model（因果模型）。这块对我们使用方来说不重要，我也不能全看懂，有兴趣的可以看看 JSR 133。</p>
+<hr />
+<div class="footnote-definition" id="final"><sup class="footnote-definition-label">1</sup>
+<p>final 修饰的变量也有一些特殊的语义，本章先不提及，有兴趣的可以参考 JSL 第 17 章</p>
+</div>
+<div class="footnote-definition" id="lock-and-visibility"><sup class="footnote-definition-label">4</sup>
+<p>示例来源于书本《Java 并发编程实战》</p>
+</div>
+<div class="footnote-definition" id="partial-order"><sup class="footnote-definition-label">2</sup>
+<p>Happens Before 是一种<a href="https://zh.wikipedia.org/wiki/%E5%81%8F%E5%BA%8F%E5%85%B3%E7%B3%BB">偏序关系</a>，偏序是集合上的一种关系，满足自反性(<code>a&lt;=a</code>)、反对称(<code>a&lt;=b &amp;&amp; b&lt;=a</code> =&gt; <code>a = b</code>)、和传递性(<code>a&lt;=b &amp;&amp; b&lt;=c</code> =&gt; <code>a&lt;=c</code>)。</p>
+</div>
+<div class="footnote-definition" id="java-concurrency-book"><sup class="footnote-definition-label">3</sup>
+<p>参考《Java 并发编程实战》第 16 章，我觉得它比 JLS 17 章和 JSR 133 中的描述都要清晰</p>
+</div>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../Cruel-World/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../Thread-Safety-Examples/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../Cruel-World/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="../Thread-Safety-Examples/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+        <!-- Google Analytics Tag -->
+        <script type="text/javascript">
+            var localAddrs = ["localhost", "127.0.0.1", ""];
+
+            // make sure we don't activate google analytics if the developer is
+            // inspecting the book locally...
+            if (localAddrs.indexOf(document.location.hostname) === -1) {
+                (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+                ga('create', 'UA-39956831-2', 'auto');
+                ga('send', 'pageview');
+            }
+        </script>
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

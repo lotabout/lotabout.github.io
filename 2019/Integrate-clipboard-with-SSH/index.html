@@ -1,0 +1,58 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="我们常常会用 &lt;code&gt;ssh&lt;/code&gt; 登录远程机器，并在在其中 &lt;code&gt;vim&lt;/code&gt; 命令编辑查看文件。一个常见的问题是如何&lt;strong&gt;无缝&lt;/strong&gt;把选中的内容复制到本地的剪贴板呢？"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>QQA: 如何从远程运行的 Vim 中复制内容 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/tmux/" rel="tag">tmux</a><a class="post-tag-link" href="/tags/vim/" rel="tag">vim</a></div><div class="post-time">2019-04-25</div></div></div><div class="container post-header"><h1>QQA: 如何从远程运行的 Vim 中复制内容</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#步骤"><span class="toc-number">1.</span> <span class="toc-text">步骤</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#原理"><span class="toc-number">2.</span> <span class="toc-text">原理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#osc-52"><span class="toc-number">2.1.</span> <span class="toc-text">OSC 52</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#clipboard-provider"><span class="toc-number">2.2.</span> <span class="toc-text">clipboard-provider</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#g-clipboard"><span class="toc-number">2.3.</span> <span class="toc-text">g:clipboard</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#支持-tmux"><span class="toc-number">3.</span> <span class="toc-text">支持 tmux</span></a></li></ol></details></div><div class="container post-content"><p>我们常常会用 <code>ssh</code> 登录远程机器，并在在其中 <code>vim</code> 命令编辑查看文件。一个常见的问题是如何<strong>无缝</strong>把选中的内容复制到本地的剪贴板呢？</p>
+<h2 id="步骤"><a class="header-anchor" href="#步骤"></a>步骤</h2>
+<ol start="0">
+<li>本地需要一个支持 OSC 52 的终端
+<ul>
+<li>Linux 下的 xterm，<a href="https://github.com/tmux/tmux/wiki/FAQ#how-do-i-copy-a-selection-from-tmux-to-the-systems-clipboard" target="_blank" rel="noopener">设置</a> <code>disallowedWindowOps: 20,21,SetXprop</code></li>
+<li>Mac 下的 iterm2，勾选 <code>Applications in terminal may access clipboard</code></li>
+</ul>
+</li>
+<li>在远程机器上安装 neovim，它允许我们自定义如何复制粘贴</li>
+<li>把 <a href="https://github.com/lotabout/dotfiles/blob/master/bin/clipboard-provider" target="_blank" rel="noopener">clipboard-provider</a> 脚本放在 <code>PATH</code> 下。</li>
+<li>在 vimrc 中添加如下配置： <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">if executable(&#39;clipboard-provider&#39;)</span><br><span class="line">    let g:clipboard &#x3D; &#123;</span><br><span class="line">          \ &#39;name&#39;: &#39;myClipboard&#39;,</span><br><span class="line">          \     &#39;copy&#39;: &#123;</span><br><span class="line">          \         &#39;+&#39;: &#39;clipboard-provider copy&#39;,</span><br><span class="line">          \         &#39;*&#39;: &#39;env COPY_PROVIDERS&#x3D;tmux clipboard-provider copy&#39;,</span><br><span class="line">          \     &#125;,</span><br><span class="line">          \     &#39;paste&#39;: &#123;</span><br><span class="line">          \         &#39;+&#39;: &#39;clipboard-provider paste&#39;,</span><br><span class="line">          \         &#39;*&#39;: &#39;env COPY_PROVIDERS&#x3D;tmux clipboard-provider paste&#39;,</span><br><span class="line">          \     &#125;,</span><br><span class="line">          \ &#125;</span><br><span class="line">endif</span><br></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>尝试在 ssh 中打开 neovim，通过 <code>&quot;+y</code> 来复制内容，预期本地能直接粘贴这些内容！</p>
+<h2 id="原理"><a class="header-anchor" href="#原理"></a>原理</h2>
+<h3 id="osc-52"><a class="header-anchor" href="#osc-52"></a>OSC 52</h3>
+<p>OSC 52 是 <code>xterm</code> 的一个特性，许多终端也支持。它能识别命令行输出中的一些特定格式的内容，并将其中的内容解析后设置为系统剪贴板的内容。具体来说，<a href="http://invisible-island.net/xterm/ctlseqs/ctlseqs.html" target="_blank" rel="noopener">这个特性
+</a> 能解析的格式如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">OSC 52 ; Pc ; Pd ST</span><br></pre></td></tr></table></figure>
+<ul>
+<li>前缀 OSC 是 <code>\e]</code></li>
+<li>其中的 <code>Pc</code> 用于选择使用哪个剪贴板，我们选择主剪贴板 <code>c</code></li>
+<li>其中的 <code>Pd</code> 是 base64 编码后的内容，例如 <code>hello</code> 编码为 <code>aGVsbG8=</code></li>
+<li><code>ST</code> 指的是 <code>\a</code></li>
+</ul>
+<p>我们可以通过执行命令 <code>echo -e '\e]52;c;aGVsbG8=\a'</code>，然后看粘贴的内容是否为
+<code>hello</code> 来判断当前终端是否支持 OSC 52.</p>
+<p><strong>注意</strong>：这个特性有潜在的安全问题，所以理论上开启后不要执行你不信任的程序。</p>
+<h3 id="clipboard-provider"><a class="header-anchor" href="#clipboard-provider"></a>clipboard-provider</h3>
+<p>clipboard-provider 脚本的作用是将输入的内容尝试“粘贴”到 tmux 的 buffer 中、系统的剪贴板中。这个脚本可以独立于 neovim 使用。如可以尝试把远程的文件复制到剪贴板中：<code>cat hello.txt | clipboard-provider copy</code>。</p>
+<h3 id="g-clipboard"><a class="header-anchor" href="#g-clipboard"></a>g:clipboard</h3>
+<p>在 neovim 中输入 <code>:help g:clipboard</code> 可以看到相关的说明。简单地说，它允许我们指定，当复制内容到 <code>+</code> 或 <code>*</code> 寄存器时，执行什么命令。上面的设置其实就是调用了
+<code>clipboard-provider copy</code> 来将内容复制 tmux 及系统剪贴板中。</p>
+<h2 id="支持-tmux"><a class="header-anchor" href="#支持-tmux"></a>支持 tmux</h2>
+<p>我个人一般是在 SSH 中运行 tmux，再在 tmux 中运行 vim 等命令。幸运的是 tmux 也支持 OSC 52. 只需要在 <code>~/.tmux.conf</code> 中添加：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">set -g set-clipboard on</span><br></pre></td></tr></table></figure>
+<p>现在还缺失的一个功能是远程粘贴的时候也能打通剪贴板，这个还没研究出来，就先不说了。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2019/Integrate-clipboard-with-SSH/';
+var disqus_title = 'QQA: 如何从远程运行的 Vim 中复制内容';
+var disqus_url = 'https://lotabout.me/2019/Integrate-clipboard-with-SSH/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

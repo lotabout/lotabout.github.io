@@ -1,0 +1,56 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;code&gt;top&lt;/code&gt; 或 &lt;code&gt;uptime&lt;/code&gt; 等命令会输出系统的平均负载 (Load Average)，一般会有三个值，分别代表 1 分钟，5 分钟和 15 分钟的平均负载。那“负载”又是什么含义呢？"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>理解系统负载 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Linux/" rel="tag">Linux</a><a class="post-tag-link" href="/tags/Load/" rel="tag">Load</a></div><div class="post-time">2018-10-30</div></div></div><div class="container post-header"><h1>理解系统负载</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#进程计数与采样"><span class="toc-number">1.</span> <span class="toc-text">进程计数与采样</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#移动平均"><span class="toc-number">2.</span> <span class="toc-text">移动平均</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#系统负载与-cpu-占用率"><span class="toc-number">3.</span> <span class="toc-text">系统负载与 CPU 占用率</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#负载与-cpu-核数"><span class="toc-number">4.</span> <span class="toc-text">负载与 CPU 核数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">5.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">6.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p><code>top</code> 或 <code>uptime</code> 等命令会输出系统的平均负载 (Load Average)，一般会有三个值，分别代表 1 分钟，5 分钟和 15 分钟的平均负载。那“负载”又是什么含义呢？</p>
+<p>一般搜索得到的结果都会有一个“桥”或是“公路”的类比，虽然形象但却不准确，其实直接阅读维基百科 <a href="https://en.wikipedia.org/wiki/Load_%28computing%29" target="_blank" rel="noopener">Load
+(Computing)</a> 就能知道差不多信息。这里在维基的基础上简单梳理。</p>
+<h2 id="进程计数与采样"><a class="header-anchor" href="#进程计数与采样"></a>进程计数与采样</h2>
+<p>负载记录的是 CPU 的负荷，能对 CPU 造成负荷的是进程（包括线程）的执行。负载的数值代表的是 CPU 还没处理完的进程的数目。</p>
+<p>空闲的系统负载为 0。当一个进程正在被 CPU 执行或即将要被执行（即进入等待执行的队列）时，系统的负载加 1；执行完成<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup> 时负载减 1。从这种角度看有点像是高速公路，进去时取卡，出来时还卡，然后计算高速上一共有多少车辆。当然还有一些特殊情况（如有些系统对线程的计算方式不同）这里就不展开了。</p>
+<p>现在我们能计算某个时刻系统的负载。Linux 会每隔 <code>5s</code> 的时间检查一下当前系统负载，并求它们的平均数。因此要是仔细查看的话，负载的值是每 5s 变化一次。</p>
+<h2 id="移动平均"><a class="header-anchor" href="#移动平均"></a>移动平均</h2>
+<p>炒股的朋友们应该知道 5 日均线，20 日均线什么的，系统的负载采用的也是类似的技术，具体用的是<a href="https://zh.wikipedia.org/wiki/%E7%A7%BB%E5%8A%A8%E5%B9%B3%E5%9D%87" target="_blank" rel="noopener">指数移动平均</a>，计算方法如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">S(0) &#x3D; 0</span><br><span class="line">S(t) &#x3D; a * X(t) + (1-a)*S(t-1)</span><br></pre></td></tr></table></figure>
+<p>其中，<code>X(t)</code> 为最近一次采样的值，<code>a</code> 为最近采样值占的比重，<code>S(t)</code> 则是系统最近一次采样的负载。</p>
+<p>指数移动平均的计算方式会累计历史所有的采样值，但离现在越久，占的比重越小。更具体的，Linux 系统上对 1 分钟的平均负载取 <code>a</code> 的取值<sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>为 <code>1 - e^(-5/60)</code>，5 分钟为
+<code>1 - e^(-5s/5min)</code>，以此类推。</p>
+<p>以一分钟为例，上面的取值能达到的效果是，最近一分钟的采样占所有历史值的比重约为
+63%（准确值为 <code>1 - 1/e</code>），5 分钟和 15 分钟也一样。</p>
+<h2 id="系统负载与-cpu-占用率"><a class="header-anchor" href="#系统负载与-cpu-占用率"></a>系统负载与 CPU 占用率</h2>
+<p>两个相同的系统，一个负载是 3，一个负载是 6，如果只看 CPU 占用率，大家都是 100%
+，能看出哪个系统当前的压力大吗？高负载时一般 CPU 都是 100%，要了解系统的压力，负载指标就比 CPU百分比更有意义。当然 CPU 占用率的细节（如 <code>us</code>、<code>sy</code> 等指标）对于排查问题还是很有帮助的。</p>
+<h2 id="负载与-cpu-核数"><a class="header-anchor" href="#负载与-cpu-核数"></a>负载与 CPU 核数</h2>
+<p>单核满载是 <code>1</code>，有 <code>n</code> 核满载是 <code>n</code>。一般说线上运行的系统大于 <code>0.7</code> 的时候就要注意了，超过 <code>1.5</code> 应该就会有人打电话找你了。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>总觉得这是一个好像很厉害但却没什么卵用的知识：</p>
+<ul>
+<li>系统负载统计的是运行和等待运行的进程/线程数</li>
+<li>Linux 下是 5s 一采样并计算移动平均</li>
+<li>一分钟指数移动平均用到了不止近一分钟的采样数据</li>
+<li>有 <code>n</code> 核，满载的负载就是 <code>n</code></li>
+</ul>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="http://www.ruanyifeng.com/blog/2011/07/linux_load_average_explained.html" target="_blank" rel="noopener">理解Linux系统负荷</a> 系统负载的车/桥类比</li>
+<li><a href="https://en.wikipedia.org/wiki/Load_%28computing%29" target="_blank" rel="noopener">Load (Computing)</a> 维基百科，本文主要资料来源</li>
+<li><a href="https://www.teamquest.com/import/pdfs/whitepaper/ldavg1.pdf" target="_blank" rel="noopener">UNIX Load Average</a> Load
+计算方法的详细讲解</li>
+</ul>
+<div id="footnotes"><hr><div id="footnotelist"><ol style="list-style:none; padding-left: 0"><li id="fn:1"><span style="display: inline-block; vertical-align: top; padding-right: 10px">1.</span><span style="display: inline-block; vertical-align: top">这里指的是时间片执行完成，而不是指进程退出。</span><a href="#fnref:1" rev="footnote"> ↩</a></li><li id="fn:2"><span style="display: inline-block; vertical-align: top; padding-right: 10px">2.</span><span style="display: inline-block; vertical-align: top">Linux 采用了近似算法来算指数，具体可以看维基</span><a href="#fnref:2" rev="footnote"> ↩</a></li></ol></div></div></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/how-system-load-is-calculated/';
+var disqus_title = '理解系统负载';
+var disqus_url = 'https://lotabout.me/2018/how-system-load-is-calculated/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

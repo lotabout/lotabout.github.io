@@ -1,0 +1,351 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>如何优雅退出 - Java 并发知识</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+        <link rel="stylesheet" href="../css/lotabout.css">
+        
+
+        
+        <!-- MathJax -->
+        <script async type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Java 并发知识</a></li><li class="chapter-item expanded affix "><li class="part-title">理解线程安全</li><li class="chapter-item expanded "><a href="../Ideal-World/index.html"><strong aria-hidden="true">1.</strong> 理想的并发世界</a></li><li class="chapter-item expanded "><a href="../Cruel-World/index.html"><strong aria-hidden="true">2.</strong> 残酷的现实</a></li><li class="chapter-item expanded "><a href="../Happens-Before/index.html"><strong aria-hidden="true">3.</strong> Happens Before</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/index.html"><strong aria-hidden="true">4.</strong> 常见线程安全问题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/TOCTOU.html"><strong aria-hidden="true">4.1.</strong> TOCTOU</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Double-Checked-Locking.html"><strong aria-hidden="true">4.2.</strong> Double Checked Locking</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Compound-Actions.html"><strong aria-hidden="true">4.3.</strong> 复合操作</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Summary.html"><strong aria-hidden="true">4.4.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Best-Practice/index.html"><strong aria-hidden="true">5.</strong> 良好的并发编程习惯</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Best-Practice/Confinement.html"><strong aria-hidden="true">5.1.</strong> 封闭</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Immutability.html"><strong aria-hidden="true">5.2.</strong> 不可变</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Threadsafe-Data-Types.html"><strong aria-hidden="true">5.3.</strong> 利用线程安全类</a></li></ol></li><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/index.html"><strong aria-hidden="true">6.</strong> 思考题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/Spring-Bean-Initialization.html"><strong aria-hidden="true">6.1.</strong> Spring Bean 初始化如何线程安全</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">线程与线程池</li><li class="chapter-item expanded "><a href="../Amdahl-Law/index.html"><strong aria-hidden="true">7.</strong> Amdahl 定律</a></li><li class="chapter-item expanded "><a href="../Cost-of-Thread/index.html"><strong aria-hidden="true">8.</strong> 线程的代价</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/index.html"><strong aria-hidden="true">9.</strong> 线程池</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Pool/Concepts.html"><strong aria-hidden="true">9.1.</strong> 线程池相关概念</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Predefined.html"><strong aria-hidden="true">9.2.</strong> 预定义的线程池</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Usage.html"><strong aria-hidden="true">9.3.</strong> 线程池使用</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Interrupt.html"><strong aria-hidden="true">9.4.</strong> 线程的中断</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Shutdown.html" class="active"><strong aria-hidden="true">9.5.</strong> 如何优雅退出</a></li></ol></li><li class="chapter-item expanded "><strong aria-hidden="true">10.</strong> 线程调度</li><li class="chapter-item expanded affix "><li class="part-title">源码分析</li><li class="chapter-item expanded "><a href="../Source-Unsafe/index.html"><strong aria-hidden="true">11.</strong> Unsafe</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/index.html"><strong aria-hidden="true">12.</strong> Atomic</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicInteger.html"><strong aria-hidden="true">12.1.</strong> AtomicInteger</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicIntegerArray.html"><strong aria-hidden="true">12.2.</strong> AtomicIntegerArray</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Striped64.html"><strong aria-hidden="true">12.3.</strong> Striped64</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Adder.html"><strong aria-hidden="true">12.4.</strong> Adder</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/FieldUpdater.html"><strong aria-hidden="true">12.5.</strong> FieldUpdater</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/StampedReference.html"><strong aria-hidden="true">12.6.</strong> StampedReference</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-AQS/AQS.html"><strong aria-hidden="true">13.</strong> AbstractQueuedSynchronizer</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-AQS/blocking-exclusive.html"><strong aria-hidden="true">13.1.</strong> 互斥锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/blocking-shared.html"><strong aria-hidden="true">13.2.</strong> 共享锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/timeout.html"><strong aria-hidden="true">13.3.</strong> 超时</a></li><li class="chapter-item expanded "><a href="../Source-AQS/interrupt.html"><strong aria-hidden="true">13.4.</strong> 中断</a></li><li class="chapter-item expanded "><a href="../Source-AQS/cancellation.html"><strong aria-hidden="true">13.5.</strong> 取消</a></li><li class="chapter-item expanded "><a href="../Source-AQS/condition.html"><strong aria-hidden="true">13.6.</strong> 条件变量</a></li><li class="chapter-item expanded "><a href="../Source-AQS/Summary.html"><strong aria-hidden="true">13.7.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-Lock/Lock.html"><strong aria-hidden="true">14.</strong> Lock</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantLock.html"><strong aria-hidden="true">14.1.</strong> ReentrantLock</a></li><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantReadWriteLock.html"><strong aria-hidden="true">14.2.</strong> ReentrantReadWriteLock</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Java 并发知识</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#如何优雅退出" id="如何优雅退出">如何优雅退出</a></h1>
+<p>上节中我们讨论了如何中断一个线程，这节我们讨论如何关闭 JVM 进程。</p>
+<h2><a class="header" href="#如何关闭-jvm" id="如何关闭-jvm">如何关闭 JVM</a></h2>
+<p>关闭分为正常关闭和强制关闭。</p>
+<p>触发正常关闭的方式有：当最后一个（非守护）线程退出结束时；调用了 <code>System.exit</code>
+或 <code>Runtime.exit</code> 时；以及接收到操作系统的退出信号时（如收到
+<code>SIGINT</code> 信号，或按了 <code>Ctrl-C</code> 发送了 <code>SIGTERM</code> 信号等）。</p>
+<p>强制关闭可以通过调用 <code>Runtime.halt</code> 方法或通过操作系统发送 <code>SIGKILL</code> 信号（如通过 <code>kill -9 &lt;pid&gt;</code>）实现。</p>
+<p>正常关闭与强制关闭的区别在于，正常关闭时，JVM 会调用 Shutdown Hook（关闭钩子），等到所有 hook 执行结束后再退出 JVM。因此在正常关闭的情况下，我们可以通过
+Shutdown hook 机制在退出前做一些清理（如清理产生的临时文件，打印所有未打印的日志等），来实现“优雅退出”。</p>
+<h2><a class="header" href="#shutdown-hook" id="shutdown-hook">Shutdown Hook</a></h2>
+<p>Shutdown hook 需要通过 <code>Runtime.addShutdownHook(Thread hook)</code> 注册，我们把传入的线程称作 hook，<code>addShutdownHook</code> 要求 hook 线程尚未启动，且一个线程只能注册一次。Hook 的执行有两种情况：</p>
+<ul>
+<li>正常情况下，需要等所有非守护线程退出，才开始执行</li>
+<li>当 JVM 接到关闭信号（如 <code>SIGINT</code>）时执行，此时与非守护线程并发执行。</li>
+</ul>
+<p>所有的 hook 线程在 JVM 正常退出时被一起启动，执行顺序没有保证。当所有 hook 线程结束时，JVM 将停止运行<sup class="footnote-reference"><a href="#finalizer">1</a></sup>，停止时并<strong>不会</strong>关闭或中断任何仍然在运行的应用程序线程。</p>
+<p>由于 hook 线程在运行时仍然是并发的环境，要保证其中的逻辑是线程安全的。同时，
+hook 线程不应该对程序是如何结束的有任何假设（如某个服务是否已经关闭），因为任何情况都有可能发生。最后，和线程中断一样，hook 线程应该尽快退出，因为调用方预期 JVM 尽快结束。</p>
+<p>通常会在 hook 线程中做一些资源清理的工作，来达到“优雅退出”的目标。例如 Spring
+框架中，每个 <code>ApplicationContext</code> 需要实现 <code>registerShutdownHook</code> 方法来注册清理的逻辑，例如 <code>AbstractApplicationContext</code> 的实现如下，调用 <code>doClose</code> 来清理相关资源：</p>
+<pre><code class="language-java">public void registerShutdownHook() {
+  if (this.shutdownHook == null) {
+    // No shutdown hook registered yet.
+    this.shutdownHook = new Thread(SHUTDOWN_HOOK_THREAD_NAME) {
+      @Override
+      public void run() {
+        synchronized (startupShutdownMonitor) {
+          doClose();
+        }
+      }
+    };
+    Runtime.getRuntime().addShutdownHook(this.shutdownHook);
+  }
+}
+</code></pre>
+<p>建议用一个 hook 线程来做所有的关闭操作（如上面的代码），这样将所有的关闭操作串行执行，可以减少很多由并发带来的竞争和死锁问题，例如可以防止关闭某个服务时依赖了另一个服务，而它又被另一个 hook 线程关闭了而造成的死锁。</p>
+<h2><a class="header" href="#守护线程" id="守护线程">守护线程</a></h2>
+<p>守护线程（Daemon Thread）是在后台运行的低优先级的线程，当 JVM 正常退出时，会等待所有<strong>非</strong>守护线程退出后才退出，而不管守护线程的死活。</p>
+<p>可以调用 <code>Thread.isDaemon</code> 来判断线程是否为守护线程，可以在线程启动前调用
+<code>Thread.setDaemon</code> 来设置是否为守护线程。在一个线程中创建了另一个线程，是否守护的状态会被继承。JVM 启动时只有主线程是普通线程，其它都是守护线程，于是可以推论，默认情况下，主线程创建的所有线程都是普通线程。</p>
+<p>一般不建议将线程设置成守护线程，因为守护线程的潜在约定是其它线程结束后，它可以随时被中止。而很少有线程能达到这个条件，例如线程中如果包含 I/O 操作，突然被中止而不做清理可能导致数据没有被正确写入，临时文件没有被清理等。还记得上节中提到语言层面不提供抢占式中断的原因吗？也同样是不建议使用守护线程的原因。</p>
+<p>一些没有外部依赖的清理工作可以设置成守护线程，如系统 GC 线程，或是一些清除内内存缓存的线程。</p>
+<h2><a class="header" href="#关闭线程池" id="关闭线程池">关闭线程池</a></h2>
+<p>在系统退出前，需要手工关闭线程池，否则诸如 <code>newFixedThreadPool</code> 线程池会始终保持 N 个在运行的线程，从而阻止 JVM 正常退出。</p>
+<p>我们知道 <code>ExecutorService</code> 有两个关闭方法，<code>shutdown</code> 会拒绝新的请求，并等待所有（在运行的和排队中的）任务退出；<code>shutdownNow</code> 会中断正在运行的任务，并返回所有还未运行的任务。当然，如果有任务不能正确响应中断（如在获取锁），那么没有通用的手段能强制它们退出。</p>
+<p><code>shutdownNow</code> 的局限在于没有通用方法处理在运行中的任务，需要从业务角度做处理。例如接收到中断时记录被取消的任务<sup class="footnote-reference"><a href="#ref-tracking-executor">2</a></sup>：</p>
+<pre><code class="language-java">static class TrackingExecutor extends AbstractExecutorService {
+  private final ExecutorService inner扩展
+  private final Set&lt;Runnable&gt; cancelledTasks = Collections.synchronizedSet(new HashSet&lt;&gt;());
+
+  //...
+
+  public List&lt;Runnable&gt; getCancelledTask() {
+      if (!isTerminated()) throw new IllegalStateException(...);
+      return new ArrayList&lt;&gt;(cancelledTasks);
+  }
+
+  @Override
+  public void execute(Runnable command) {
+      inner.execute(() -&gt; {
+        try {
+          command.run();
+        } finally {
+          if (isShutdown() &amp;&amp; Thread.currentThread().isInterrupted())
+            cancelledTasks.add(command);
+        }
+      });
+
+  }
+}
+</code></pre>
+<p>这种方法可能有“误报”，有些任务可能运行结束，但在设置状态前，线程池被关闭了，于是也可能被包含在被取消任务中。当然，要如何处理被取消的任务需要根据业务情况具体分析，例如爬虫任务可能可以无脑重试（幂等），下定单任务可能要额外判断是否可重试了。</p>
+<p>对于无法响应中断的任务，实现时需要准备一些额外中止手段，如任务执行逻辑轮询某个退出标志。</p>
+<h2><a class="header" href="#处理异常退出的线程" id="处理异常退出的线程">处理异常退出的线程</a></h2>
+<p>有些任务可能是同构的，如多个线程消费消息，处理逻辑相同；有些任务可能是异构的，如发送消息和接收消息就是不同的逻辑。</p>
+<p>如果由于某些原因，某个线程异常退出了（如调用下游某个 API 时抛异常，且没有被捕获），JVM 会照常执行。如果退出的同构任务中的一个，风险还可控，如果退出的是某个异构任务，程序的整体逻辑就会有问题，如唯一的发送消息的任务异常退出，程序的正确性就有问题）。</p>
+<p>最重要的解法还是要求程序正确编码。作为通用性的事后处理，一般至少要记日志，如果严重的还要对接一些监控告警的系统。从语言层面，提供了线程异常退出的通知机制，供用户自定义处理逻辑。</p>
+<pre><code class="language-java">public interface UncaughtExceptionHandler {
+  void uncaughtException(Thread t, Throwable e);
+}
+</code></pre>
+<p>调用 <code>Thread.setDefaultUncaughtExceptionHandler</code> 来设置线程的 Exception
+Handler（异常处理程序），如果是需要为线程池中的 Handler，则需要在构造线程池时指定自定义的工厂函数，如：</p>
+<pre><code class="language-java">ExecutorService pool = Executors.newCachedThreadPool((runnable) -&gt; {
+    Thread thread = new Thread(runnable);
+    thread.setUncaughtExceptionHandler((t, e) -&gt; System.out.println(...));
+    return thread;
+});
+</code></pre>
+<p>另外注意一个线程中创建另一个线程，Exception Handler 是不继承的。</p>
+<h2><a class="header" href="#小结" id="小结">小结</a></h2>
+<p>何为“优雅”？正确地清理使用的资源即为优雅。JVM 正常退出时提供了 Shutdown hook机制让我们能在退出时执行自定义的清理逻辑，通常线程池的关闭逻辑我们也会放到这里。</p>
+<p>正确关闭线程池并不容易，虽然我们有 <code>shutdown</code> 和 <code>shutdownNow</code> 两种关闭语义，过程中还是有一些未定义的任务需要处理：关闭时正在执行的任务。<code>shutdownNow</code> 会发送中断请求，但线程不一定能响应中断。而即使线程响应了中断，线程池也不会有额外的处理。通常后续的处理需要看业务上的需求。</p>
+<p>此外，如果线程因为未捕获的异常而退出，根据任务的不同，可能会有严重的影响，Java
+提供了 <code>UncaughtExceptionHandler</code>，用于注册异常退出时的处理逻辑，具体逻辑通常也依赖业务需求。</p>
+<hr />
+<div class="footnote-definition" id="finalizer"><sup class="footnote-definition-label">1</sup>
+<p>严格来说如果设置了 <code>runFinalizersOnExit</code>，还会运行所有对象的<code>finalizer</code>，现在已经不推荐使用这项技术了。</p>
+</div>
+<div class="footnote-definition" id="ref-tracking-executor"><sup class="footnote-definition-label">2</sup>
+<p>例子来源《Java 并发编程实战》</p>
+</div>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../Thread-Pool/Interrupt.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../Source-Unsafe/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../Thread-Pool/Interrupt.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="../Source-Unsafe/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+        <!-- Google Analytics Tag -->
+        <script type="text/javascript">
+            var localAddrs = ["localhost", "127.0.0.1", ""];
+
+            // make sure we don't activate google analytics if the developer is
+            // inspecting the book locally...
+            if (localAddrs.indexOf(document.location.hostname) === -1) {
+                (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+                ga('create', 'UA-39956831-2', 'auto');
+                ga('send', 'pageview');
+            }
+        </script>
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

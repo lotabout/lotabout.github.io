@@ -1,0 +1,127 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="对于一个数据集，&lt;code&gt;map&lt;/code&gt; 是对每行进行操作，为每行得到一个结果；&lt;code&gt;reduce&lt;/code&gt; 则是对多行进行操作，得到一个结果；而 &lt;code&gt;window&lt;/code&gt; 函数则是对多行进行操作，得到多个结果（每行一个）。本文会以实例介绍 &lt;code&gt;window&lt;/code&gt; 函数的基本概念和用法。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Spark Window 入门介绍 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Big-Data/" rel="tag">Big Data</a><a class="post-tag-link" href="/tags/Spark/" rel="tag">Spark</a></div><div class="post-time">2019-10-20</div></div></div><div class="container post-header"><h1>Spark Window 入门介绍</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#示例：计算成绩排名"><span class="toc-number">1.</span> <span class="toc-text">示例：计算成绩排名</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#如何定义窗口"><span class="toc-number">2.</span> <span class="toc-text">如何定义窗口</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#row-frame-行帧"><span class="toc-number">2.1.</span> <span class="toc-text">Row Frame(行帧)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#range-frame-范围帧"><span class="toc-number">2.2.</span> <span class="toc-text">Range Frame(范围帧)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#窗口函数"><span class="toc-number">3.</span> <span class="toc-text">窗口函数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">4.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">5.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>对于一个数据集，<code>map</code> 是对每行进行操作，为每行得到一个结果；<code>reduce</code> 则是对多行进行操作，得到一个结果；而 <code>window</code> 函数则是对多行进行操作，得到多个结果（每行一个）。本文会以实例介绍 <code>window</code> 函数的基本概念和用法。</p>
+<h2 id="示例：计算成绩排名"><a class="header-anchor" href="#示例：计算成绩排名"></a>示例：计算成绩排名</h2>
+<p>例如大学里有许多专业，每个专业有若干个班级，每个班级又有许多学生，这次考试，每个学生的成绩用 pyspark 表示如下：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">df = sqlContext.createDataFrame([</span><br><span class="line">    [<span class="string">"Student A"</span>, <span class="number">1</span>, <span class="string">"Science"</span>, <span class="number">10</span>],</span><br><span class="line">    [<span class="string">"Student B"</span>, <span class="number">1</span>, <span class="string">"Science"</span>, <span class="number">20</span>],</span><br><span class="line">    [<span class="string">"Student C"</span>, <span class="number">2</span>, <span class="string">"Science"</span>, <span class="number">30</span>],</span><br><span class="line">    [<span class="string">"Student D"</span>, <span class="number">2</span>, <span class="string">"Science"</span>, <span class="number">40</span>],</span><br><span class="line">    [<span class="string">"Student D"</span>, <span class="number">3</span>, <span class="string">"Science"</span>, <span class="number">50</span>],</span><br><span class="line">    [<span class="string">"Student E"</span>, <span class="number">4</span>, <span class="string">"Art"</span>, <span class="number">10</span>],</span><br><span class="line">    [<span class="string">"Student F"</span>, <span class="number">4</span>, <span class="string">"Art"</span>, <span class="number">20</span>],</span><br><span class="line">    [<span class="string">"Student G"</span>, <span class="number">5</span>, <span class="string">"Art"</span>, <span class="number">30</span>],</span><br><span class="line">    [<span class="string">"Student H"</span>, <span class="number">5</span>, <span class="string">"Art"</span>, <span class="number">40</span>],</span><br><span class="line">    [<span class="string">"Student I"</span>, <span class="number">6</span>, <span class="string">"Art"</span>, <span class="number">50</span>],</span><br><span class="line">    ], [<span class="string">"name"</span>, <span class="string">"class"</span>, <span class="string">"subject"</span>, <span class="string">"score"</span>])</span><br></pre></td></tr></table></figure>
+<p>现在我们的需求是：计算每个学生在专业里的成绩排名。</p>
+<p>首先，我们将学生按专业分成两组：</p>
+<img src="/2019/Spark-Window-Function-Introduction/window-example-step-1.svg" class="" title="Step 1: Partition">
+<p>接着我们按分数从高到低进行排序：</p>
+<img src="/2019/Spark-Window-Function-Introduction/window-example-step-2.svg" class="" title="Step 2: Sort">
+<p>之后是执行窗口函数。对于每个学生，我们将排在它之前的所有学生取出，再计算当前学生排在第几名：</p>
+<img src="/2019/Spark-Window-Function-Introduction/window-example-step-3.svg" class="" title="Step 3: Window Execution">
+<p>对应的 pyspark 代码如下：</p>
+<figure class="highlight python"><table><tr><td class="code"><pre><span class="line">windowSpec = Window.partitionBy(df.subject)</span><br><span class="line">windowSpec = windowSpec.orderBy(df.score.desc())</span><br><span class="line">windowSpec = windowSpec.rowsBetween(Window.unboundedPreceding, Window.currentRow)</span><br><span class="line"></span><br><span class="line">df.withColumn(<span class="string">'rank'</span>, func.rank().over(windowSpec)).show()</span><br><span class="line"></span><br><span class="line"><span class="comment"># +---------+-------+-----+-----+----+</span></span><br><span class="line"><span class="comment"># |     name|subject|class|score|rank|</span></span><br><span class="line"><span class="comment"># +---------+-------+-----+-----+----+</span></span><br><span class="line"><span class="comment"># |Student B|Science|    1|   70|   1|</span></span><br><span class="line"><span class="comment"># |Student D|Science|    2|   60|   2|</span></span><br><span class="line"><span class="comment"># |Student E|Science|    3|   50|   3|</span></span><br><span class="line"><span class="comment"># |Student C|Science|    2|   30|   4|</span></span><br><span class="line"><span class="comment"># |Student A|Science|    1|   10|   5|</span></span><br><span class="line"><span class="comment"># |Student G|    Art|    4|   60|   1|</span></span><br><span class="line"><span class="comment"># |Student H|    Art|    5|   50|   2|</span></span><br><span class="line"><span class="comment"># |Student J|    Art|    6|   40|   3|</span></span><br><span class="line"><span class="comment"># |Student I|    Art|    5|   30|   4|</span></span><br><span class="line"><span class="comment"># |Student F|    Art|    4|   10|   5|</span></span><br><span class="line"><span class="comment"># +---------+-------+-----+-----+----+</span></span><br></pre></td></tr></table></figure>
+<h2 id="如何定义窗口"><a class="header-anchor" href="#如何定义窗口"></a>如何定义窗口</h2>
+<p>一个窗口需要定义三个部分：</p>
+<ol>
+<li>分组，如何将行分组？在选取窗口数据时，只对组内数据生效</li>
+<li>排序，按何种方式进行排序？选取窗口数据时，会首先按指定方式排序</li>
+<li>帧(frame)选取，以当前行为基准，如何选取周围行？</li>
+</ol>
+<h3 id="row-frame-行帧"><a class="header-anchor" href="#row-frame-行帧"></a>Row Frame(行帧)</h3>
+<p>行帧，即选择帧的时候通过行数指定。语法为 <code>rowsBetween(x, y)</code>，其中 <code>x, y</code> 可以是数字，<code>-n</code>表示向前数 <code>n</code> 行，<code>n</code> 表示向后数 <code>n</code> 行。除此之外，还可以是：</p>
+<ul>
+<li><code>Window.unboundedPreceding</code> 表示当前行之前的无限行</li>
+<li><code>Window.currentRow</code> 表示当前行</li>
+<li><code>Window.unboundedFollowing</code> 表示当前行之后的无限行</li>
+</ul>
+<p>例如，要选择当前行的前一行和后一行，则 pyspark 的写法为 <code>rowsBetween(-1, 1)</code>，对应 SQL 的写法为 <code>ROWS BETWEEN 1 PRECEEDING AND 1 FOLLOWING</code>，表示如下图：</p>
+<img src="/2019/Spark-Window-Function-Introduction/row-frame-example.svg" class="" title="Row Frame example">
+<h3 id="range-frame-范围帧"><a class="header-anchor" href="#range-frame-范围帧"></a>Range Frame(范围帧)</h3>
+<p>有时，我们想根据当前行列值的范围来选取窗口，语法为 <code>rangeBetween(x, y)</code>。例如，当前的分数为 <code>60</code>，选择范围帧 <code>rangeBetween(-20, 20)</code>，则会选择所有分数落在
+<code>[40, 80]</code> 范围内的行。如下图：</p>
+<img src="/2019/Spark-Window-Function-Introduction/range-frame-example.svg" class="" title="Range Frame example">
+<h2 id="窗口函数"><a class="header-anchor" href="#窗口函数"></a>窗口函数</h2>
+<p>从通用性的角度来说，选定帧内数据后，做何种计算，需要让用户自行定义。考虑到效率和便利性等因素，Spark SQL 不支持自定义的窗口函数<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>，而是提供了一些内置的优化过的函数，来满足日常的需求。</p>
+<p>Spark SQL 支持三种类型的窗口函数：排名函数(ranking function)、分析函数
+(analytic functions)和聚合函数(aggregate functions)。其中聚合函数（如 <code>max</code>,
+<code>min</code>, <code>avg</code> 等)常用在 <code>reduce</code> 操作中，不再介绍，其它函数如下：</p>
+<table>
+    <thead>
+        <tr>
+            <th></th>
+            <th>SQL</th>
+            <th>Dataframe API</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan="5">Ranking functions</td>
+            <td>rank</td>
+            <td>rank</td>
+        </tr>
+        <tr>
+            <td>dense_rank</td>
+            <td>denseRank</td>
+        </tr>
+        <tr>
+            <td>percent_rank</td>
+            <td>percentRank</td>
+        </tr>
+        <tr>
+            <td>ntile</td>
+            <td>ntile</td>
+        </tr>
+        <tr>
+            <td>row_number</td>
+            <td>rowNumber</td>
+        </tr>
+        <tr>
+            <td rowspan="5">Analytic functions</td>
+            <td>cume_dist</td>
+            <td>cumeDist</td>
+        </tr>
+        <tr>
+            <td>first_value</td>
+            <td>firstValue</td>
+        </tr>
+        <tr>
+            <td>last_value</td>
+            <td>lastValue</td>
+        </tr>
+        <tr>
+            <td>lag</td>
+            <td>lead</td>
+        </tr>
+    </tbody>
+</table>
+<p>这些函数在使用时，只需要将函数应用在窗口定义上，例如
+<code>avg(df.score).over(windowSpec)</code>。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>文章给出一个使用窗口函数的示例，并尝试说清如何定义一个窗口，包括帧的选择，最后给出一些常用的窗口函数。</p>
+<p>注意的是窗口函数在 Spark 1.4 开始支持，一些窗口函数在 Spark 1.* 中需要使用
+<code>HiveContext</code> 才能运行。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://databricks.com/blog/2015/07/15/introducing-window-functions-in-spark-sql.html" target="_blank" rel="noopener">Introducing Window Functions in Spark SQL</a>  入门必看</li>
+<li><a href="https://knockdata.github.io/spark-window-function/" target="_blank" rel="noopener">https://knockdata.github.io/spark-window-function/</a> 也是不错的入门材料，可以相互佐证</li>
+<li><a href="https://jaceklaskowski.gitbooks.io/mastering-spark-sql/spark-sql-functions.html" target="_blank" rel="noopener">https://jaceklaskowski.gitbooks.io/mastering-spark-sql/spark-sql-functions.html</a> 窗口函数汇总</li>
+</ul>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p><a href="https://stackoverflow.com/a/48160300" target="_blank" rel="noopener">StackOverflow</a> 看到说 pyspark &gt;=
+2.4 后才支持窗口函数中使用 UDF，这里不深究了 <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2019/Spark-Window-Function-Introduction/';
+var disqus_title = 'Spark Window 入门介绍';
+var disqus_url = 'https://lotabout.me/2019/Spark-Window-Function-Introduction/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

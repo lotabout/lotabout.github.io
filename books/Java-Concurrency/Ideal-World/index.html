@@ -1,0 +1,321 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>理想的并发世界 - Java 并发知识</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+        <link rel="stylesheet" href="../css/lotabout.css">
+        
+
+        
+        <!-- MathJax -->
+        <script async type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Java 并发知识</a></li><li class="chapter-item expanded affix "><li class="part-title">理解线程安全</li><li class="chapter-item expanded "><a href="../Ideal-World/index.html" class="active"><strong aria-hidden="true">1.</strong> 理想的并发世界</a></li><li class="chapter-item expanded "><a href="../Cruel-World/index.html"><strong aria-hidden="true">2.</strong> 残酷的现实</a></li><li class="chapter-item expanded "><a href="../Happens-Before/index.html"><strong aria-hidden="true">3.</strong> Happens Before</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/index.html"><strong aria-hidden="true">4.</strong> 常见线程安全问题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/TOCTOU.html"><strong aria-hidden="true">4.1.</strong> TOCTOU</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Double-Checked-Locking.html"><strong aria-hidden="true">4.2.</strong> Double Checked Locking</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Compound-Actions.html"><strong aria-hidden="true">4.3.</strong> 复合操作</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Summary.html"><strong aria-hidden="true">4.4.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Best-Practice/index.html"><strong aria-hidden="true">5.</strong> 良好的并发编程习惯</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Best-Practice/Confinement.html"><strong aria-hidden="true">5.1.</strong> 封闭</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Immutability.html"><strong aria-hidden="true">5.2.</strong> 不可变</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Threadsafe-Data-Types.html"><strong aria-hidden="true">5.3.</strong> 利用线程安全类</a></li></ol></li><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/index.html"><strong aria-hidden="true">6.</strong> 思考题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/Spring-Bean-Initialization.html"><strong aria-hidden="true">6.1.</strong> Spring Bean 初始化如何线程安全</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">线程与线程池</li><li class="chapter-item expanded "><a href="../Amdahl-Law/index.html"><strong aria-hidden="true">7.</strong> Amdahl 定律</a></li><li class="chapter-item expanded "><a href="../Cost-of-Thread/index.html"><strong aria-hidden="true">8.</strong> 线程的代价</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/index.html"><strong aria-hidden="true">9.</strong> 线程池</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Pool/Concepts.html"><strong aria-hidden="true">9.1.</strong> 线程池相关概念</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Predefined.html"><strong aria-hidden="true">9.2.</strong> 预定义的线程池</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Usage.html"><strong aria-hidden="true">9.3.</strong> 线程池使用</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Interrupt.html"><strong aria-hidden="true">9.4.</strong> 线程的中断</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Shutdown.html"><strong aria-hidden="true">9.5.</strong> 如何优雅退出</a></li></ol></li><li class="chapter-item expanded "><strong aria-hidden="true">10.</strong> 线程调度</li><li class="chapter-item expanded affix "><li class="part-title">源码分析</li><li class="chapter-item expanded "><a href="../Source-Unsafe/index.html"><strong aria-hidden="true">11.</strong> Unsafe</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/index.html"><strong aria-hidden="true">12.</strong> Atomic</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicInteger.html"><strong aria-hidden="true">12.1.</strong> AtomicInteger</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicIntegerArray.html"><strong aria-hidden="true">12.2.</strong> AtomicIntegerArray</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Striped64.html"><strong aria-hidden="true">12.3.</strong> Striped64</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Adder.html"><strong aria-hidden="true">12.4.</strong> Adder</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/FieldUpdater.html"><strong aria-hidden="true">12.5.</strong> FieldUpdater</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/StampedReference.html"><strong aria-hidden="true">12.6.</strong> StampedReference</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-AQS/AQS.html"><strong aria-hidden="true">13.</strong> AbstractQueuedSynchronizer</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-AQS/blocking-exclusive.html"><strong aria-hidden="true">13.1.</strong> 互斥锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/blocking-shared.html"><strong aria-hidden="true">13.2.</strong> 共享锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/timeout.html"><strong aria-hidden="true">13.3.</strong> 超时</a></li><li class="chapter-item expanded "><a href="../Source-AQS/interrupt.html"><strong aria-hidden="true">13.4.</strong> 中断</a></li><li class="chapter-item expanded "><a href="../Source-AQS/cancellation.html"><strong aria-hidden="true">13.5.</strong> 取消</a></li><li class="chapter-item expanded "><a href="../Source-AQS/condition.html"><strong aria-hidden="true">13.6.</strong> 条件变量</a></li><li class="chapter-item expanded "><a href="../Source-AQS/Summary.html"><strong aria-hidden="true">13.7.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-Lock/Lock.html"><strong aria-hidden="true">14.</strong> Lock</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantLock.html"><strong aria-hidden="true">14.1.</strong> ReentrantLock</a></li><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantReadWriteLock.html"><strong aria-hidden="true">14.2.</strong> ReentrantReadWriteLock</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Java 并发知识</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#理想的并发世界" id="理想的并发世界">理想的并发世界</a></h1>
+<p>并发问题，或者说线程安全问题的根本原因是我们对编写代码的运行逻辑有某种预期，而这种预期 JVM 或机器无法满足。那么我们会有什么预期呢？</p>
+<h2><a class="header" href="#单线程的执行顺序" id="单线程的执行顺序">单线程的执行顺序</a></h2>
+<p>我们对代码运行逻辑的预期主要有两个：</p>
+<ol>
+<li>写在代码里的操作/语句，按先后顺序执行</li>
+<li>前面操作的结果对后面的操作可见</li>
+</ol>
+<p>例如 Java 代码：</p>
+<pre><code>// 初始条件 x = 0; y = 0;
+1. x = 1;
+2. if (x &gt; 0)
+3.    y = 2;
+</code></pre>
+<p>我们很自然地预期执行的顺序是 <code>1 &gt; 2 &gt; 3</code>，写在前面的先执行。同时在 #1 执行后，我们预期 #2 就能看到结果，于是 #2 的 <code>if</code> 判断结果为 <code>true</code>。</p>
+<p>这是单线程的情况，我们预期代码的执行顺序就是代码撰写的顺序。那么多线程下呢？我们会有什么预期？</p>
+<h2><a class="header" href="#sequential-consistency" id="sequential-consistency">Sequential Consistency</a></h2>
+<p>在多线程语境下，什么执行顺序才是合理的预期呢？Leslie Lamport 提出了 <a href="https://www.microsoft.com/en-us/research/uploads/prod/2016/12/How-to-Make-a-Multiprocessor-Computer-That-Correctly-Executes-Multiprocess-Programs.pdf">Sequential
+Consistency</a>
+（顺序一致性）来更精确地定义我们的合理预期：</p>
+<blockquote>
+<p>... the result of any execution is the same as if the operations of all the
+processors were executed in some sequential order, and the operations of
+each individual processor appear in this sequence in the order specified by
+its program.<sup class="footnote-reference"><a href="#ref-wiki">1</a></sup></p>
+</blockquote>
+<p>考虑 CPU 多个核的执行顺序，多核的执行结果，相当于把每个核要执行的操作汇总排个序，在这个顺序里，要求每个核的操作依旧保持在单核内的相对顺序。例如，下图中有两个线程 <code>A</code> 和 <code>B</code>，它们各自要执行两个操作，则符合 Sequential Consistency 的顺序如下所示：</p>
+<p><img src="Sequential-Consistency.svg" alt="Sequential Consistent Execution Orders" /></p>
+<p>可以看到，这些顺序里，<code>A1</code> 永远在 <code>A2</code> 之前，<code>B1</code> 永远在 <code>B2</code> 之前，而 <code>A</code> 和
+<code>B</code> 的相对顺序是没有指定的。换句话说，我们会希望，在并发的情况下，每个线程自己操作的执行顺序，在汇总的全局排序下依旧保持不变（代码撰写的顺序）。</p>
+<p>可以理解为 Sequential Consistency 就是将多个线程要执行的代码交错(interleave)排成一个新的序列。</p>
+<p>注意的是，Sequential Consistency 其实有两很强的隐藏假设：</p>
+<ol>
+<li>每一个操作都要是原子的，操作在执行过程中不能被打断。</li>
+<li>操作对下一个操作可见<sup class="footnote-reference"><a href="#visibility">2</a></sup>。如 <code>r1 = B</code> 执行结束后，后续操作读取
+<code>r1</code> 时要读到 <code>B</code> 这个值。</li>
+</ol>
+<p>这个假设很符合直觉，后面我们会说明，其实底层却很难做到。</p>
+<h2><a class="header" href="#线程同步" id="线程同步">线程同步</a></h2>
+<p>Sequential Consistency 很好地描述了我们对多线程代码执行逻辑的合理预期，但
+Sequential Consistency 对线程之间的操作先后并没有规定。如果我们希望先执行线程A
+的某些操作，之后才允许执行线程 B 的某些操作（即线程同步）要怎么做呢？我们会看到，如果底层能满足 Sequential Consistency 的约定，则我们可以通过一些算法自己来实现同步。</p>
+<p>考虑临界区(critical section)问题：希望其中的代码（一般包含多个操作）“同时”只有一个线程在执行。从微观层面，即希望这些代码所代表的操作整体上“原子地”执行，这些操作进行时不被其它线程的操作插队。下面是 <a href="https://en.wikipedia.org/wiki/Dekker%27s_algorithm">Dekker 算法</a>（该算法不理解也没关系，实际上用不到）：</p>
+<pre><code>----------- Thread A --------+--------- Thread B -----------
+1. a = 1;                    | 1. b = 1;
+2. turn = 1;                 | 2. turn = 2;
+3. if (b == 1)               | 3. if (a == 1)
+4.    if (turn == 1)         | 4.    if (turn == 2)
+5.        goto #3            | 5.        goto #3
+6. &lt;critical section&gt;        | 6. &lt;critical section&gt;
+7. a = 0                     | 7. b = 0
+</code></pre>
+<p>我们希望“同一时刻”，只有一个线程进入临界区(#6)，所以我们在 #6 之前写了很多同步的逻辑，如果程序执行能满足 Sequential Consistency，那么上面的算法就能满足，在任意时刻，线程 A/B 只有一个能进入临界区，执行 #6 中的代码（实际可能有多行）。下面会尝试证明（不理解也不影响阅读）。</p>
+<p>不考虑一方先执行到 #7 的情况，因为此时无冲突。假设线程 A 先进入临界区，则 A3（线程 A 第 3 行）和 A4 条件必有一个不成立。先考虑 A3 不成立，则可以确定 <code>A3 &gt; B1</code>（A3 排序在 B1 之前），由于底层满足 Sequential Consistency，则有 <code>A1 &gt; A3</code>,
+<code>B1 &gt; B2 &gt; B3</code>，可以确认 <code>A1 &gt; A2 &gt; B2 &gt; B3</code>，则此时 B3, B4肯定成立，线程 B 进入不了临界区 B6；考虑 A4 不成立，由于考虑的是 A 先进入临界区，则有 <code>A4 &gt; B4</code>，由于 A4 不成立，则有 <code>B1 &gt; A3</code>保证 A3成立，同时 <code>B2 &gt; A2</code>使 A4 不成立，则推出<code>A1 | B2 &gt; A2 &gt; A4 &gt; B4</code>，可以确定B3 B4 都是成立的，线程B 无法进入临界区。同理，任意一方的 #3 或#4条件不满足，先进入了临界区，则另一方肯定进不了临界区。</p>
+<p>我们看到，如果系统提供了 Sequential Consistency，则我们可以通过一些（不容易想到的）算法来达到线程间的同步，即人为地对多个线程间的相对执行顺序做约束。</p>
+<h2><a class="header" href="#只要看上去如此" id="只要看上去如此">只要看上去如此</a></h2>
+<p>事实上，机器真的会按上面所说的顺序执行代码吗？或者说，我们关心吗？</p>
+<p>这也是理解并发编程的一个思维转变，我们其实不关心机器到底是如何执行的，我们只关心最终的结果是否符合预期。我们需要和机器有个约定，这样当结果不符合预期时，我们好分辩是代码写错了，还是机器执行错了。</p>
+<p>这样能允许底层实现做一些优化，例如，如果线程之间没有任何的共享变量，机器可以并行地执行这些线程，最终的结果仍然满足 Sequential Consistency。</p>
+<h2><a class="header" href="#小结" id="小结">小结</a></h2>
+<p>本章中，我们主要探讨了对于多线程的代码在运行时，什么才是合理的预期结果。</p>
+<p>Sequential Consistency 是一个符合直觉的合理预期，它没有对线程间的相对顺序做任何约束，不过我们依旧可以用一些算法来实现线程间的同步。</p>
+<p>下一章中，我们会看到 Sequential Consistency 模型的约束太强了，编译器、CPU、内存几乎没办法做任何优化，也因此目前没有任何 CPU、JVM 能实现 Sequential
+Consistency。</p>
+<p>但至少，我们知道了理想的世界应该是什么样的。</p>
+<hr />
+<div class="footnote-definition" id="ref-wiki"><sup class="footnote-definition-label">1</sup>
+<p>https://en.wikipedia.org/wiki/Sequential_consistency</p>
+</div>
+<div class="footnote-definition" id="visibility"><sup class="footnote-definition-label">2</sup>
+<p><a href="https://en.wikipedia.org/wiki/Consistency_model#Sequential_consistency">维基百科</a> 里说：Sequential Consistency 中一个写入一个变量不需要被“立即”看到。与我们文中说的“操作对下一个操作可见”似乎有冲突。我翻了很多资料，最终的理解是：“写入不需要被立即看到”的语境是排序前，如果有一写两读，<code>W(2)</code>, <code>R1, R2</code>，最终如果排序成 <code>R1, W(2), R2</code> 则代表了 <code>W(2)</code> 被延时感知了。但是排序后的操作仍旧必须对下一个操作可见。</p>
+</div>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../Cruel-World/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="../Cruel-World/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+        <!-- Google Analytics Tag -->
+        <script type="text/javascript">
+            var localAddrs = ["localhost", "127.0.0.1", ""];
+
+            // make sure we don't activate google analytics if the developer is
+            // inspecting the book locally...
+            if (localAddrs.indexOf(document.location.hostname) === -1) {
+                (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+                ga('create', 'UA-39956831-2', 'auto');
+                ga('send', 'pageview');
+            }
+        </script>
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

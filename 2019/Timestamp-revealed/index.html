@@ -1,0 +1,96 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="海上生明月，天涯共此时。在计算机的世界里，怎么才能“共此时”呢？"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>聊一聊时间戳 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/java/" rel="tag">java</a><a class="post-tag-link" href="/tags/timestamp/" rel="tag">timestamp</a></div><div class="post-time">2019-10-15</div></div></div><div class="container post-header"><h1>聊一聊时间戳</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#时间如何存储"><span class="toc-number">1.</span> <span class="toc-text">时间如何存储</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#时间如何解析"><span class="toc-number">2.</span> <span class="toc-text">时间如何解析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#时间如何展示"><span class="toc-number">3.</span> <span class="toc-text">时间如何展示</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">4.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">5.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>海上生明月，天涯共此时。在计算机的世界里，怎么才能“共此时”呢？</p>
+<h2 id="时间如何存储"><a class="header-anchor" href="#时间如何存储"></a>时间如何存储</h2>
+<p>存储的首先需要有唯一性。</p>
+<p>你朋友说要在 <code>22:00</code> 给你打电话，结果 <code>21:00</code> 电话就来了，心里咒骂了一阵，才想起来朋友在日本，日本 <code>22:00</code> 时北京正好是 <code>21:00</code>。虽然平时可能不太注意得到，但是如果想让时间唯一，是需要加上时区的。用 <code>时间＋时区</code> 来存储时间似乎是一个好选择。</p>
+<p>存储的数据最好能方便比较。</p>
+<p>你可能很难一眼看出 <code>10:00 CST</code> 和 <code>11:00 IOT</code> 哪个时间更早。但如果统一换算成协调世界时(UTC)或是其它什么时区，就很容易比较了。也就是说存储的基准最好一致。</p>
+<p>再着嘛，最好节省空间。</p>
+<p>直接的想法是记录年月日时，但是一个标准的时间字符串 (如 <code>2019-10-15 20:48:19.128</code>) 就占用了 23 个字节，比较浪费。所以计算机中也使用一种称为 epoch
+time 的存储方式，存储的是当前时间(转换为 UTC) 距离 Unix epoch (<code>1970-01-01 00:00:00</code>) 的毫秒数，例如上例可表示为 <code>1571172499000</code>。这样要表示日常生活中的时间，通常只需要 4 个字节(32位) 或是 8 个字节(64位) 即可。当然，存储节省了，能表示的时间范围也小了，例如 32 位的 epoch time 最多只能表示到 <code>2038-01-19</code>。</p>
+<p>下面是列举了一些系统的时间表示方式：</p>
+<ul>
+<li>MySQL 中的 <code>TIMESTAMP</code> 类型以 <code>YYYY-MM-DD hh:mm:ss</code> 表示当前时间对应的UTC时间<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>， 占 19 个字节。
+<ul>
+<li>5.6.4 之后的版本可通过 <code>TIMESTAMP(n)</code> 指定保留 n 位毫秒数<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup></li>
+</ul>
+</li>
+<li>Java 中的 Date 类型内部以 <code>long</code> 型(64位)存储当前时间(UTC)距 epoch time 的毫秒数。</li>
+<li>大数据格式 Parquet 以 <code>int96</code> 的类型存储当前时间(UTC)距 epoch time 的纳秒数。</li>
+</ul>
+<p>当然后面我们会看到，为了更准确处理各种情形，也会直接用 <code>年月日时分秒＋时区</code> 的方式存储。</p>
+<h2 id="时间如何解析"><a class="header-anchor" href="#时间如何解析"></a>时间如何解析</h2>
+<p>假设我们以 epoch time 作为存储格式，现在拿到 <code>2019-10-15 20:48:19</code> 这样一个时间，要如何转换成相应的 epoch time 呢？注意，这个时间字符串是不带时区的！</p>
+<p>原始时区信息缺失是时间处理不一致的重要根源之一，不同的系统/工具应对的方式不同。</p>
+<p>例如 <code>java.sql.Timestamp.valueOf</code> 会认为解析的字符串就是 UTC 时间。Java 创建
+<code>Timestamp</code>类型的初衷是对标 MySQL 的 <code>TIMESTAMP</code> 类型，两者在<strong>解析</strong>时都认为输入是 UTC 时间也就不足为奇了。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">String timeStr = <span class="string">"2019-10-15 10:10:10.001"</span>;</span><br><span class="line">Timestamp timestamp = java.sql.Timestamp.valueOf(timeStr);</span><br><span class="line">System.out.println(timestamp);</span><br><span class="line">System.out.println(timestamp.getTime());</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2019-10-15 10:10:10.001 # 北京时间下运行</span></span><br><span class="line"><span class="comment">// 1571105410001 # (2019-10-15 10:10:10.001 in GMT)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 2019-10-15 10:10:10.001 # 东京时间下运行</span></span><br><span class="line"><span class="comment">// 1571101810001 # (2019-10-15 10:10:10.001 in GMT)</span></span><br></pre></td></tr></table></figure>
+<p>上例中将系统调成北京时间(CST)还是东京时间(JST)，输出的内容不变。</p>
+<p>而 <code>java.util.Date</code> 以及对应的 <code>java.text.DateFormat</code> 都允许指定时区，默认选取系统的时区进行解析。下面以 <code>SimpleDateFormat</code> 为例
+<sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup>：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">SimpleDateFormat format = <span class="keyword">new</span> SimpleDateFormat(<span class="string">"yyyy-MM-dd HH:mm:ss.SSS"</span>);</span><br><span class="line">String timeStr = <span class="string">"2019-10-15 10:10:10.001"</span>;</span><br><span class="line">java.util.Date date = format.parse(timeStr);</span><br><span class="line">System.out.println(date);</span><br><span class="line">System.out.println(date.getTime());</span><br><span class="line"></span><br><span class="line"><span class="comment">// Tue Oct 15 10:10:10 CST 2019 # 北京时间下运行</span></span><br><span class="line"><span class="comment">// 1571105410001 # (2019-10-15 2:10:10.001 in GMT)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// Tue Oct 15 10:10:10 JST 2019 # 东京时间下运行</span></span><br><span class="line"><span class="comment">// 1571101810001 # (2019-10-15 1:10:10.001 in GMT)</span></span><br></pre></td></tr></table></figure>
+<p>由于使用了系统当前所在的时区，上面的代码在北京时间（CST）和东京时间（JST）下执行，得到的毫秒数是不同的。</p>
+<h2 id="时间如何展示"><a class="header-anchor" href="#时间如何展示"></a>时间如何展示</h2>
+<p>展示的终极问题：要以当前的时区展示？还是以原时区展示？这是与业务相关的。</p>
+<ul>
+<li>如果要判断一笔交易在几点进行，则可能按发生地时区展示/计算更合理（例如认为凌晨发生的交易是欺诈的可能性高，则境外的交易就需要按境外的时区算几点）</li>
+<li>如果要展示一篇博客何时发布，以读者所在的时区展示可能更理想</li>
+</ul>
+<p>正因为这个决定跟业务相关，系统的实现者只能为两种需求都提供对应的机制。显然以
+epoch time 存储是不行的，因为它不带原始时区。MySQL 的存储也同样不行，虽然以字符串存储，但依旧不包含原始时区<sup class="footnote-ref"><a href="#fn4" id="fnref4">[4]</a></sup>。这里我们简单记录 Java 提供的处理机制。</p>
+<p>Java 8 的 <code>java.time</code> 包中提供了许多时间处理的类，让我们按需自取。如
+<code>LocalDate</code>、<code>LocalTime</code> 和 <code>LocalDateTime</code> 内部以年月日、时分秒的形式保存了日期和时间，不包含任何时区的信息。而 <code>ZonedDateTime</code> 则是 <code>DateTime</code> 加上时区，用于处理与时区相关的所有操作，包括时区间的时间转换。</p>
+<p>Java 8 中的 <code>ZonedDateTime</code> 人如其名，内部提供了额外的字段保留时区：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">String timeStr = <span class="string">"2019-10-15T10:10:10.001+02:00[Europe/Paris]"</span>;</span><br><span class="line">ZonedDateTime datetime = ZonedDateTime.parse(timeStr);</span><br><span class="line">System.out.println(datetime);</span><br><span class="line">System.out.println(datetime.toInstant().getEpochSecond());</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2019-10-15T10:10:10.001+02:00[Europe/Paris] # 北京时间下运行</span></span><br><span class="line"><span class="comment">// 1571127010 # 2019-10-15 08:10:10 GMT</span></span><br></pre></td></tr></table></figure>
+<p>可以看到，尽管在北京时间下运行，输出里仍然保留了原始输入的时区：巴黎时间。</p>
+<p>而如果希望将巴黎时间展示为当前的时区，则可以如下操作：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">String timeStr = <span class="string">"2019-10-15T10:10:10.001+02:00[Europe/Paris]"</span>;</span><br><span class="line">ZonedDateTime parisTime = ZonedDateTime.parse(timeStr);</span><br><span class="line">ZonedDateTime shanghaiTime = parisTime.withZoneSameInstant(ZoneId.systemDefault());</span><br><span class="line">System.out.println(shanghaiTime);</span><br><span class="line">System.out.println(parisTime.toInstant().getEpochSecond());</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2019-10-15T16:10:10.001+08:00[Asia/Shanghai]</span></span><br><span class="line"><span class="comment">// 1571127010</span></span><br></pre></td></tr></table></figure>
+<p>可以看到，当前时区是上海，巴黎 <code>10:10</code> 时，上海是 <code>16:10</code>。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>时间处理，尤其是在不同系统中传递时间信息，一般会涉及三个问题：</p>
+<ol>
+<li>数据解析，时间数据如何解析成内部格式？如何补全时区信息？</li>
+<li>数据存储，存储带不带原始时间的时区？</li>
+<li>数据展示，要展示原始时区？当前时区？还是其它时区？</li>
+</ol>
+<p>考虑一下，Java 中的 LocalDateTime 是不带时区的，但是如果将对应数据存入 MySQL，则需要转换成 epoch time，那么如何补全时区信息呢？</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Unix_time" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Unix_time</a> 关于 epoch time 的更多信息</li>
+<li><a href="https://juejin.im/post/5adb06cdf265da0b7b3579fb" target="_blank" rel="noopener">Java 中的时间日期 API（上）</a> 详细介绍了 Java 的时间 API</li>
+<li><a href="https://juejin.im/post/5addc7a66fb9a07aa43bd2a0" target="_blank" rel="noopener">Java 中的时间日期 API（下）</a> 详细对比了 Java 8 的时间 API</li>
+<li><a href="http://wrschneider.github.io/2019/09/01/timezones-parquet-redshift.html" target="_blank" rel="noopener">http://wrschneider.github.io/2019/09/01/timezones-parquet-redshift.html</a> 时间处理不一致的示例</li>
+</ul>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p><a href="https://dev.mysql.com/doc/refman/5.5/en/datetime.html" target="_blank" rel="noopener">https://dev.mysql.com/doc/refman/5.5/en/datetime.html</a> <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p><a href="https://dev.mysql.com/doc/refman/5.5/en/datetime.html" target="_blank" rel="noopener">https://dev.mysql.com/doc/refman/5.5/en/datetime.html</a> <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn3" class="footnote-item"><p><code>SimpleDateFormat</code> 不是线程安全的，Java 8
+之后尽量使用 <code>java.time.DateTimeFormatter</code> <a href="#fnref3" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn4" class="footnote-item"><p>MySQL 中的 <code>DATETIME</code> 类型不会将时间转换成 UTC，但依旧不保留时区信息。 <a href="#fnref4" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2019/Timestamp-revealed/';
+var disqus_title = '聊一聊时间戳';
+var disqus_url = 'https://lotabout.me/2019/Timestamp-revealed/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

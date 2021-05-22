@@ -1,0 +1,40 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="用 Prometheus 作业务监控，需要统计“今日请求量”，很自然想到用 &lt;code&gt;increase&lt;/code&gt; 函数。实际效果是它不返回整数，甚至在突然的压力下“请求量”还会减少。为什么会发生这些现象呢？"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>QQA: 为什么 Prometheus increase 不返回整数？ | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/QQA/" rel="tag">QQA</a><a class="post-tag-link" href="/tags/increase/" rel="tag">increase</a><a class="post-tag-link" href="/tags/prometheus/" rel="tag">prometheus</a></div><div class="post-time">2019-08-03</div></div></div><div class="container post-header"><h1>QQA: 为什么 Prometheus increase 不返回整数？</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#prometheus-怎么做线性外插"><span class="toc-number">1.</span> <span class="toc-text">Prometheus 怎么做线性外插</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#为什么请求量会减少？"><span class="toc-number">2.</span> <span class="toc-text">为什么请求量会减少？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">3.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>用 Prometheus 作业务监控，需要统计“今日请求量”，很自然想到用 <code>increase</code> 函数。实际效果是它不返回整数，甚至在突然的压力下“请求量”还会减少。为什么会发生这些现象呢？</p>
+<p>原因是 <code>increase</code>/<code>rate</code> 函数对区间的统计信息做了“线性外插”，是一个估算值。</p>
+<h2 id="prometheus-怎么做线性外插"><a class="header-anchor" href="#prometheus-怎么做线性外插"></a>Prometheus 怎么做线性外插</h2>
+<p>如下图：我们每隔 5s 采样一次，问在 <code>[3s, 23s]</code> 的区间内增长了多少？这里的问题在于查询区间的时间与采样时间不重合，因此并没法得到准确的数值。</p>
+<img src="/2019/QQA-Why-Prometheus-increase-return-float/extrapolated.svg" class="" title="Extrapolated">
+<p>Prometheus 的策略是拿到样本的端点 <code>{5s: 10}</code> 与 <code>{20s: 30}</code>，并计算它们的区间为<code>20 - 5 = 15s</code>，期间请求量增长了 <code>30 - 10 = 10</code> 次。因此推算每秒增长了
+<code>20/15</code>次，按增长率估算在<code>[3s, 23]</code> 这 20s 期间，增长了 <code>20 * (20/15) = 26.67</code>
+次。</p>
+<p>线性插值是假设数据线性增长进行推测，而“外插”则表示推测的数据范围数据 <code>[3s, 23s]</code> 在样本点定义域 <code>[5s, 20s]</code> 之<strong>外</strong>。</p>
+<p>当然 Prometheus 还考虑了其它一些极端情况，如样本点太少，数据归零等情形，这里不作说明。</p>
+<h2 id="为什么请求量会减少？"><a class="header-anchor" href="#为什么请求量会减少？"></a>为什么请求量会减少？</h2>
+<p>在突然的高压力下，数据就不再是“线性”分布，此时线性外插就会失真。如下图：</p>
+<img src="/2019/QQA-Why-Prometheus-increase-return-float/decreased.svg" class="" title="Decreased">
+<p>考虑 <code>[5s, 10s]</code> 区间时，增长率为每秒 8 次，而在考虑 <code>[5s, 15s]</code> 时只有每秒
+4.2 次，只有之前的近一半。从而导致外插后的请求量反而减少了。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://github.com/prometheus/prometheus/blob/9e47bb8b46dbd364d4c47634823760053846efb1/promql/functions.go#L65" target="_blank" rel="noopener">Prometheus extrapolatedRate</a> 外插逻辑的源代码</li>
+<li><a href="https://ihac.xyz/2018/12/11/Prometheus-Extrapolation%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90" target="_blank" rel="noopener">https://ihac.xyz/2018/12/11/Prometheus-Extrapolation原理解析</a> 讲解了外插的原理及动机</li>
+</ul></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2019/QQA-Why-Prometheus-increase-return-float/';
+var disqus_title = 'QQA: 为什么 Prometheus increase 不返回整数？';
+var disqus_url = 'https://lotabout.me/2019/QQA-Why-Prometheus-increase-return-float/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

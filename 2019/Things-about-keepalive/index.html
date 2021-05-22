@@ -1,0 +1,96 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="HTTP keep-alive 也称为 HTTP 长连接。它通过重用一个 TCP 连接来发送/接收多个
+HTTP请求，来减少创建/关闭多个 TCP 连接的开销。keep-alive 用不用？怎么用？"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>HTTP keep-alive 二三事 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Spring/" rel="tag">Spring</a><a class="post-tag-link" href="/tags/keep-alive/" rel="tag">keep-alive</a><a class="post-tag-link" href="/tags/tcp/" rel="tag">tcp</a></div><div class="post-time">2019-09-29</div></div></div><div class="container post-header"><h1>HTTP keep-alive 二三事</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#什么是-keep-alive"><span class="toc-number">1.</span> <span class="toc-text">什么是 keep-alive?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#用还是不用-这是个问题"><span class="toc-number">2.</span> <span class="toc-text">用还是不用，这是个问题</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#客户端如何开启？"><span class="toc-number">3.</span> <span class="toc-text">客户端如何开启？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#服务端如何实现"><span class="toc-number">4.</span> <span class="toc-text">服务端如何实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#抓包实验"><span class="toc-number">5.</span> <span class="toc-text">抓包实验</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">6.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">7.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>HTTP keep-alive 也称为 HTTP 长连接。它通过重用一个 TCP 连接来发送/接收多个
+HTTP请求，来减少创建/关闭多个 TCP 连接的开销。keep-alive 用不用？怎么用？</p>
+<h2 id="什么是-keep-alive"><a class="header-anchor" href="#什么是-keep-alive"></a>什么是 keep-alive?</h2>
+<p>keep-alive 是客户端和服务端的一个约定，如果开启 keep-alive，则服务端在返回
+response 后不关闭 TCP 连接；同样的，在接收完响应报文后，客户端也不关闭连接，发送下一个 HTTP 请求时会重用该连接。</p>
+<p>在 HTTP/1.0 协议中，如果请求头中包含：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Connection: keep-alive</span><br></pre></td></tr></table></figure>
+<p>则代表开启 keep-alive，而服务端的返回报文头中，也会包含相同的内容。</p>
+<p>在 HTTP/1.1 协议中，默认开启 keep-alive，除非显式地关闭它：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Connection: close</span><br></pre></td></tr></table></figure>
+<h2 id="用还是不用-这是个问题"><a class="header-anchor" href="#用还是不用-这是个问题"></a>用还是不用，这是个问题</h2>
+<p>keep-alive 技术创建的目的，就是能在多次 HTTP 之间重用同一个 TCP 连接，从而减少创建/关闭多个 TCP 连接的开销（包括响应时间、CPU 资源、减少拥堵等），参考如下示意图（来源：维基百科）：</p>
+<img src="/2019/Things-about-keepalive/keep-alive-demonstration.svg" class="" title="Keep Alive Demonstration">
+<p>然而天下没有免费的午餐，如果客户端在接收完所有的信息之后还没有关闭连接，则服务端相应的资源还在被占用（尽管已经没用了）。例如 Tomcat 的 BIO 实现中，未关闭的连接会占用对应的处理线程，如果一个长连接实际上已经处理完毕，但关闭的超时时间未到，则该线程会一直被占用（使用 NIO 的实现没有该问题）。</p>
+<p>显然，如果客户端和服务端的确需要进行多次通信，则开启 keep-alive 是更好的选择，例如在微服务架构中，通常微服务的使用方和提供方会长期有交流，此时最好开启
+keep-alive。</p>
+<p>在一些 TPS/QPS 很高的 REST 服务中，如果使用的是短连接（即没有开启keep-alive），则很可能发生客户端端口被占满的情形。这是由于短时间内会创建大量TCP 连接，而在
+TCP 四次挥手结束后，客户端的端口会处于 TIME_WAIT一段时间(2*MSL)，这期间端口不会被释放，从而导致端口被占满。这种情况下最好使用长连接。</p>
+<h2 id="客户端如何开启？"><a class="header-anchor" href="#客户端如何开启？"></a>客户端如何开启？</h2>
+<p>现在我们用到的几乎所有工具都是默认开启长连接的：</p>
+<ul>
+<li>对于浏览器而言，几乎你现在用的浏览器（包括 IE6）都默认使用 keep-alive 了。</li>
+<li>Java8 中的 <code>HttpURLConnection</code> 默认开启长连接，但是默认连接池中只保留 5 个长连接<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>，如果同时超过 5 个线程在使用，则会创建新的连接，结束后多于 5 个的部分会被客户端主动关闭。</li>
+<li>Apache <code>HttpClient</code> 默认为每个地址保留 2 个长连接，连接池中最多共保留 20 个连接<sup id="fnref:2"><a href="#fn:2" rel="footnote">2</a></sup>。</li>
+<li>Python requests 如果使用 session 则会默认开启长连接。</li>
+</ul>
+<p>下面是一些代码备忘：</p>
+<details>
+<summary>Feign 使用 HttpClient 连接池示例</summary>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">PoolingHttpClientConnectionManager connectionManager = <span class="keyword">new</span> PoolingHttpClientConnectionManager();</span><br><span class="line">connectionManager.setMaxTotal(maxConnections);</span><br><span class="line">connectionManager.setDefaultMaxPerRoute(maxConnectionsPerRoute);</span><br><span class="line"></span><br><span class="line">CloseableHttpClient httpClient = HttpClients</span><br><span class="line">    .custom()</span><br><span class="line">    .setConnectionManager(connectionManager)</span><br><span class="line">    .build();</span><br><span class="line"></span><br><span class="line"><span class="keyword">return</span> Feign.builder()</span><br><span class="line">        .client(<span class="keyword">new</span> ApacheHttpClient(httpClient))</span><br><span class="line">        .options(<span class="keyword">new</span> Options(connectTimeoutMills, readTimeoutMills))</span><br><span class="line">        .retryer(<span class="keyword">new</span> Default(retryPeriod, retryMaxPeriod, retryMaxAttempts))</span><br><span class="line">        .encoder(<span class="keyword">new</span> JacksonEncoder(JsonUtil.getObjectMapper()))</span><br><span class="line">        .decoder(<span class="keyword">new</span> JacksonDecoder(JsonUtil.getObjectMapper()))</span><br><span class="line">        .decode404()</span><br><span class="line">        .target(PredictorFeignService<span class="class">.<span class="keyword">class</span>, <span class="title">endpoint</span>)</span>;</span><br></pre></td></tr></table></figure>
+</details>
+<h2 id="服务端如何实现"><a class="header-anchor" href="#服务端如何实现"></a>服务端如何实现</h2>
+<p>不同的服务端对 keep-alive 的实现方式不同，就连 tomcat 不同的工作模式下，处理的方式也不同。这里大致说下 NIO 模式(tomcat 9.0.22)下的处理逻辑：</p>
+<ul>
+<li>
+<p>在 <code>NioEndpoint#SocketProcessor</code> 类中，只会关闭内部状态为 <code>CLOSED</code> 的端口：</p>
+  <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> (state == SocketState.CLOSED) &#123;</span><br><span class="line">    poller.cancelledKey(key, <span class="keyword">this</span>.socketWrapper);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>而在 <code>Http11Processor#service</code> 方法中，如果是 keep-alive 的连接，最终的内部状态会是 <code>OPEN</code></p>
+  <figure class="highlight java"><table><tr><td class="code"><pre><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">this</span>.openSocket) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>.readComplete ? SocketState.OPEN : SocketState.LONG;</span><br><span class="line">&#125; <span class="keyword">else</span> &#123;</span><br></pre></td></tr></table></figure>
+</li>
+<li>
+<p>被保留的连接，超时时间之后，会在 <code>NioEndpoint#Poller#timeout</code> 方法中被关闭：</p>
+  <figure class="highlight java"><table><tr><td class="code"><pre><span class="line">&#125; <span class="keyword">else</span> <span class="keyword">if</span> (!NioEndpoint.<span class="keyword">this</span>.processSocket(socketWrapper, SocketEvent.ERROR, <span class="keyword">true</span>)) &#123;</span><br><span class="line">    <span class="keyword">this</span>.cancelledKey(key, socketWrapper);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>另外，如果使用 spring boot，可以通过 <code>server.connection-timeout</code> 配置项来调整
+keep-alive 连接的保留时间，如果不设置则为每个 server 自己的默认配置，Tomcat 默认为 60s<sup id="fnref:3"><a href="#fn:3" rel="footnote">3</a></sup>。</p>
+<h2 id="抓包实验"><a class="header-anchor" href="#抓包实验"></a>抓包实验</h2>
+<p>抓包之下，再复杂的逻辑也将显露无疑。我们使用
+<a href="https://www.wireshark.org" target="_blank" rel="noopener">Wireshark</a> 抓包，看到使用了 keep-alive 的请求如下：</p>
+<img src="/2019/Things-about-keepalive/wireshark-persistent-connection.jpg" class="" title="Wireshark keep-alive demo">
+<ul>
+<li>第二次 Http 请求时，并没有创建的连接的过程（没有 <code>SYN</code>），而是重用之前的连接</li>
+<li>在默认 60s 超时后，由服务端发送 <code>FIN</code> 报文关闭连接。</li>
+</ul>
+<p>而不开启 keep-alive 的请求过程如下：</p>
+<img src="/2019/Things-about-keepalive/wireshark-two-connection.jpg" class="" title="Wireshark two connection">
+<p>可以看到，与 keep-alive 不同，每次请求结束时都关闭当前连接，之后重新创建新的连接。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>文章比较杂，可能真正有用的就是：如果使用基于 Http 的微服务，可以使用长连接来解决一些问题。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://www.nginx.com/blog/http-keepalives-and-web-performance" target="_blank" rel="noopener">HTTP Keepalive Connections and Web
+Performance</a>
+Nginx 谈长连接与服务器性能的关系（文章比较老）</li>
+<li>
+<a href="/2019/TCP-connection-establish-and-termination/" title="复习：TCP 三次握手、四次挥手">复习：TCP 三次握手、四次挥手</a> 本站的文章，复习 TCP 连接的状态转换，尝试理解 TIME_WAIT 的影响
+</li>
+<li><a href="https://techblog.bozho.net/caveats-of-httpurlconnection/" target="_blank" rel="noopener">https://techblog.bozho.net/caveats-of-httpurlconnection/</a> 使用
+HttpURLConnection 的一些坑</li>
+<li><a href="https://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html" target="_blank" rel="noopener">Appendix A. Common application properties</a> Spring Boot 通用配置项</li>
+</ul>
+<div id="footnotes"><hr><div id="footnotelist"><ol style="list-style:none; padding-left: 0"><li id="fn:1"><span style="display: inline-block; vertical-align: top; padding-right: 10px">1.</span><span style="display: inline-block; vertical-align: top">https://docs.oracle.com/javase/8/docs/technotes/guides/net/http-keepalive.html</span><a href="#fnref:1" rev="footnote"> ↩</a></li><li id="fn:2"><span style="display: inline-block; vertical-align: top; padding-right: 10px">2.</span><span style="display: inline-block; vertical-align: top">https://hc.apache.org/httpcomponents-client-ga/tutorial/html/connmgmt.html#d5e393</span><a href="#fnref:2" rev="footnote"> ↩</a></li><li id="fn:3"><span style="display: inline-block; vertical-align: top; padding-right: 10px">3.</span><span style="display: inline-block; vertical-align: top">https://github.com/apache/tomcat/blob/master/java/org/apache/coyote/http11/Constants.java#L28</span><a href="#fnref:3" rev="footnote"> ↩</a></li></ol></div></div></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2019/Things-about-keepalive/';
+var disqus_title = 'HTTP keep-alive 二三事';
+var disqus_url = 'https://lotabout.me/2019/Things-about-keepalive/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

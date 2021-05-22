@@ -1,0 +1,55 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="看教程时，自己动手输入教程的例子有助于学习和理解。但有时会发现自己输入的代码跑不通，而粘贴的代码是正确的。这时我们希望能一行行地对比自己输入的代码和原始代码。用 Vim 怎么做到呢？"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Vim 小技巧——合并行块 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/FAQ/" rel="tag">FAQ</a><a class="post-tag-link" href="/tags/vim/" rel="tag">vim</a></div><div class="post-time">2015-12-21</div></div></div><div class="container post-header"><h1>Vim 小技巧——合并行块</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#"><span class="toc-number">1.</span> <span class="toc-text">问题描述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#"><span class="toc-number">2.</span> <span class="toc-text">功能实现</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#"><span class="toc-number">3.</span> <span class="toc-text">效果展示</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#"><span class="toc-number">4.</span> <span class="toc-text">后记</span></a></li></ol></details></div><div class="container post-content"><p>看教程时，自己动手输入教程的例子有助于学习和理解。但有时会发现自己输入的代码跑不通，而粘贴的代码是正确的。这时我们希望能一行行地对比自己输入的代码和原始代码。用 Vim 怎么做到呢？</p>
+<h1>问题描述</h1>
+<p>如果我们有两块（block）文本，如：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Line 1</span><br><span class="line">Line 2</span><br><span class="line">Line 3</span><br><span class="line">Line 4</span><br><span class="line">Line 5</span><br><span class="line">Line 6</span><br><span class="line"></span><br><span class="line">Reference Line 1</span><br><span class="line">Reference Line 2</span><br><span class="line">Reference Line 3</span><br><span class="line">Reference Line 4</span><br><span class="line">Reference Line 5</span><br><span class="line">Reference Line 6</span><br></pre></td></tr></table></figure>
+<p>我们想将两个块逐行合并，得到如下的结果：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Line 1</span><br><span class="line">Reference Line 1</span><br><span class="line">Line 2</span><br><span class="line">Reference Line 2</span><br><span class="line">Line 3</span><br><span class="line">Reference Line 3</span><br><span class="line">Line 4</span><br><span class="line">Reference Line 4</span><br><span class="line">Line 5</span><br><span class="line">Reference Line 5</span><br><span class="line">Line 6</span><br><span class="line">Reference Line 6</span><br></pre></td></tr></table></figure>
+<p>这个需求还是会时遇到的，那么如何用 Vim 来实现这样的功能呢？</p>
+<p>顺带一提，这也是 Vim Golf 中的一道题： <a href="http://www.vimgolf.com/challenges/4dcd7b572c8e510001000005" target="_blank" rel="noopener">Interweave two blocks of text</a> （需要梯子）</p>
+<h1>功能实现</h1>
+<p>其实这个功能用脚本实现起来并不难，难的是怎么让最终的功能方便使用。其中的核心脚本是从 <a href="http://vi.stackexchange.com/questions/4575/merge-blocks-by-interleaving-lines" target="_blank" rel="noopener">Merge blocks by interleaving lines</a> 中获得。代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">function! Interleave(start, end, where)</span><br><span class="line">    if a:start &lt; a:where</span><br><span class="line">        for i in range(0, a:end - a:start)</span><br><span class="line">            execute a:start . &#39;m&#39; . (a:where + i)</span><br><span class="line">        endfor</span><br><span class="line">    else</span><br><span class="line">        for i in range(a:end - a:start, 0, -1)</span><br><span class="line">            execute a:end . &#39;m&#39; . (a:where + i)</span><br><span class="line">        endfor</span><br><span class="line">    endif</span><br><span class="line">endfunction</span><br></pre></td></tr></table></figure>
+<p>使用时，调用 <code>:call Interleave(8, 13, 1)</code>。前两个参数分别指定 'Reference Line’
+块的首末行的行号。第三个参数指定目标行，即 ‘Line 1’ 的行号。</p>
+<p>上述代码中使用的是 vim 的 Ex 命令，即：<code>:10m2</code> 用于将第10行的文本移动到第2行后。</p>
+<p>上述代码的功能是 OK 的，只是调用的时候需要知道 3 个行号，并且要输入很多字符。因此改进如下：</p>
+<ol>
+<li>通过 visual selection （<code>Ctrl-v</code>）来指定 ‘Reference Line’ 块。</li>
+<li>可以通过行号（Line number）或标签（Mark）来指定目标行号。</li>
+<li>为选择模式添加一个相应的快捷键。</li>
+</ol>
+<p>代码如下（放入 <code>.vimrc</code> 中）：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">function! Interleave(where) range</span><br><span class="line">    let l:where &#x3D; a:where</span><br><span class="line"></span><br><span class="line">    let l:pos &#x3D; getpos(l:where)</span><br><span class="line">    if l:where &#x3D;~ &quot;^&#39;&quot; &amp;&amp; !empty(l:pos)</span><br><span class="line">        let l:where &#x3D; l:pos[1]</span><br><span class="line">    endif</span><br><span class="line"></span><br><span class="line">    let l:start &#x3D; a:firstline</span><br><span class="line">    let l:end &#x3D; a:lastline</span><br><span class="line"></span><br><span class="line">    if l:start &lt; a:where</span><br><span class="line">        for i in range(0, l:end - l:start)</span><br><span class="line">            execute l:start . &#39;m&#39; . (l:where + i)</span><br><span class="line">        endfor</span><br><span class="line">    else</span><br><span class="line">        for i in range(l:end - l:start, 0, -1)</span><br><span class="line">            execute l:end . &#39;m&#39; . (l:where + i)</span><br><span class="line">        endfor</span><br><span class="line">    endif</span><br><span class="line">endfunction</span><br><span class="line"></span><br><span class="line">command! -nargs&#x3D;1 -range Interleave &lt;line1&gt;,&lt;line2&gt;call Interleave(&quot;&lt;args&gt;&quot;)</span><br><span class="line">vmap &lt;leader&gt;j :Interleave&lt;space&gt;</span><br></pre></td></tr></table></figure>
+<p>完成后的效果参见下节。</p>
+<h1>效果展示</h1>
+<p>首先是用行号指定目标行的情形：</p>
+<p><img src="/images/2015-12-21-use-line-number.gif" alt="Interleave with line number"></p>
+<p>在目标行定义新的标签 <code>a</code>，之后用 <code>'a</code> 来访问。</p>
+<p><img src="/images/2015-12-21-use-mark.gif" alt="Interleave with mark"></p>
+<p>另外绑定快捷键 <code>&lt;leader&gt;j</code> 是因为 vim 中默认用 <code>j</code> 来合并行。</p>
+<h1>后记</h1>
+<p>本文中介绍的这个功能实际出现的频率并不是特别高，大概一个月一两次。每次都想着要不单独写个插件吧。但都忘了，这次正好一次消灭了。</p>
+<p>另外有些同学可能不喜欢看到这么多代码。那么用宏也能实现该功能，只是几乎都需要事先知道两个块之间隔的行数，或是在两者之间跳转的方法。如：</p>
+<p><img src="/images/2015-12-21-use-macro.gif" alt="Interleave with macro"></p>
+<p>上图中按下的键为：<code>ma:16&lt;Enter&gt;qqdd'apjma''q12@q</code>。其中 <code>&lt;Enter&gt;</code> 为回车键。</p>
+<p>这里使用了 <code>ma</code> 来标记目标行，用 <code>''</code> 来跳转到本次跳转前的位置。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2015/Vim-小技巧——合并行块/';
+var disqus_title = 'Vim 小技巧——合并行块';
+var disqus_url = 'https://lotabout.me/2015/Vim-%E5%B0%8F%E6%8A%80%E5%B7%A7%E2%80%94%E2%80%94%E5%90%88%E5%B9%B6%E8%A1%8C%E5%9D%97/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

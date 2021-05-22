@@ -1,0 +1,75 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="因为它不是。对不关键部分的过早优化才是。Donald Knuth 这句话的原文是："><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>过早优化为什么是万恶之源？ | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/optimization/" rel="tag">optimization</a></div><div class="post-time">2020-04-06</div></div></div><div class="container post-header"><h1>过早优化为什么是万恶之源？</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#什么部分才关键？"><span class="toc-number">1.</span> <span class="toc-text">什么部分才关键？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#事后优化头很大"><span class="toc-number">2.</span> <span class="toc-text">事后优化头很大</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#让优化刻入骨髓"><span class="toc-number">3.</span> <span class="toc-text">让优化刻入骨髓</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">4.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">5.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>因为它不是。对不关键部分的过早优化才是。Donald Knuth 这句话的原文是：</p>
+<blockquote>
+<p>Programmers waste enormous amounts of time thinking about, or worrying
+about, the speed of noncritical parts of their programs, and these attempts
+at efficiency actually have a strong negative impact when debugging and
+maintenance are considered. We should forget about small efficiencies, say
+about 97% of the time: <strong>premature optimization is the root of all evil</strong>.
+Yet we should not pass up our opportunities in that critical 3%.</p>
+<p>– <a href="https://wiki.c2.com/?PrematureOptimization" target="_blank" rel="noopener">https://wiki.c2.com/?PrematureOptimization</a></p>
+</blockquote>
+<p>翻译过来是（注意前半句话）：</p>
+<blockquote>
+<p>程序员们浪费了大量的时间去思考、担心程序中非关键部分的性能，如果考虑整体代码
+的 debug 和维护的时间，则这些性能优化的开销是得不偿失的。对于约 97% 的小优化
+点，我们应该忽略它们：<strong>过早优化为什么万恶之源</strong>。而对于剩下的关键的 3%，我
+们则不能放弃优化的机会。</p>
+</blockquote>
+<p>原文说的是：对于不关键的部分不要过早优化。而原因主要是性价比太低。</p>
+<h2 id="什么部分才关键？"><a class="header-anchor" href="#什么部分才关键？"></a>什么部分才关键？</h2>
+<p>一看预算、二看数量、三看单价。</p>
+<ul>
+<li>“预算”是指你能容忍的时间/空间。支付宝的一笔转帐大概率需要在 200ms 内完成；一笔贷款申请 10 min 审批可能算快的；淘宝新商品也许上线 1h 后才能搜到。</li>
+<li>“数量”是指某个操作被调用的次数。量变引起质变。如一般 64 位的 String 里 length
+字段是 8 个字节，100 万个就被放大到 8MB 内存了。</li>
+<li>“单价”就是某个操作本身的耗时了，通常需要和数量结合起来看。</li>
+</ul>
+<p>换句话说，当<code>单价*数量</code>有可能大于<code>预算</code>时，要么优化数量，要么优化单价。</p>
+<p>问题在于，我怎么知道哪部分操作可能出问题？这也许也是 Donald Knuth 最想要表达的：我们并不知道，所以要最后通过 profile 找到。借用知乎网友的回答<sup id="fnref:1"><a href="#fn:1" rel="footnote">1</a></sup>，原文应该翻译为“盲目优化是万恶之源”。</p>
+<p>也许上面的说法都指向“不要过早优化”，但实际编码中，多数情况下，我认为<strong>需要</strong>尽早优化。原因有二：</p>
+<ol>
+<li>事后优化代价很大</li>
+<li>事实上通过经验是可以预判优化点的</li>
+</ol>
+<h2 id="事后优化头很大"><a class="header-anchor" href="#事后优化头很大"></a>事后优化头很大</h2>
+<p>这里我举两个亲身经历的事件。</p>
+<p>第一个是做规则引擎，允许用户编写规则，QA 发现在导入一个大的配置文件 (2k个规则)
+需要 2 小时，在 profile 之后也很快定位到瓶颈：读写数据库的次数过多。之前的逻辑是针对界面创建规则写的，在创建规则过程中需要访问多次数据库，而批量导入时重用了单次的规则，没有合并批量的读写，导致特别慢。</p>
+<p>思路很清晰，批量读写数据库。问题在于写入规则的逻辑很复杂，费了九牛二虎之力才理清楚逻辑改成了批量的版本，结果 bug 还是修了好几个迭代。</p>
+<p>第二个是有一个微服务，调用的协议使用了 Avro，请求和响应中会携带数据的 Schema。经过 profile 后发现数据的序列化和反序列化占用了最多的时间，而 Schema 的内容远大于数据本身。</p>
+<p>由于有些服务已经上线，修改协议的难度比较大，后期只能尝试增加批量的接口一定程度上缓解。</p>
+<p>除此之外，还可能遇到“处处是热点，处处是瓶颈”的情况。比如 Rust 的编译时间很长，可是 profile 了编译器发现没有明显的热点，每个过程都占用不多，但整体性能就是优化不了。</p>
+<h2 id="让优化刻入骨髓"><a class="header-anchor" href="#让优化刻入骨髓"></a>让优化刻入骨髓</h2>
+<p>虽然提前判断出优化点很大程度上依赖于经验，但其实还是有一定“套路”的。</p>
+<p>比如考虑“数量”，只要一个操作的次数与输入的规模相关，且输入规模可能爆炸，就要注意去优化。比如上节示例里的批量数据库读写。</p>
+<p>比如考虑“单价”，比如上例中，Schema 内容大于数据内容，本身就是不合理的，单价的损耗太大了，就需要在设计时提前考虑。当然“单价”一般要依托于数量。</p>
+<p>对于“处处是热点，处处是瓶颈”其实就没有特别好的方法了，只能说，要把一些知识化成习惯。例如知道了二维数组先遍历行再遍历列能更高效利用缓存，把它作为编码习惯就好了。</p>
+<p>当然，最最重要的还是确定“预算”！接需求的时候确认输入的规模，能接受的延时等等都能让我们更好地理解优化的边界和粒度。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>不要让“过早优化是万恶之源”成为懒惰的借口。过早优化不好的前提是你不知道瓶颈在哪，而在实际中是有迹可循的：预算、数量、单价。事后的优化往往代价会很大，预防才是最便宜的治疗。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li>多搜搜谷歌相关的讨论，正反的观点都多了解了解</li>
+<li><a href="https://gywbd.github.io/posts/2016/10/the-premature-optimization-is-evil-myth.html" target="_blank" rel="noopener">对“提早优化是万恶之源”的批判</a></li>
+</ul>
+<div id="footnotes"><hr><div id="footnotelist"><ol style="list-style:none; padding-left: 0"><li id="fn:1"><span style="display: inline-block; vertical-align: top; padding-right: 10px">1.</span><span style="display: inline-block; vertical-align: top"><a href="https://www.zhihu.com/question/24282796/answer/846758069" target="_blank" rel="noopener">「过早的优化是万恶之源」这种说法对不对，为什么？ - 南星的回答 - 知乎</a></span><a href="#fnref:1" rev="footnote"> ↩</a></li></ol></div></div></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2020/premature-optimization/';
+var disqus_title = '过早优化为什么是万恶之源？';
+var disqus_url = 'https://lotabout.me/2020/premature-optimization/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

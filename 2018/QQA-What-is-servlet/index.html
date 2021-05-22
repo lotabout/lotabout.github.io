@@ -1,0 +1,46 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="Servlet 没有标准的中文译名，我们会在学习 Java Web 编程（如 Spring）时遇到，你知道它是什么吗？"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>QQA: 什么是 Servlet | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/QQA/" rel="tag">QQA</a><a class="post-tag-link" href="/tags/java/" rel="tag">java</a><a class="post-tag-link" href="/tags/servlet/" rel="tag">servlet</a></div><div class="post-time">2018-03-31</div></div></div><div class="container post-header"><h1>QQA: 什么是 Servlet</h1></div><div class="container post-content"><p>Servlet 没有标准的中文译名，我们会在学习 Java Web 编程（如 Spring）时遇到，你知道它是什么吗？</p>
+<p>（Quick Question and Answer 系列旨在对小问题做简短解答）</p>
+<h2 id="什么是-servlet"><a class="header-anchor" href="#什么是-servlet"></a>什么是 Servlet</h2>
+<p>英语里 <code>-let</code> 后缀代表“小型的”，如 “booklet” 是小册子，所以 'Servlet’可以认为是“小 Server”。</p>
+<ul>
+<li>狭义上，Servlet 是一个接口，定义在 <code>javax.servlet.Servlet</code>。</li>
+<li>广义上，任何实现了 Servlet 接口的程序都可以叫作 Servlet</li>
+</ul>
+<h2 id="web-应用的结构"><a class="header-anchor" href="#web-应用的结构"></a>Web 应用的结构</h2>
+<p>假设我们要写一个 Web 应用，什么框架都不用，应该从何做起？一般来说，我们需要：</p>
+<ol>
+<li>监听 TCP 请求，并解析出 TCP 中的 HTTP 请求</li>
+<li>有了 HTTP 请求，我们需要根据 HTTP 请求找到对应的函数来执行（路由）</li>
+<li>实现函数中的 business 逻辑，例如从数据库里查询数据，做操作，生成返回的内容等等。</li>
+<li>将返回的内容用 HTTP 请求包裹</li>
+<li>用 TCP 将生成的 HTTP 请求返回</li>
+</ol>
+<p>我们发现 1,2,4,5 这些工作不管开发什么样的应用都要实现一次，那干脆单独抽出来做成模块。于是 1,5 就被做成了 web server ，如 tomcat；2,4就被独立成 web 框架，如
+Spring。</p>
+<img src="/2018/QQA-What-is-servlet/servlet.svg" class="" title="Structure of Web Application">
+<p>如上，Servlet 接口就是 web server 与框架间的通信协议，所以在学习 Web 框架的实现时容易遇到它。但写具体的应用时，因为框架已经屏蔽了这些细节，所以基本也不会用到 Servlet 的概念。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://ruslanspivak.com/lsbaws-part1/" target="_blank" rel="noopener">Let’s Build A Web Server</a> Python 教程，从头写一个 Web Server，对理解 web server 的工作原理很有帮助</li>
+<li><a href="https://www.mulesoft.com/cn/tcat/tomcat-servlet" target="_blank" rel="noopener">An Introduction to Tomcat Servlet Interactions</a> Tomcat 如何与 Servlet 进行交互</li>
+</ul></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/QQA-What-is-servlet/';
+var disqus_title = 'QQA: 什么是 Servlet';
+var disqus_url = 'https://lotabout.me/2018/QQA-What-is-servlet/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

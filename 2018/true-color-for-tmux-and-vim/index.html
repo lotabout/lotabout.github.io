@@ -1,0 +1,41 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="有一些 vim 主题（如 &lt;a href=&quot;https://github.com/morhetz/gruvbox&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;gruvbox&lt;/a&gt; 或
+&lt;a href=&quot;https://github.com/lifepillar/vim-solarized8&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;solarized8&lt;/a&gt;）在 GUI 和终端下效果不同，有可能是因为这个主题需要 true color (24 位颜色) 的支持，而通常终端只开启 256 色的支持（如 &lt;code&gt;xterm-256color&lt;/code&gt;）。下面来看看怎么开启 true color 支持。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>为 vim + tmux 开启真彩色(true color) | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/tmux/" rel="tag">tmux</a><a class="post-tag-link" href="/tags/vim/" rel="tag">vim</a></div><div class="post-time">2018-07-11</div></div></div><div class="container post-header"><h1>为 vim + tmux 开启真彩色(true color)</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#验证终端的色彩支持"><span class="toc-number">1.</span> <span class="toc-text">验证终端的色彩支持</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tmux-开启真彩色"><span class="toc-number">2.</span> <span class="toc-text">tmux 开启真彩色</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#vim-开启真彩色"><span class="toc-number">3.</span> <span class="toc-text">vim 开启真彩色</span></a></li></ol></details></div><div class="container post-content"><p>有一些 vim 主题（如 <a href="https://github.com/morhetz/gruvbox" target="_blank" rel="noopener">gruvbox</a> 或
+<a href="https://github.com/lifepillar/vim-solarized8" target="_blank" rel="noopener">solarized8</a>）在 GUI 和终端下效果不同，有可能是因为这个主题需要 true color (24 位颜色) 的支持，而通常终端只开启 256 色的支持（如 <code>xterm-256color</code>）。下面来看看怎么开启 true color 支持。</p>
+<h2 id="验证终端的色彩支持"><a class="header-anchor" href="#验证终端的色彩支持"></a>验证终端的色彩支持</h2>
+<p>真彩色的支持是需要终端的支持的，常用的终端（如 iterm2, konsole 等) 都已经支持了，详细的列表可以参考 <a href="https://gist.github.com/XVilka/8346728#now-supporting-truecolour" target="_blank" rel="noopener">Colours in terminal</a>。</p>
+<p>当然，我们可以自己验证终端是否支持真彩色。在终端里执行
+<a href="https://github.com/gnachman/iTerm2/blob/master/tests/24-bit-color.sh" target="_blank" rel="noopener">24-bit-color.sh</a>
+脚本，如果支持真彩色，则显示如下：</p>
+<img src="/2018/true-color-for-tmux-and-vim/true-color.png" class="" title="True Color">
+<p>否则则类似下图：</p>
+<img src="/2018/true-color-for-tmux-and-vim/256-color.png" class="" title="Not True Color">
+<h2 id="tmux-开启真彩色"><a class="header-anchor" href="#tmux-开启真彩色"></a>tmux 开启真彩色</h2>
+<p>tmux &gt; 2.2 后开始支持真彩色。在 <code>.tmux.conf</code> 中添加如下内容：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">set -g default-terminal screen-256color</span><br><span class="line">set-option -ga terminal-overrides &quot;,*256col*:Tc&quot; # 这句是关键</span><br></pre></td></tr></table></figure>
+<p>重新开启 tmux 即可。注意要先退出所有正在运行的 tmux 后再重开 tmux。</p>
+<h2 id="vim-开启真彩色"><a class="header-anchor" href="#vim-开启真彩色"></a>vim 开启真彩色</h2>
+<p><code>vim &gt;= 7.4.1770</code> 及 <code>neovim &gt;= 0.2.2</code> 都支持真彩色，但需要少许配置。在
+<code>.vimrc</code> 中加入：</p>
+<figure class="highlight vim"><table><tr><td class="code"><pre><span class="line"><span class="keyword">if</span> <span class="built_in">has</span>(<span class="string">"termguicolors"</span>)</span><br><span class="line">    <span class="comment">" fix bug for vim</span></span><br><span class="line">    set t_8f=^[[38;2;%lu;%lu;%lum</span><br><span class="line">    set t_8b=^[[48;2;%lu;%lu;%lum</span><br><span class="line"></span><br><span class="line">    <span class="comment">" enable true color</span></span><br><span class="line">    <span class="keyword">set</span> termguicolors</span><br><span class="line"><span class="keyword">endif</span></span><br></pre></td></tr></table></figure>
+<p>其中 <code>termguicolors</code> 用来开启真彩色，前面两行用来解决 vim 的 BUG (neovim 不需要），其中 <code>^[</code> 是代表 ESC 键，需要在 vim 中按 <code>Ctrl-v ESC</code> 来输入。</p>
+<p>最后可以在 vim 中开启 terminal (vim 8 或 neovim 中执行 <code>:terminal</code>)，执行上面的 <code>24-bit-color.sh</code> 来验证是否成功。祝你的终端生活“丰富多彩”！</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/true-color-for-tmux-and-vim/';
+var disqus_title = '为 vim + tmux 开启真彩色(true color)';
+var disqus_url = 'https://lotabout.me/2018/true-color-for-tmux-and-vim/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

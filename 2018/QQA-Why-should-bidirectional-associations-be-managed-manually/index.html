@@ -1,0 +1,65 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="Hibernate/JPA 中如果两个 Entity 之间的关联是双向的（不论是 &lt;code&gt;@ManyToMany&lt;/code&gt;、
+&lt;code&gt;@OneToMany&lt;/code&gt; 还是 &lt;code&gt;@OneToOne&lt;/code&gt;），都需要手动管理关联，为什么？"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>QQA: Hibernate 为什么需要手工管理双向关联 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/JPA/" rel="tag">JPA</a><a class="post-tag-link" href="/tags/QQA/" rel="tag">QQA</a><a class="post-tag-link" href="/tags/hibernate/" rel="tag">hibernate</a></div><div class="post-time">2018-07-28</div></div></div><div class="container post-header"><h1>QQA: Hibernate 为什么需要手工管理双向关联</h1></div><div class="container post-content"><p>Hibernate/JPA 中如果两个 Entity 之间的关联是双向的（不论是 <code>@ManyToMany</code>、
+<code>@OneToMany</code> 还是 <code>@OneToOne</code>），都需要手动管理关联，为什么？</p>
+<ul>
+<li>调用 <code>entityManager.persist</code> 保存对象时 Hibernate/JPA 不会直接执行 SQL，而会等到 <code>entityManager.flush</code> 或事务 <code>commit</code> 时完成。</li>
+<li>同理 <code>entityManager.load</code> 也可能只会从内存中获取对象(可以认为是某种缓存)。</li>
+<li>如果不手动管理双向关联，则从内存获取的对象并不会反映数据库中的映射关系。</li>
+</ul>
+<h2 id="什么是双向关联"><a class="header-anchor" href="#什么是双向关联"></a>什么是双向关联</h2>
+<p>双向关联的本质是告诉 Hibernate 让两个实体共用一张数据库表(或表结构)。</p>
+<p>这里以 <code>@ManyToMany</code> 为例(参考<a href="http://docs.jboss.org/hibernate/orm/5.3/userguide/html_single/Hibernate_User_Guide.html#associations-many-to-many-bidirectional" target="_blank" rel="noopener">Hibernate User
+Guide</a>)
+：有两个实体 <code>Person</code> 和 <code>Address</code>，一个 Person 可以拥有多个 Address，而一个
+Address 也可以属于多个 Person。于是设计实体如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Entity</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Person</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Id</span></span><br><span class="line">    <span class="meta">@GeneratedValue</span></span><br><span class="line">    <span class="keyword">private</span> Long id;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@ManyToMany</span></span><br><span class="line">    <span class="keyword">private</span> List&lt;Address&gt; addresses = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ... omit all other stuff</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Entity</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Address</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Id</span></span><br><span class="line">    <span class="meta">@GeneratedValue</span></span><br><span class="line">    <span class="keyword">private</span> Long id;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@ManyToMany</span></span><br><span class="line">    <span class="keyword">private</span> List&lt;Person&gt; owners = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ... omit all other stuff</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>问题来了，我们应该创建一张关联表还是两张呢？其实取决于使用业务含义。即如果
+<code>Person</code> 中 <code>addresses</code> 的含义是“人的居住地址”，而 <code>Address</code> 中的 <code>owners</code> 与之对应，表达的是“地址上居住的人”，则它们应该是一张关联表。但如果 <code>Address</code> 的
+<code>owners</code> 表达的是“地址的主人(如房东)”，则二者就不应该共用一张关联表。</p>
+<p>如何告诉 Hibernate 需要共用一张表呢？通过 <code>mappedBy</code>：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Entity</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Person</span> </span>&#123;</span><br><span class="line">    <span class="meta">@ManyToMany</span></span><br><span class="line">    <span class="keyword">private</span> List&lt;Address&gt; addresses = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">    <span class="comment">// ... omit all other methods</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Entity</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Address</span> </span>&#123;</span><br><span class="line">    <span class="meta">@ManyToMany</span>(mappedBy = <span class="string">"addresses"</span>)</span><br><span class="line">    <span class="keyword">private</span> List&lt;Person&gt; owners = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ... omit all other methods</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>(mappedBy = &quot;addresses&quot;)</code> 的含义是这个字段与 <code>Person</code> 中的
+<code>addresses</code> 字段共用表结构。</p>
+<p>这里最后重点是双向关系一定是从属关系，有一方是 owner，另一方是 follower(标记了
+<code>mappedBy</code> 的一方)。只有在 owner 这方添加关联并保存时，Hibernate 才会存入关联表，反之不会。例如我们只能通过 <code>person.addAddress()</code> 并保存 <code>person</code> 的方式来完成添加关联而不能用 <code>address.addPerson()</code> 后保存 <code>address</code> 的方式。</p>
+<h2 id="手工管理关联是什么意思"><a class="header-anchor" href="#手工管理关联是什么意思"></a>手工管理关联是什么意思</h2>
+<p>例如我们在实现 <code>Person.addAddress</code> 时，需要这样实现：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Entity</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Person</span> </span>&#123;</span><br><span class="line">    <span class="comment">//...omit other fields</span></span><br><span class="line"></span><br><span class="line">    <span class="meta">@ManyToMany</span></span><br><span class="line">    <span class="keyword">private</span> List&lt;Address&gt; addresses = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">addAddress</span><span class="params">(Address address)</span> </span>&#123;</span><br><span class="line">        addresses.add( address );</span><br><span class="line">        address.getOwners().add( <span class="keyword">this</span> );</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">removeAddress</span><span class="params">(Address address)</span> </span>&#123;</span><br><span class="line">        addresses.remove( address );</span><br><span class="line">        address.getOwners().remove( <span class="keyword">this</span> );</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// ... omit all other methods</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>即在为 <code>person</code> 添加 <code>address</code> 时，我们需要将当前的 person 添加到 address的
+<code>owners</code> 字段中；删除时相似。“管理关联”表示需要在代码级别来管理关联双方实体的联系。</p>
+<p>如果从数据库的角度思考，我们知道 <code>Person</code> 与 <code>Address</code> 的关系是存储在一张关联表里的，一个关联存入这张表后，不论哪一方读取，都应该反映出新的关联关系，而在
+Hibernate 这一层，却需要我们显式地(从另一方的 <code>set</code> )中添加/删除这个关联，显得不可思议。</p>
+<p>另外，注意我们往 <code>set</code> 中添加 <code>address</code> 或 <code>person</code> 时，需要我们正确的实现
+<code>Person</code> 和 <code>Address</code> 的 <code>equals</code> 和 <code>hashCode</code> 方法，这是另一个坑，这里就不深入了。</p>
+<h2 id="为什么需要手工管理"><a class="header-anchor" href="#为什么需要手工管理"></a>为什么需要手工管理</h2>
+<p>终于到了“为什么”部分了，首先是如果不手工管理会发生什么。考虑下面的测试：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="meta">@Transactional</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    Person person = repository.findPersonById(<span class="number">1</span>);</span><br><span class="line">    Address address = repository.findAddressById(<span class="number">20</span>);</span><br><span class="line">    person.getAddresses.add(address);</span><br><span class="line">    repository.save(person);</span><br><span class="line"></span><br><span class="line">    System.out.println(address.getOwners().size()) <span class="comment">// what is the result?</span></span><br><span class="line"></span><br><span class="line">    Address address = repository.findAddressById(<span class="number">20</span>);</span><br><span class="line">    System.out.println(address.getOwners().size()) <span class="comment">// what is the result?</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>答案是两个 <code>size</code> 都为 <code>0</code>。</p>
+<ul>
+<li>调用 <code>save</code> 方法时，Hibernate/JPA 并不会直接执行 SQL 来保存，这样性能差。</li>
+<li>在 <code>find</code> 时，如果内存中已经有对应的对象，Hibernate/JPA 也不会执行 SQL 去查询。</li>
+</ul>
+<p>注意上面说的是一般的情况，什么时候执行 SQL 取决于具体的配置，一般会在事务前的
+<code>commit</code>。</p>
+<p>因此，如果在 <code>save</code> 之后还需要使用到 <code>address</code>，就不要期待它会立即反映出数据库中的修改；反之，如果 <code>save</code> 之后就不再使用到 <code>address</code>，那即使不手工管理(同步)
+关联关系也不会有多大影响。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/QQA-Why-should-bidirectional-associations-be-managed-manually/';
+var disqus_title = 'QQA: Hibernate 为什么需要手工管理双向关联';
+var disqus_url = 'https://lotabout.me/2018/QQA-Why-should-bidirectional-associations-be-managed-manually/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

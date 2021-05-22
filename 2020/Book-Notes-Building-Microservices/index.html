@@ -1,0 +1,1772 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;p&gt;简评：&lt;a href=&quot;https://www.amazon.cn/dp/B01M3VNAYQ/&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;这本书&lt;/a&gt;是很“宽”的一本书，描述了许多构建微服务中将面临的挑战，不过大多数知识点还是点到为止。个人觉得适合有一定基础的读者，能扩展知识的宽度，之后再针对其中的知识点深造。&lt;/p&gt;
+&lt;p&gt;本文是读书笔记，由 XMind 导出（&lt;a href=&quot;/2020/Book-Notes-Building-Microservices/building-microservices.xmind&quot;&gt;XMind 源文件
+&lt;/a&gt;）。 不建议阅读。&lt;/p&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>《微服务设计》 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Book/" rel="tag">Book</a><a class="post-tag-link" href="/tags/MicroService/" rel="tag">MicroService</a></div><div class="post-time">2020-02-21</div></div></div><div class="container post-header"><h1>《微服务设计》</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#ch01-微服务"><span class="toc-number">1.</span> <span class="toc-text">Ch01: 微服务</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#什么是微服务"><span class="toc-number">1.1.</span> <span class="toc-text">什么是微服务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#主要好处"><span class="toc-number">1.2.</span> <span class="toc-text">主要好处</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#面向服务的架构"><span class="toc-number">1.3.</span> <span class="toc-text">面向服务的架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#其它分解技术"><span class="toc-number">1.4.</span> <span class="toc-text">其它分解技术</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch02-演化式架构师"><span class="toc-number">2.</span> <span class="toc-text">Ch02: 演化式架构师</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#不准确的比较"><span class="toc-number">2.1.</span> <span class="toc-text">不准确的比较</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#架构师的演化视角"><span class="toc-number">2.2.</span> <span class="toc-text">架构师的演化视角</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#分区"><span class="toc-number">2.3.</span> <span class="toc-text">分区</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#一个原则性方法"><span class="toc-number">2.4.</span> <span class="toc-text">一个原则性方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#要求的标准"><span class="toc-number">2.5.</span> <span class="toc-text">要求的标准</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#代码治理"><span class="toc-number">2.6.</span> <span class="toc-text">代码治理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#技术债务"><span class="toc-number">2.7.</span> <span class="toc-text">技术债务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#例外管理"><span class="toc-number">2.8.</span> <span class="toc-text">例外管理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#集中治理和领导"><span class="toc-number">2.9.</span> <span class="toc-text">集中治理和领导</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#建设团队"><span class="toc-number">2.10.</span> <span class="toc-text">建设团队</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#小结：架构师的职责"><span class="toc-number">2.11.</span> <span class="toc-text">小结：架构师的职责</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch03-如何建模服务"><span class="toc-number">3.</span> <span class="toc-text">Ch03: 如何建模服务</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#什么样的服务是好服务"><span class="toc-number">3.1.</span> <span class="toc-text">什么样的服务是好服务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#限界上下文"><span class="toc-number">3.2.</span> <span class="toc-text">限界上下文</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#业务功能"><span class="toc-number">3.3.</span> <span class="toc-text">业务功能</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#逐步划分上下文"><span class="toc-number">3.4.</span> <span class="toc-text">逐步划分上下文</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#关于业务概念的沟通"><span class="toc-number">3.5.</span> <span class="toc-text">关于业务概念的沟通</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#技术边界"><span class="toc-number">3.6.</span> <span class="toc-text">技术边界</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch04-集成"><span class="toc-number">4.</span> <span class="toc-text">Ch04: 集成</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#寻找理想的集成技术"><span class="toc-number">4.1.</span> <span class="toc-text">寻找理想的集成技术</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#共享数据库"><span class="toc-number">4.2.</span> <span class="toc-text">共享数据库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#同步与异步"><span class="toc-number">4.3.</span> <span class="toc-text">同步与异步</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#编排与协同"><span class="toc-number">4.4.</span> <span class="toc-text">编排与协同</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#远程过程调用-rpc"><span class="toc-number">4.5.</span> <span class="toc-text">远程过程调用(RPC)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#rest"><span class="toc-number">4.6.</span> <span class="toc-text">REST</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#实现基于事件的异步协作方式"><span class="toc-number">4.7.</span> <span class="toc-text">实现基于事件的异步协作方式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#服务即状态机"><span class="toc-number">4.8.</span> <span class="toc-text">服务即状态机</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#响应式扩展-reactive-extensions-rx"><span class="toc-number">4.9.</span> <span class="toc-text">响应式扩展(Reactive Extensions, Rx)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#微服务中的-dry-和代码重用的危险"><span class="toc-number">4.10.</span> <span class="toc-text">微服务中的 DRY 和代码重用的危险</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#按引用访问"><span class="toc-number">4.11.</span> <span class="toc-text">按引用访问</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#版本管理"><span class="toc-number">4.12.</span> <span class="toc-text">版本管理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#用户界面"><span class="toc-number">4.13.</span> <span class="toc-text">用户界面</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#与第三方软件集成"><span class="toc-number">4.14.</span> <span class="toc-text">与第三方软件集成</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch05-分解单块系统"><span class="toc-number">5.</span> <span class="toc-text">Ch05: 分解单块系统</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#关键是接缝"><span class="toc-number">5.1.</span> <span class="toc-text">关键是接缝</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#分解单块系统的原因"><span class="toc-number">5.2.</span> <span class="toc-text">分解单块系统的原因</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#杂乱的依赖"><span class="toc-number">5.3.</span> <span class="toc-text">杂乱的依赖</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#找到问题的关键"><span class="toc-number">5.4.</span> <span class="toc-text">找到问题的关键</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#例子：打破外键关系"><span class="toc-number">5.5.</span> <span class="toc-text">例子：打破外键关系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#例子：共享静态数据"><span class="toc-number">5.6.</span> <span class="toc-text">例子：共享静态数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#例子：共享-可变-数据"><span class="toc-number">5.7.</span> <span class="toc-text">例子：共享（可变）数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#例子：共享表"><span class="toc-number">5.8.</span> <span class="toc-text">例子：共享表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#重构数据库"><span class="toc-number">5.9.</span> <span class="toc-text">重构数据库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#事务边界"><span class="toc-number">5.10.</span> <span class="toc-text">事务边界</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#分离数据库后如何做报告"><span class="toc-number">5.11.</span> <span class="toc-text">分离数据库后如何做报告</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#修改的代价"><span class="toc-number">5.12.</span> <span class="toc-text">修改的代价</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch06-部署"><span class="toc-number">6.</span> <span class="toc-text">Ch06: 部署</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#持续集成简介"><span class="toc-number">6.1.</span> <span class="toc-text">持续集成简介</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ci-应用到微服务"><span class="toc-number">6.2.</span> <span class="toc-text">CI 应用到微服务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#pipeline-与-ci"><span class="toc-number">6.3.</span> <span class="toc-text">pipeline 与 CI</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#artifact"><span class="toc-number">6.4.</span> <span class="toc-text">Artifact</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#环境"><span class="toc-number">6.5.</span> <span class="toc-text">环境</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#服务配置"><span class="toc-number">6.6.</span> <span class="toc-text">服务配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#服务与主机的映射"><span class="toc-number">6.7.</span> <span class="toc-text">服务与主机的映射</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#自动化"><span class="toc-number">6.8.</span> <span class="toc-text">自动化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#从物理机到虚拟机"><span class="toc-number">6.9.</span> <span class="toc-text">从物理机到虚拟机</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#一个部署接口"><span class="toc-number">6.10.</span> <span class="toc-text">一个部署接口</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch07-测试"><span class="toc-number">7.</span> <span class="toc-text">Ch07: 测试</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#测试类型"><span class="toc-number">7.1.</span> <span class="toc-text">测试类型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#测试范围-金字塔"><span class="toc-number">7.2.</span> <span class="toc-text">测试范围（金字塔）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#实现服务测试"><span class="toc-number">7.3.</span> <span class="toc-text">实现服务测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#端到端测试"><span class="toc-number">7.4.</span> <span class="toc-text">端到端测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#部署后再测试"><span class="toc-number">7.5.</span> <span class="toc-text">部署后再测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#非功能性需求-性能-用户-稳定"><span class="toc-number">7.6.</span> <span class="toc-text">非功能性需求（性能、用户、稳定……）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch08-监控"><span class="toc-number">8.</span> <span class="toc-text">Ch08: 监控</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#单一服务-单一服务器"><span class="toc-number">8.1.</span> <span class="toc-text">单一服务、单一服务器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#单一服务-多服务器"><span class="toc-number">8.2.</span> <span class="toc-text">单一服务、多服务器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#多个服务-多个服务器"><span class="toc-number">8.3.</span> <span class="toc-text">多个服务、多个服务器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#日志-日志-更多的日志"><span class="toc-number">8.4.</span> <span class="toc-text">日志、日志、更多的日志</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#多个服务的指标跟踪"><span class="toc-number">8.5.</span> <span class="toc-text">多个服务的指标跟踪</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#服务指标"><span class="toc-number">8.6.</span> <span class="toc-text">服务指标</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#综合监控"><span class="toc-number">8.7.</span> <span class="toc-text">综合监控</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#关联标识"><span class="toc-number">8.8.</span> <span class="toc-text">关联标识</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#级联"><span class="toc-number">8.9.</span> <span class="toc-text">级联</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#标准化"><span class="toc-number">8.10.</span> <span class="toc-text">标准化</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch09-安全"><span class="toc-number">9.</span> <span class="toc-text">Ch09: 安全</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#身份验证和授权"><span class="toc-number">9.1.</span> <span class="toc-text">身份验证和授权</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#服务间的身份验证和授权"><span class="toc-number">9.2.</span> <span class="toc-text">服务间的身份验证和授权</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#静态数据的安全"><span class="toc-number">9.3.</span> <span class="toc-text">静态数据的安全</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#深度-防御"><span class="toc-number">9.4.</span> <span class="toc-text">深度防御</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#保持节俭"><span class="toc-number">9.5.</span> <span class="toc-text">保持节俭</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#黄金法则"><span class="toc-number">9.6.</span> <span class="toc-text">黄金法则</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#内建安全"><span class="toc-number">9.7.</span> <span class="toc-text">内建安全</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#外部验证"><span class="toc-number">9.8.</span> <span class="toc-text">外部验证</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch10-康威定律和系统设计"><span class="toc-number">10.</span> <span class="toc-text">Ch10: 康威定律和系统设计</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#康威定律"><span class="toc-number">10.1.</span> <span class="toc-text">康威定律</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#证据"><span class="toc-number">10.2.</span> <span class="toc-text">证据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#适应沟通途径"><span class="toc-number">10.3.</span> <span class="toc-text">适应沟通途径</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#服务所有权"><span class="toc-number">10.4.</span> <span class="toc-text">服务所有权</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#共享服务的原因"><span class="toc-number">10.5.</span> <span class="toc-text">共享服务的原因</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#内部开源"><span class="toc-number">10.6.</span> <span class="toc-text">内部开源</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#限界上下文和团队结构"><span class="toc-number">10.7.</span> <span class="toc-text">限界上下文和团队结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#孤儿服务"><span class="toc-number">10.8.</span> <span class="toc-text">孤儿服务</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#反向的康威定律"><span class="toc-number">10.9.</span> <span class="toc-text">反向的康威定律</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#人"><span class="toc-number">10.10.</span> <span class="toc-text">人</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch11-规模化微服务"><span class="toc-number">11.</span> <span class="toc-text">Ch11: 规模化微服务</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#故障无处不在"><span class="toc-number">11.1.</span> <span class="toc-text">故障无处不在</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#多少是太多"><span class="toc-number">11.2.</span> <span class="toc-text">多少是太多</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#功能降级"><span class="toc-number">11.3.</span> <span class="toc-text">功能降级</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#架构性安全措施"><span class="toc-number">11.4.</span> <span class="toc-text">架构性安全措施</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#反脆弱的组织"><span class="toc-number">11.5.</span> <span class="toc-text">反脆弱的组织</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#幂等"><span class="toc-number">11.6.</span> <span class="toc-text">幂等</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#扩展-scale"><span class="toc-number">11.7.</span> <span class="toc-text">扩展(scale?)</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#扩展数据库"><span class="toc-number">11.8.</span> <span class="toc-text">扩展数据库</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#缓存"><span class="toc-number">11.9.</span> <span class="toc-text">缓存</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#自动伸缩"><span class="toc-number">11.10.</span> <span class="toc-text">自动伸缩</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#cap"><span class="toc-number">11.11.</span> <span class="toc-text">CAP</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#服务发现"><span class="toc-number">11.12.</span> <span class="toc-text">服务发现</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#文档服务"><span class="toc-number">11.13.</span> <span class="toc-text">文档服务</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ch12-总结"><span class="toc-number">12.</span> <span class="toc-text">Ch12: 总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#微服务原则"><span class="toc-number">12.1.</span> <span class="toc-text">微服务原则</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#什么时候不使用"><span class="toc-number">12.2.</span> <span class="toc-text">什么时候不使用</span></a></li></ol></li></ol></details></div><div class="container post-content"><p>简评：<a href="https://www.amazon.cn/dp/B01M3VNAYQ/" target="_blank" rel="noopener">这本书</a>是很“宽”的一本书，描述了许多构建微服务中将面临的挑战，不过大多数知识点还是点到为止。个人觉得适合有一定基础的读者，能扩展知识的宽度，之后再针对其中的知识点深造。</p>
+<p>本文是读书笔记，由 XMind 导出（<a href="/2020/Book-Notes-Building-Microservices/building-microservices.xmind">XMind 源文件
+</a>）。 不建议阅读。</p>
+<a id="more"></a>
+<h2 id="ch01-微服务"><a class="header-anchor" href="#ch01-微服务"></a>Ch01: 微服务</h2>
+<h3 id="什么是微服务"><a class="header-anchor" href="#什么是微服务"></a>什么是微服务</h3>
+<ul>
+<li>
+<p>很小，专注好做一件事</p>
+<ul>
+<li>构建服务时，内聚性很重要</li>
+<li>单一职责原则：把因相同原因而变化的东西聚合到一起，把因不同原因而变化的东西分离开来</li>
+<li>服务越小，独立性的好处越多，但管理大量服务也会越复杂</li>
+</ul>
+</li>
+<li>
+<p>自治性</p>
+<ul>
+<li>能独立部署</li>
+<li>通过网络通信</li>
+<li>能独立修改（不对调用方产生影响）</li>
+</ul>
+</li>
+</ul>
+<h3 id="主要好处"><a class="header-anchor" href="#主要好处"></a>主要好处</h3>
+<ul>
+<li>
+<p>技术异构性</p>
+</li>
+<li>
+<p>弹性</p>
+<ul>
+<li>舱壁，一个组件失效不会影响其它部分</li>
+</ul>
+</li>
+<li>
+<p>扩展</p>
+<ul>
+<li>粒度更细</li>
+</ul>
+</li>
+<li>
+<p>简化部署</p>
+<ul>
+<li>局部更新（C端常用）</li>
+<li>快速迭代，容易回滚</li>
+</ul>
+</li>
+<li>
+<p>与组织结构相匹配</p>
+</li>
+<li>
+<p>可组合性</p>
+<ul>
+<li>利于重用已有功能</li>
+</ul>
+</li>
+<li>
+<p>对可替代性的优化</p>
+<ul>
+<li>（可以重写小服务）</li>
+</ul>
+</li>
+</ul>
+<h3 id="面向服务的架构"><a class="header-anchor" href="#面向服务的架构"></a>面向服务的架构</h3>
+<ul>
+<li>Service-Oriented Architecture(SOA)</li>
+<li>可以认为微服务架构是 SOA 的一种特定方法</li>
+</ul>
+<h3 id="其它分解技术"><a class="header-anchor" href="#其它分解技术"></a>其它分解技术</h3>
+<ul>
+<li>
+<p>微服务两个优势</p>
+<ul>
+<li>较小的粒度</li>
+<li>解决问题方法上的更多选择</li>
+</ul>
+</li>
+<li>
+<p>共享库</p>
+<ul>
+<li>无法选择异构的技术</li>
+<li>无法保证弹性</li>
+<li>个人观点：共享库通常业务信息太浓</li>
+</ul>
+</li>
+<li>
+<p>模块</p>
+<ul>
+<li>OSGI：语言对生命周期管理支持不足，模块作者工作很大，进程内模块间耦合太重</li>
+<li>Erlang 在语言层面内支持模块，很强大。但还是无法采用异构的技术，局限性</li>
+<li>模块在实际中会迅速耦合（强烈同意）</li>
+</ul>
+</li>
+<li>
+<p>没有银弹</p>
+</li>
+</ul>
+<h2 id="ch02-演化式架构师"><a class="header-anchor" href="#ch02-演化式架构师"></a>Ch02: 演化式架构师</h2>
+<h3 id="不准确的比较"><a class="header-anchor" href="#不准确的比较"></a>不准确的比较</h3>
+<ul>
+<li>Architect 这个词是有问题的</li>
+<li>建筑领域内，是详细的计划和按部就班的实施</li>
+<li>但在软件领域内，这是不可能的</li>
+</ul>
+<h3 id="架构师的演化视角"><a class="header-anchor" href="#架构师的演化视角"></a>架构师的演化视角</h3>
+<ul>
+<li>大量的需求变更</li>
+<li>使用的工具、技术多样</li>
+<li>发布之后依然在变化</li>
+<li>类比城市规划师，应当聚焦于规划，保证系统适合开发人员在其上工作</li>
+</ul>
+<h3 id="分区"><a class="header-anchor" href="#分区"></a>分区</h3>
+<ul>
+<li>服务边界（对比于城市里的区域）</li>
+<li>应该考虑服务间如何交互，较少关心服务内</li>
+</ul>
+<h3 id="一个原则性方法"><a class="header-anchor" href="#一个原则性方法"></a>一个原则性方法</h3>
+<ul>
+<li>
+<p>战略目标</p>
+<ul>
+<li>通常我们不需要去定义战略目标</li>
+</ul>
+</li>
+<li>
+<p>原则</p>
+<ul>
+<li>为了与目标保持一致，制定一些规则，称为原则</li>
+<li>一般不要超过 10 个</li>
+<li>区分“原则”和“约束”</li>
+</ul>
+</li>
+<li>
+<p>实践</p>
+<ul>
+<li>
+<p>通过实践来保证原则能得到实施</p>
+</li>
+<li>
+<p>通常实践是技术相关的、偏底层的</p>
+</li>
+<li>
+<p>实践应该巩固原则</p>
+<p>如原则：开发团队应该对软件的开发全流程有控制权则对应实践：所有的服务部署在不同的 AWS 帐户中，从而提供资源的自助管理和其它团队的资源隔离</p>
+</li>
+</ul>
+</li>
+<li>
+<p>将原则和实践结合</p>
+<ul>
+<li>
+<p>有时原则和实际会混淆</p>
+<p>如 HTTP/REST 是实践还是原则？</p>
+</li>
+<li>
+<p>重要的是需要有原则指导系统的演化</p>
+</li>
+</ul>
+</li>
+<li>
+<p>Real World Example</p>
+</li>
+</ul>
+<h3 id="要求的标准"><a class="header-anchor" href="#要求的标准"></a>要求的标准</h3>
+<p>在考虑取舍时，要考虑：系统允许多少可变性？如何在优化单个服务自治性的同时，兼顾全局？一种方法是：清楚地定义出一个好服务应用的属性</p>
+<p>换句话说，有什么是系统的所有服务要统一遵守的？</p>
+<ul>
+<li>
+<p>监控</p>
+<ul>
+<li>能够清楚地描绘出跨服务系统的健康状态非常关键</li>
+<li>必须在系统级别而非单个服务级别进行考虑</li>
+<li>建议所有服务使用同样的方法报告健康状态</li>
+<li>Subtopic 4</li>
+</ul>
+</li>
+<li>
+<p>接口</p>
+<ul>
+<li>选用几种少数明确的接口技术有助于新消费者集成</li>
+<li>使用一种或两种接口技术作为标准，不要多</li>
+</ul>
+</li>
+<li>
+<p>架构安全性</p>
+<ul>
+<li>
+<p>必须保证每个服务都可以应对下游服务的错误</p>
+</li>
+<li>
+<p>返回码也应该遵守一定规则</p>
+</li>
+<li>
+<p>处理不同的请求</p>
+<ul>
+<li>正常且正确处理</li>
+<li>错误请求且被系统识别</li>
+<li>被访问的服务宕机，无法判断请求是否正常</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="代码治理"><a class="header-anchor" href="#代码治理"></a>代码治理</h3>
+<ul>
+<li>
+<p>如何保证共识？</p>
+</li>
+<li>
+<p>范例</p>
+<ul>
+<li>理想情况下，范例应该来自真实项目</li>
+</ul>
+</li>
+<li>
+<p>裁剪服务代码模板</p>
+<ul>
+<li>即新服务的核心属性最好是一致、现成的</li>
+<li>对标：maven 的 architecture</li>
+<li>注意：服务模板不是中心化的职责，也不是指导</li>
+<li>重用代码有危险，可能会引入服务间的耦合</li>
+</ul>
+</li>
+</ul>
+<h3 id="技术债务"><a class="header-anchor" href="#技术债务"></a>技术债务</h3>
+<ul>
+<li>有时可能会因为紧急发布某些特性而忽略一些约束，但最终是需要还债的</li>
+<li>架构师需要从更高的层次出发，理解如何做权衡</li>
+<li>理解债务的层次及对系统的影响</li>
+</ul>
+<h3 id="例外管理"><a class="header-anchor" href="#例外管理"></a>例外管理</h3>
+<ul>
+<li>多次对原则的偏离可能意味着需要修改原则</li>
+</ul>
+<h3 id="集中治理和领导"><a class="header-anchor" href="#集中治理和领导"></a>集中治理和领导</h3>
+<ul>
+<li>治理通过评估干系人的需求、当前情况及下一步的可能性来确保企业目标的达成，通过排优先级和做决策来设定方向。对于已经达成一致的方向和目标进行监督</li>
+<li>架构师不应该独自做这些事</li>
+<li>有时架构师不认同小组的决定，最好尊重他们</li>
+</ul>
+<h3 id="建设团队"><a class="header-anchor" href="#建设团队"></a>建设团队</h3>
+<ul>
+<li>重要的是帮助你的队友成长</li>
+</ul>
+<h3 id="小结：架构师的职责"><a class="header-anchor" href="#小结：架构师的职责"></a>小结：架构师的职责</h3>
+<ul>
+<li>愿景：确保系统有一个充分沟通的技术愿景，可能帮助满足客户和组织的需求</li>
+<li>同理心：理解你的决定对客户和同事的影响</li>
+<li>合作：和尽量多的同事沟通，更好地对愿景进行定义、修订和执行。</li>
+<li>适应性：确保在你的客户和组织需求的时候调整技术愿景</li>
+<li>自治性：在标准化和团队自治之间寻找一个正确的平衡点</li>
+<li>治理：确保系统按照技术愿景实现</li>
+</ul>
+<h2 id="ch03-如何建模服务"><a class="header-anchor" href="#ch03-如何建模服务"></a>Ch03: 如何建模服务</h2>
+<h3 id="什么样的服务是好服务"><a class="header-anchor" href="#什么样的服务是好服务"></a>什么样的服务是好服务</h3>
+<ul>
+<li>
+<p>低耦合+高内聚</p>
+</li>
+<li>
+<p>低耦合</p>
+<ul>
+<li>修改一个服务不需要修改另一个服务</li>
+<li>尽可能少地知道其它服务的信息</li>
+</ul>
+</li>
+<li>
+<p>高内聚</p>
+<ul>
+<li>把相关的行为聚在一起，不相关的放在别处</li>
+<li>最好能只在一个地方进行修改，就可以尽快发布</li>
+</ul>
+</li>
+</ul>
+<h3 id="限界上下文"><a class="header-anchor" href="#限界上下文"></a>限界上下文</h3>
+<ul>
+<li>
+<p>一个由显式边界限定的特定职责，类比“细胞”</p>
+</li>
+<li>
+<p>共享的隐藏模型</p>
+<ul>
+<li>同一个名字在不同的上下文中有完全不同的含义</li>
+<li>应当共享特定模型，不应该共享内部表示</li>
+</ul>
+</li>
+<li>
+<p>模块和服务</p>
+<ul>
+<li>一旦发现领域内的限界上下文，一定要用模块对其进行建模，同时共享和隐藏模型</li>
+<li>一般来说，服务应该和限界上下文保持一致</li>
+</ul>
+</li>
+<li>
+<p>过早划分</p>
+<ul>
+<li>很多时候，将一个已有代码库划分成微服务，比重头构建要简单得多</li>
+</ul>
+</li>
+</ul>
+<h3 id="业务功能"><a class="header-anchor" href="#业务功能"></a>业务功能</h3>
+<ul>
+<li>限界上下文应从业务功能出发，而非共享数据</li>
+</ul>
+<h3 id="逐步划分上下文"><a class="header-anchor" href="#逐步划分上下文"></a>逐步划分上下文</h3>
+<ul>
+<li>嵌套上下文 vs 完全分离？</li>
+<li>也许应该根据组织结构决定</li>
+<li>嵌套的另一个好处是方便成块测试</li>
+</ul>
+<h3 id="关于业务概念的沟通"><a class="header-anchor" href="#关于业务概念的沟通"></a>关于业务概念的沟通</h3>
+<h3 id="技术边界"><a class="header-anchor" href="#技术边界"></a>技术边界</h3>
+<ul>
+<li>边界划分时要考虑组织结构（如地理位置）</li>
+</ul>
+<h2 id="ch04-集成"><a class="header-anchor" href="#ch04-集成"></a>Ch04: 集成</h2>
+<h3 id="寻找理想的集成技术"><a class="header-anchor" href="#寻找理想的集成技术"></a>寻找理想的集成技术</h3>
+<ul>
+<li>
+<p>SOAP? XML-RPC? REST? Protocol Buffers?</p>
+</li>
+<li>
+<p>避免破坏性修改</p>
+<ul>
+<li>比如在响应中添加一个字段，已有的消费方不应该受到影响</li>
+</ul>
+</li>
+<li>
+<p>保证 API 的技术无关性</p>
+<ul>
+<li>用以兼容未来的技术</li>
+</ul>
+</li>
+<li>
+<p>隐藏内部的实现细节</p>
+</li>
+</ul>
+<h3 id="共享数据库"><a class="header-anchor" href="#共享数据库"></a>共享数据库</h3>
+<ul>
+<li>
+<p>最快的集成方式</p>
+</li>
+<li>
+<p>暴露了内部实现，后续修改困难</p>
+</li>
+<li>
+<p>消费方与特定技术绑定</p>
+<ul>
+<li>如果今后要使用 NoSQL?</li>
+</ul>
+</li>
+<li>
+<p>行为上，如果隐藏修改的 API？</p>
+<ul>
+<li>修改的逻辑可能散落在各个地方，破坏内聚性</li>
+</ul>
+</li>
+</ul>
+<h3 id="同步与异步"><a class="header-anchor" href="#同步与异步"></a>同步与异步</h3>
+<ul>
+<li>同步一般基于请求/响应</li>
+<li>异步一般基于事件</li>
+</ul>
+<h3 id="编排与协同"><a class="header-anchor" href="#编排与协同"></a>编排与协同</h3>
+<ul>
+<li>
+<p>如何处理跨服务业务流程的逻辑</p>
+</li>
+<li>
+<p>编排(orchestration)：中心化管理</p>
+<ul>
+<li>相当于有一个统一的协调者</li>
+<li>比如规则引擎（商业流程建模软件）</li>
+<li>缺点：编排的任务过于重大</li>
+</ul>
+</li>
+<li>
+<p>协同(chereography)：各自为政</p>
+<ul>
+<li>只触发事件，各方作出各自的响应</li>
+<li>缺点：缺少明确的流程视图</li>
+<li>需要额外工作来监控流程是否正确执行</li>
+<li>总评：能降耦合，但需要跨服务监控，微服务下优先考虑</li>
+</ul>
+</li>
+</ul>
+<h3 id="远程过程调用-rpc"><a class="header-anchor" href="#远程过程调用-rpc"></a>远程过程调用(RPC)</h3>
+<ul>
+<li>
+<p>技术的耦合</p>
+<ul>
+<li>耦合的技术方便使用，解耦的技术方便扩展</li>
+<li>如 Java RMI 只能在 Java 中使用，方便但限定技术栈</li>
+<li>如 Thrift, protocol buffers 能对接各种语言，但使用过程比较繁琐</li>
+</ul>
+</li>
+<li>
+<p>本地调用与远程调用并不相同</p>
+<ul>
+<li>
+<p>RPC 的核心是隐藏远程调用的复杂性</p>
+</li>
+<li>
+<p>封装得太好会导致人们忽略了性能、可靠性</p>
+<p>JPA 也是类似，相比于 Mybatis 封装性更好，更易用，但是也容易过度使用导致性能问题</p>
+</li>
+</ul>
+</li>
+<li>
+<p>脆弱性</p>
+<ul>
+<li>如 Java RMI，添加接口的新方法需要修改所有客户端</li>
+<li>如 Java RMI，仅在服务端删除某个字段会导致序列化和反序列化逻辑不一致，从而导致服务失败</li>
+</ul>
+</li>
+<li>
+<p>RPC 很糟糕吗？</p>
+<ul>
+<li>如果决定使用 RPC，注意：不要对远程调用过度抽象</li>
+</ul>
+</li>
+</ul>
+<h3 id="rest"><a class="header-anchor" href="#rest"></a>REST</h3>
+<ul>
+<li>
+<p>REST 和 HTTP</p>
+<ul>
+<li>它们在一起会更强</li>
+</ul>
+</li>
+<li>
+<p>Hypermedia As The Engine Of Application State(HATEOAS)</p>
+<ul>
+<li>避免客户端和服务端耦合的一个原则</li>
+<li>如 Amazon，用户点击购物车，这是一种隐式约定，即使购物车的真实地址变化，用户还是能找到</li>
+<li>对电子用户而言，我们希望它总是从“商品”找到购买链接，尽管链接会变化，商品本身不变</li>
+<li>缺点是：通信次数比较多</li>
+<li>实践中，可以先让用户自行遍历，有必要时再优化</li>
+</ul>
+</li>
+<li>
+<p>JSON、XML 及其它</p>
+</li>
+<li>
+<p>留心过多的约定</p>
+<ul>
+<li>不要直接暴露内部的对象（转成 JSON）</li>
+</ul>
+</li>
+<li>
+<p>基于 HTTP 的 REST 的缺点</p>
+<ul>
+<li>易用性：无法生成客户端的 stub 代码</li>
+<li>有些 Web 框架无法很好地支持所有的 HTTP 动词</li>
+<li>性能上：性能不如二进制协议（如 Thrift），不适用于低延迟的通信</li>
+</ul>
+</li>
+</ul>
+<h3 id="实现基于事件的异步协作方式"><a class="header-anchor" href="#实现基于事件的异步协作方式"></a>实现基于事件的异步协作方式</h3>
+<ul>
+<li>
+<p>技术选择</p>
+<ul>
+<li>
+<p>发布事件和接收事件的机制</p>
+</li>
+<li>
+<p>如 RabbitMQ 的消费代理</p>
+<ul>
+<li>能够处理发布和接收的问题</li>
+<li>同时还能对消息进行管理追踪</li>
+<li>代价是增加开发复杂度，因为需要额外中间件</li>
+<li>尽量保持中间件简单，把业务逻辑放在自己的服务里</li>
+</ul>
+</li>
+<li>
+<p>通过 HTTP 传播事件</p>
+<ul>
+<li>例如 ATOM 协议（feed)</li>
+<li>有事件时发布到该聚合上，消费者会轮询</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>异步架构的复杂性</p>
+<ul>
+<li>
+<p>复杂性，不仅来源于发布、订阅操作</p>
+</li>
+<li>
+<p>银行系统的示例</p>
+<ul>
+<li>如何处理消费者故障？</li>
+<li>如何处理失败消息？最大重试次数？死信队列？</li>
+<li>简评：异步架构看似各自为政，但会隐藏一些全局的需求。这些需求恰恰是复杂性的来源</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="服务即状态机"><a class="header-anchor" href="#服务即状态机"></a>服务即状态机</h3>
+<ul>
+<li>将领域的生命周期显示建模</li>
+<li>不仅是对 CRUD，也对状态转换封装一些行为</li>
+</ul>
+<h3 id="响应式扩展-reactive-extensions-rx"><a class="header-anchor" href="#响应式扩展-reactive-extensions-rx"></a>响应式扩展(Reactive Extensions, Rx)</h3>
+<ul>
+<li>组装一个或多个异步调用，简化代码</li>
+<li>简评：异步是坑，Think Twice</li>
+</ul>
+<h3 id="微服务中的-dry-和代码重用的危险"><a class="header-anchor" href="#微服务中的-dry-和代码重用的危险"></a>微服务中的 DRY 和代码重用的危险</h3>
+<ul>
+<li>个人认为 DRY 抽取重复代码是增加内聚性的过程，不需要修改多个地方</li>
+<li>共享代码会导致微服务间的耦合，一处修改会影响多个服务</li>
+<li>经验法则：微服务内 DRY，跨服务适当违反</li>
+</ul>
+<h3 id="按引用访问"><a class="header-anchor" href="#按引用访问"></a>按引用访问</h3>
+<ul>
+<li>领域实体的生命周期应当只在某个服务内管理</li>
+<li>如果保存本地副本，应该保留原始实体的引用，方便后续查询，更新</li>
+<li>需要知道事件是否发生，还需要知道发生了什么</li>
+<li>具体是否引用要看场景，是否数据切片能满足要求</li>
+</ul>
+<h3 id="版本管理"><a class="header-anchor" href="#版本管理"></a>版本管理</h3>
+<ul>
+<li>
+<p>尽可能推迟</p>
+<ul>
+<li>
+<p>采用一些耦合小的技术（如 REST 而非数据库集成）</p>
+</li>
+<li>
+<p>鼓励客户端的正确行为</p>
+<ul>
+<li>宽进严出（对自己发送的东西要严格，对接收的东西要宽容）</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>及早发现破坏性修改</p>
+</li>
+<li>
+<p>使用语义化的版本管理</p>
+<ul>
+<li>MAJOR.MINOR.PATCH</li>
+<li>个人觉得并没有什么用</li>
+</ul>
+</li>
+<li>
+<p>不同的接口共存</p>
+<ul>
+<li>平滑过渡</li>
+</ul>
+</li>
+<li>
+<p>同时使用多个版本的服务</p>
+<ul>
+<li>坏处：老版本永远不会升级</li>
+</ul>
+</li>
+</ul>
+<h3 id="用户界面"><a class="header-anchor" href="#用户界面"></a>用户界面</h3>
+<ul>
+<li>
+<p>是否轻界面，重后端</p>
+</li>
+<li>
+<p>走向数字化</p>
+<ul>
+<li>API 的粒度，细 vs 粗</li>
+</ul>
+</li>
+<li>
+<p>约束</p>
+<ul>
+<li>如移动端的带宽、电量等的影响</li>
+</ul>
+</li>
+<li>
+<p>API 组合（让 UI 直接访问 API）</p>
+<ul>
+<li>不同的设备可能需要不同的数据，一个解决方案是允许客户选择字段（如 GraphQL?）</li>
+<li>谁来创建 UI？如果是不同团队，会回到分层合并的模式，则细微的修改都需要多个团队参与</li>
+</ul>
+</li>
+<li>
+<p>UI 版本的组合：服务直接暴露部分 UI，上层应用对其进行组合</p>
+</li>
+<li>
+<p>为前端服务的后端：即增加一层代理，将细粒度 API 拼接成粗粒度，提供给前端</p>
+<ul>
+<li>问题是最终代理层会变得巨大无比</li>
+</ul>
+</li>
+<li>
+<p>混合方式</p>
+</li>
+</ul>
+<h3 id="与第三方软件集成"><a class="header-anchor" href="#与第三方软件集成"></a>与第三方软件集成</h3>
+<ul>
+<li>
+<p>缺乏控制</p>
+</li>
+<li>
+<p>定制化</p>
+<ul>
+<li>一般购买的定制化成本很大</li>
+</ul>
+</li>
+<li>
+<p>在自己可控的平台上进行定制化</p>
+<ul>
+<li>把三方软件当成服务，以此为基础搭建自己的系统</li>
+</ul>
+</li>
+<li>
+<p>绞杀者模式</p>
+<ul>
+<li>拦截对三方系统的应用，路由部分到新系统</li>
+</ul>
+</li>
+</ul>
+<h2 id="ch05-分解单块系统"><a class="header-anchor" href="#ch05-分解单块系统"></a>Ch05: 分解单块系统</h2>
+<p>服务怎么拆？拆了怎么办？源头是业务，找到上下文的边界。拆的过程中很可能最终发现数据库层面的耦合。拆成服务后可能会遇到分布式事务的要求还有一些跨数据库（报告）的需求和方法。</p>
+<h3 id="关键是接缝"><a class="header-anchor" href="#关键是接缝"></a>关键是接缝</h3>
+<ul>
+<li>从接缝处抽取相对独立的代码，对其修改不影响其它部分</li>
+<li>尝试找到服务的边界</li>
+</ul>
+<h3 id="分解单块系统的原因"><a class="header-anchor" href="#分解单块系统的原因"></a>分解单块系统的原因</h3>
+<ul>
+<li>
+<p>改变的速度</p>
+<ul>
+<li>抽成服务，加速后期开发</li>
+</ul>
+</li>
+<li>
+<p>团队结构</p>
+</li>
+<li>
+<p>安全</p>
+</li>
+<li>
+<p>技术</p>
+<ul>
+<li>可以用其它的技术栈</li>
+</ul>
+</li>
+</ul>
+<h3 id="杂乱的依赖"><a class="header-anchor" href="#杂乱的依赖"></a>杂乱的依赖</h3>
+<ul>
+<li>经常会发现：数据库是所有杂乱依赖的源头</li>
+</ul>
+<h3 id="找到问题的关键"><a class="header-anchor" href="#找到问题的关键"></a>找到问题的关键</h3>
+<ul>
+<li>即找到服务对数据库的交叉使用</li>
+</ul>
+<h3 id="例子：打破外键关系"><a class="header-anchor" href="#例子：打破外键关系"></a>例子：打破外键关系</h3>
+<ul>
+<li>把外键变成服务调用</li>
+</ul>
+<h3 id="例子：共享静态数据"><a class="header-anchor" href="#例子：共享静态数据"></a>例子：共享静态数据</h3>
+<ul>
+<li>例如：国家代码等数据</li>
+<li>方法一：为每个包复制一份</li>
+<li>方法二：静态数据放入代码（属性文件、枚举）</li>
+<li>方法三：静态数据作为单独服务</li>
+</ul>
+<h3 id="例子：共享-可变-数据"><a class="header-anchor" href="#例子：共享-可变-数据"></a>例子：共享（可变）数据</h3>
+<ul>
+<li>原因：领域概念在数据库中隐式建模</li>
+<li>示例中可以将这个对数据的交叉抽离成新的服务</li>
+</ul>
+<h3 id="例子：共享表"><a class="header-anchor" href="#例子：共享表"></a>例子：共享表</h3>
+<ul>
+<li>如：Catalog 中的条目与电子记录的条目存放在通用条目表</li>
+<li>方法：拆成两个表</li>
+</ul>
+<h3 id="重构数据库"><a class="header-anchor" href="#重构数据库"></a>重构数据库</h3>
+<ul>
+<li>推荐在分离服务前先分离数据库结构</li>
+<li>逐步进行：单块服务+单表 -&gt; 单块服务 + 分离表 -&gt; 分离服务+分离表</li>
+</ul>
+<h3 id="事务边界"><a class="header-anchor" href="#事务边界"></a>事务边界</h3>
+<ul>
+<li>
+<p>Retry Later</p>
+<ul>
+<li>最终一致性</li>
+</ul>
+</li>
+<li>
+<p>Abort</p>
+<ul>
+<li>补偿事务抵消之前的操作</li>
+<li>多个服务下如何处理？</li>
+</ul>
+</li>
+<li>
+<p>分布式事务</p>
+<ul>
+<li>2PC</li>
+</ul>
+</li>
+<li>
+<p>太复杂怎么办？</p>
+<ul>
+<li>业务是否需要一致？ double check</li>
+<li>能否从业务上做处理？而不是技术</li>
+</ul>
+</li>
+</ul>
+<h3 id="分离数据库后如何做报告"><a class="header-anchor" href="#分离数据库后如何做报告"></a>分离数据库后如何做报告</h3>
+<ul>
+<li>
+<p>报告生成需要跨数据库/表访问</p>
+</li>
+<li>
+<p>定期同步到报告数据库</p>
+<ul>
+<li>表结构修改怎么办</li>
+</ul>
+</li>
+<li>
+<p>通过服务调用获取数据</p>
+<ul>
+<li>只适用于少量数据，长时间同期的数据量太大</li>
+<li>批量 API 将结果写入文件</li>
+</ul>
+</li>
+<li>
+<p>推送数据到报告系统（ELK）</p>
+<ul>
+<li>直接对数据库操作</li>
+</ul>
+</li>
+<li>
+<p>导出事件数据</p>
+<ul>
+<li>低耦合</li>
+<li>比较难应对大数据量</li>
+</ul>
+</li>
+<li>
+<p>数据导出的备份</p>
+<ul>
+<li>持久化数据备份+Hadoop</li>
+</ul>
+</li>
+</ul>
+<h3 id="修改的代价"><a class="header-anchor" href="#修改的代价"></a>修改的代价</h3>
+<ul>
+<li>修改的量越大风险越大</li>
+<li>在影响最小的地方犯错误（白板）</li>
+</ul>
+<h2 id="ch06-部署"><a class="header-anchor" href="#ch06-部署"></a>Ch06: 部署</h2>
+<h3 id="持续集成简介"><a class="header-anchor" href="#持续集成简介"></a>持续集成简介</h3>
+<ul>
+<li>是否每天合并代码到主线？</li>
+<li>是否有测试来验证修改？</li>
+<li>构建失败后，修复 CI 是否是团队的头等大事？</li>
+</ul>
+<h3 id="ci-应用到微服务"><a class="header-anchor" href="#ci-应用到微服务"></a>CI 应用到微服务</h3>
+<ul>
+<li>
+<p>单仓库、单构建</p>
+<ul>
+<li>问题是一次性部署多个服务</li>
+<li>粒度太粗，影响 CI 周期，不易定位发生修改的服务</li>
+</ul>
+</li>
+<li>
+<p>单仓库、多构建</p>
+<ul>
+<li>缺点：代码粒度太粗，一个项目小修改 CI 的失败会卡其它项目的 CI</li>
+</ul>
+</li>
+<li>
+<p>多仓库、多构建</p>
+</li>
+</ul>
+<h3 id="pipeline-与-ci"><a class="header-anchor" href="#pipeline-与-ci"></a>pipeline 与 CI</h3>
+<ul>
+<li>
+<p>评：pipeline 可以将测试粒度变细，fail fast</p>
+</li>
+<li>
+<p>例外：团队刚开始的时候应该先用单仓库、单构建</p>
+<ul>
+<li>开始时不容易分辨边界</li>
+<li>开始时容易有跨服务的修改</li>
+<li>但只能是过渡</li>
+</ul>
+</li>
+</ul>
+<h3 id="artifact"><a class="header-anchor" href="#artifact"></a>Artifact</h3>
+<ul>
+<li>
+<p>Platform specific Artifact</p>
+<ul>
+<li>Ruby gem, Java jar/war, Python egg</li>
+<li>构建物可能不够，还需要中间件和其它配置</li>
+<li>考虑用 puppet, chef, ansible 管理</li>
+</ul>
+</li>
+<li>
+<p>OS specific artifact</p>
+<ul>
+<li>rpm, deb, MSI</li>
+<li>好处多多，写构建脚本比较困难，且平台支持不一</li>
+</ul>
+</li>
+<li>
+<p>定制化镜像</p>
+<ul>
+<li>构建镜像会花费大量时间</li>
+<li>镜像可能很大</li>
+</ul>
+</li>
+<li>
+<p>将镜像作为 artifact</p>
+</li>
+<li>
+<p>Immutable Server</p>
+<ul>
+<li>配置漂移：如果有人登录服务器修改了配置呢？</li>
+</ul>
+</li>
+</ul>
+<h3 id="环境"><a class="header-anchor" href="#环境"></a>环境</h3>
+<ul>
+<li>耗时测试、UAT、性能测试、生产</li>
+<li>环境要保持一致，否则会有预期之外的情况</li>
+</ul>
+<h3 id="服务配置"><a class="header-anchor" href="#服务配置"></a>服务配置</h3>
+<ul>
+<li>尽量各环境的配置保持一致</li>
+</ul>
+<h3 id="服务与主机的映射"><a class="header-anchor" href="#服务与主机的映射"></a>服务与主机的映射</h3>
+<ul>
+<li>
+<p>“每台机器应该有多少服务”？</p>
+</li>
+<li>
+<p>单主机、多服务</p>
+<ul>
+<li>主机管理工作量小</li>
+<li>管理工作量不随服务增长而增长</li>
+<li>监控困难</li>
+<li>服务部署也会更复杂，难以保证服务不相互影响</li>
+<li>不利于团队自治性</li>
+<li>虚拟技术的发展，不太应该继续这样</li>
+</ul>
+</li>
+<li>
+<p>应用程序容器(tomcat, glassfish,…)</p>
+</li>
+<li>
+<p>每个主机一个服务</p>
+</li>
+<li>
+<p>PaaS</p>
+<ul>
+<li>如果出错比较难排查</li>
+<li>一些特定的要求比较难满足</li>
+</ul>
+</li>
+</ul>
+<h3 id="自动化"><a class="header-anchor" href="#自动化"></a>自动化</h3>
+<ul>
+<li>自动化管理是微服务的必经之路</li>
+</ul>
+<h3 id="从物理机到虚拟机"><a class="header-anchor" href="#从物理机到虚拟机"></a>从物理机到虚拟机</h3>
+<ul>
+<li>
+<p>传统的虚拟化技术</p>
+<ul>
+<li>一般不做，虚拟化会有额外的开销</li>
+</ul>
+</li>
+<li>
+<p>Vagrant</p>
+<ul>
+<li>开发机上资源消耗大</li>
+</ul>
+</li>
+<li>
+<p>Linux 容器</p>
+<ul>
+<li>如 LXC</li>
+<li>更轻量</li>
+<li>并不是真正的隔离</li>
+</ul>
+</li>
+<li>
+<p>Docker</p>
+<ul>
+<li>构建于容器之上的平台</li>
+</ul>
+</li>
+</ul>
+<h3 id="一个部署接口"><a class="header-anchor" href="#一个部署接口"></a>一个部署接口</h3>
+<ul>
+<li>最佳实践是有一个统一的接口来部署服务</li>
+<li>服务的名字、版本、哪个环境</li>
+</ul>
+<h2 id="ch07-测试"><a class="header-anchor" href="#ch07-测试"></a>Ch07: 测试</h2>
+<h3 id="测试类型"><a class="header-anchor" href="#测试类型"></a>测试类型</h3>
+<ul>
+<li>单元测试（是否正确实现功能）</li>
+<li>非功能性测试（响应、扩展、性能、安全）</li>
+<li>验收测试（是否实现了正确的功能）</li>
+<li>探索性测试（如何破坏系统）</li>
+</ul>
+<h3 id="测试范围-金字塔"><a class="header-anchor" href="#测试范围-金字塔"></a>测试范围（金字塔）</h3>
+<ul>
+<li>
+<p>用户界面</p>
+<ul>
+<li>范围最大、信心最足、最难定位</li>
+</ul>
+</li>
+<li>
+<p>服务测试</p>
+<ul>
+<li>绕开界面，直接对服务测试</li>
+<li>测试单独的服务可以提高测试的隔离性</li>
+<li>为了达到要求，需要 stub</li>
+</ul>
+</li>
+<li>
+<p>单元测试</p>
+<ul>
+<li>TDD</li>
+<li>不会启动服务</li>
+<li>外部文件、网络连接访问有限</li>
+<li>对重构非常重要</li>
+</ul>
+</li>
+<li>
+<p>比例</p>
+<ul>
+<li>经验：下层比上层多一个数量级</li>
+</ul>
+</li>
+</ul>
+<h3 id="实现服务测试"><a class="header-anchor" href="#实现服务测试"></a>实现服务测试</h3>
+<ul>
+<li>
+<p>Mock vs Stub?</p>
+<ul>
+<li>这两个概念可能跟我们平时的用法不一样</li>
+<li>这里 stub 无副作用，mock 有</li>
+<li>stub 用得多</li>
+</ul>
+</li>
+</ul>
+<h3 id="端到端测试"><a class="header-anchor" href="#端到端测试"></a>端到端测试</h3>
+<ul>
+<li>
+<p>微秒的端到端测试</p>
+<ul>
+<li>界面依赖多个服务，当前服务依赖的其它服务也有新版本，测试时要用什么组合？</li>
+<li>不同服务的测试要重合，要重复测试吗？</li>
+<li>一种方法是让每个服务“扇入”到端到端测试</li>
+</ul>
+</li>
+<li>
+<p>脆弱的测试</p>
+<ul>
+<li>
+<p>存在一些非功能错误无法识别（如底层服务未响应）</p>
+</li>
+<li>
+<p>谁来写测试？</p>
+</li>
+<li>
+<p>测试多长时间？</p>
+</li>
+<li>
+<p>测试量大大，可能产生大量堆积</p>
+</li>
+<li>
+<p>元版本</p>
+<ul>
+<li>会产生为所有服务给一个统一的版本号</li>
+<li>这样就回到了单块架构</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>测试场景、而不是故事</p>
+<p>这个概念和之前的理解有出入</p>
+<ul>
+<li>核心端到端，其余在服务测试中覆盖</li>
+</ul>
+</li>
+<li>
+<p>消费者驱动的测试</p>
+<ul>
+<li>端到端测试解决问题：修改不破坏消费者</li>
+<li>另一种方式：CDC(Consumer-Driven Contract 消费者驱动的契约)</li>
+<li>即定义消费者的期望，并转化成测试代码，进入 CI pipeline</li>
+<li>Pact: 一个 CDC 测试工具</li>
+<li>CDC 与 story 一样有助于沟通</li>
+</ul>
+</li>
+<li>
+<p>还要做端到端测试吗？</p>
+<ul>
+<li>评：在业务还在强烈变化时，个人认为还是需要的，优化点在于有多少可以转移成 CDC</li>
+</ul>
+</li>
+</ul>
+<h3 id="部署后再测试"><a class="header-anchor" href="#部署后再测试"></a>部署后再测试</h3>
+<ul>
+<li>
+<p>区分部署和上线</p>
+<ul>
+<li>部署后不一定立马切流量，切流量才是上线</li>
+</ul>
+</li>
+<li>
+<p>Canary Releasing</p>
+<ul>
+<li>小流量测试</li>
+</ul>
+</li>
+<li>
+<p>平均修复时间 胜于 平均故障时间</p>
+<ul>
+<li>平均故障间隔时间 (Mean Time Between Failures, MTBF)</li>
+<li>平均修复时间 (Mean Time To Prepare, MTTP)</li>
+<li>MTBF 是指两次故障之间正常工作时间的均值，需要靠更多的测试，而 MTTP 指出现故障平均花多长时间修复。这两者是需要平衡的</li>
+</ul>
+</li>
+</ul>
+<h3 id="非功能性需求-性能-用户-稳定"><a class="header-anchor" href="#非功能性需求-性能-用户-稳定"></a>非功能性需求（性能、用户、稳定……）</h3>
+<ul>
+<li>频率可能更小，但一定要做，不能拖到上生产</li>
+</ul>
+<h2 id="ch08-监控"><a class="header-anchor" href="#ch08-监控"></a>Ch08: 监控</h2>
+<p>小结：要做监控，要标准化做法手段：传递唯一标识最低限度：服务的响应时间最你限度：下游的健康状态</p>
+<h3 id="单一服务-单一服务器"><a class="header-anchor" href="#单一服务-单一服务器"></a>单一服务、单一服务器</h3>
+<ul>
+<li>
+<p>主机本身：CPU、内存等主机数据</p>
+<ul>
+<li>如 Nagios 工具或 New Relic 托管服务</li>
+</ul>
+</li>
+<li>
+<p>服务器本身的日志</p>
+<ul>
+<li>rogrotate 移除旧日志</li>
+</ul>
+</li>
+</ul>
+<h3 id="单一服务-多服务器"><a class="header-anchor" href="#单一服务-多服务器"></a>单一服务、多服务器</h3>
+<ul>
+<li>应用场景：负载均衡</li>
+<li>除了查看所有主机的数据，也需要查看单个主机的数据</li>
+<li>如果只有几个主机，可以使用 ssh-multiplexers</li>
+<li>响应时间可以看负载均衡器中的聚合数据</li>
+</ul>
+<h3 id="多个服务-多个服务器"><a class="header-anchor" href="#多个服务-多个服务器"></a>多个服务、多个服务器</h3>
+<ul>
+<li>是系统问题？服务问题？是哪个服务？</li>
+<li>回答：集中收集和聚合尽可能多的数据</li>
+</ul>
+<h3 id="日志-日志-更多的日志"><a class="header-anchor" href="#日志-日志-更多的日志"></a>日志、日志、更多的日志</h3>
+<ul>
+<li>新需求：日志收集子系统</li>
+<li>例如 logstash、Kibana</li>
+</ul>
+<h3 id="多个服务的指标跟踪"><a class="header-anchor" href="#多个服务的指标跟踪"></a>多个服务的指标跟踪</h3>
+<ul>
+<li>
+<p>有了日志后，最好能生成指标方便追踪</p>
+</li>
+<li>
+<p>Graphite 系统</p>
+<ul>
+<li>接收指标并展示</li>
+<li>通过有效配置，聚合数据减少存储容量</li>
+<li>跨样本做聚合</li>
+</ul>
+</li>
+</ul>
+<h3 id="服务指标"><a class="header-anchor" href="#服务指标"></a>服务指标</h3>
+<ul>
+<li>
+<p>collectd 生成操作系统的大量指标</p>
+</li>
+<li>
+<p>Nginx, Varnish 支撑系统也会暴露有用的信息</p>
+</li>
+<li>
+<p>自己服务的指标呢？</p>
+<ul>
+<li>Metrics 库</li>
+</ul>
+</li>
+</ul>
+<h3 id="综合监控"><a class="header-anchor" href="#综合监控"></a>综合监控</h3>
+<ul>
+<li>Naive 的监控：设定一个标准值，超过报警</li>
+<li>示例：定期插入假事件，并判断是否被处理，更贴近最终的监控需求</li>
+<li>合成事务执行语义监控，比使用低层指标更能表明问题</li>
+<li>在生产系统上执行端到端测试（保证无副作用）</li>
+</ul>
+<h3 id="关联标识"><a class="header-anchor" href="#关联标识"></a>关联标识</h3>
+<ul>
+<li>用 GUID 给请求打标识，并传递给后续所有系统</li>
+<li>Zipkin</li>
+<li>使用包装的客户端确保信息不会丢失</li>
+</ul>
+<h3 id="级联"><a class="header-anchor" href="#级联"></a>级联</h3>
+<ul>
+<li>上游需要确认下游服务的健康状态并打日志</li>
+<li>添加断路器更加优雅地处理</li>
+</ul>
+<h3 id="标准化"><a class="header-anchor" href="#标准化"></a>标准化</h3>
+<ul>
+<li>以标准的方式暴露监控接口、落日志</li>
+</ul>
+<h2 id="ch09-安全"><a class="header-anchor" href="#ch09-安全"></a>Ch09: 安全</h2>
+<h3 id="身份验证和授权"><a class="header-anchor" href="#身份验证和授权"></a>身份验证和授权</h3>
+<ul>
+<li>
+<p>人或事，抽象为“主体”(Principle)</p>
+</li>
+<li>
+<p>常见的单点登录（SSO）实现</p>
+<ul>
+<li>SAML, OpenID Connect</li>
+<li>OAuth 2.0</li>
+</ul>
+</li>
+<li>
+<p>单点登录网关</p>
+<ul>
+<li>网关接收请求，如果已授权，则将主体信息放在 HTTP Header 信息中，如果未授权，则由网关进行授权</li>
+<li>孤立地在微服务中定位问题会更难（包括生产环境的搭建）</li>
+<li>虚假的安全感：如果网关服务故障了……</li>
+<li>小心网关变成耦合点</li>
+</ul>
+</li>
+<li>
+<p>细粒度的授权</p>
+<ul>
+<li>细粒度的 Authorization 应该留给具体服务</li>
+</ul>
+</li>
+</ul>
+<h3 id="服务间的身份验证和授权"><a class="header-anchor" href="#服务间的身份验证和授权"></a>服务间的身份验证和授权</h3>
+<ul>
+<li>
+<p>在边界内允许一切</p>
+<ul>
+<li>风险：当有人入侵网络后，系统对中间人攻击没有任何防备</li>
+<li>许多组织使用，但其实有许多风险，更糟糕的是，很多时候人们没有意识到风险</li>
+</ul>
+</li>
+<li>
+<p>HTTP(s) Basic Authentication</p>
+<ul>
+<li>在 HEADER 中指定用户名密码</li>
+<li>HTTP 会被中间人截取明文</li>
+<li>HTTPS 的证书管理复杂（尤其是多台机器）</li>
+<li>流量无法被反向代理缓存，但可以在反向代理时转成 HTTP 流量</li>
+<li>如何和现有 SSO 集成？</li>
+</ul>
+</li>
+<li>
+<p>SAML 或 OpenID Connect</p>
+<ul>
+<li>同一个网关来路由内部流量</li>
+<li>微服务的客户端有一组凭证，用于验证自身，服务获取所需信息，用于细粒度验证</li>
+<li>需要为每个微服务创建自己的凭证，可撤销</li>
+<li>缺点：需要客户端安全地存储凭证</li>
+</ul>
+</li>
+<li>
+<p>客户端证书</p>
+<ul>
+<li>每个客户端存储一个 X.509 证书，与服务端建立通信</li>
+<li>缺点：管理证书的工作很繁重</li>
+</ul>
+</li>
+<li>
+<p>HTTP 上的 HMAC</p>
+<ul>
+<li>防止密码泄露</li>
+<li>即传输的是哈希后的内容，服务端独立算哈希</li>
+<li>好处 1 ：如果哈希不匹配，则得知中间人篡改过</li>
+<li>好处 2: 密钥不泄露</li>
+<li>好处 2: 开销低于 HTTPS</li>
+<li>缺点 1: 需要共享密钥，不好撤销</li>
+<li>缺点 2: 它是一个模式，不是标准，实现不一</li>
+<li>缺点 3: 它只保证密码不泄露，其它信息依旧可能被嗅探</li>
+</ul>
+</li>
+<li>
+<p>API 密钥 (token)</p>
+<ul>
+<li>具体如何使用取决于使用的具体技术</li>
+<li>常见方法：使用公钥私钥对，并集中管理</li>
+<li>该方法关注了程序的易用性</li>
+</ul>
+</li>
+<li>
+<p>代理问题</p>
+<ul>
+<li>
+<p>服务提供方是允许代理方访问服务？</p>
+<ul>
+<li>混淆代理人问题：欺诈代理人去访问本不该是自己能访问的服务。服务提供方是否</li>
+</ul>
+</li>
+<li>
+<p>一种方法是让代理/路由做验证</p>
+</li>
+<li>
+<p>另一种方法：请求时传递主体凭证</p>
+</li>
+<li>
+<p>没有简单的答案</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="静态数据的安全"><a class="header-anchor" href="#静态数据的安全"></a>静态数据的安全</h3>
+<ul>
+<li>
+<p>防止网络被攻破，静态数据被窃取</p>
+</li>
+<li>
+<p>使用众所周知的加密方法</p>
+<ul>
+<li>AES</li>
+<li>密码哈希加盐</li>
+</ul>
+</li>
+<li>
+<p>一切皆与密钥相关</p>
+<ul>
+<li>密码不应和密文存储在一起</li>
+<li>方案一：单独的安全设备来加密和解密</li>
+<li>方案二：单独的密钥库</li>
+</ul>
+</li>
+<li>
+<p>选择你的目标</p>
+<ul>
+<li>考虑哪些数据可以被放入日志，帮助识别哪些数据需要加密</li>
+</ul>
+</li>
+<li>
+<p>按需解密</p>
+</li>
+<li>
+<p>加密备份</p>
+<ul>
+<li>备份加密数据</li>
+<li>确保备份也被加密</li>
+</ul>
+</li>
+</ul>
+<h3 id="深度-防御"><a class="header-anchor" href="#深度-防御"></a>深度防御</h3>
+<ul>
+<li>
+<p>防火墙</p>
+</li>
+<li>
+<p>日志</p>
+<ul>
+<li>可以检测异常、之后恢复</li>
+<li>要小心在日志中存储敏感信息</li>
+</ul>
+</li>
+<li>
+<p>入侵检测（和预防）系统</p>
+</li>
+<li>
+<p>网络隔离</p>
+</li>
+<li>
+<p>操作系统</p>
+</li>
+</ul>
+<h3 id="保持节俭"><a class="header-anchor" href="#保持节俭"></a>保持节俭</h3>
+<ul>
+<li>有些信息是不需要存储的</li>
+</ul>
+<h3 id="黄金法则"><a class="header-anchor" href="#黄金法则"></a>黄金法则</h3>
+<ul>
+<li>不要自己实现加密算法</li>
+</ul>
+<h3 id="内建安全"><a class="header-anchor" href="#内建安全"></a>内建安全</h3>
+<ul>
+<li>相应的安全意识、流程</li>
+<li>自动化工具探测系统漏洞</li>
+</ul>
+<h3 id="外部验证"><a class="header-anchor" href="#外部验证"></a>外部验证</h3>
+<ul>
+<li>开发人员离问题太近导致可能发现不了问题</li>
+</ul>
+<h2 id="ch10-康威定律和系统设计"><a class="header-anchor" href="#ch10-康威定律和系统设计"></a>Ch10: 康威定律和系统设计</h2>
+<h3 id="康威定律"><a class="header-anchor" href="#康威定律"></a>康威定律</h3>
+<ul>
+<li>任何组织在设计一套系统（广义）时，所交付的设计方案在结构上都与该组织的沟通结构保持一致</li>
+<li>“如果你有四个小组开发一个编译器，那你会得到一个四步编译器”</li>
+</ul>
+<h3 id="证据"><a class="header-anchor" href="#证据"></a>证据</h3>
+<ul>
+<li>
+<p>松耦合组织和紧耦合组织</p>
+<ul>
+<li>紧耦合组织：商业产品公司，所有员工一起工作</li>
+<li>松耦合组织：开源社区</li>
+<li>组织的耦合度越低，模块化越好，耦合度越低</li>
+</ul>
+</li>
+<li>
+<p>Windows Vista</p>
+<ul>
+<li>组织结构相关的指标与软件质量的相关度最高</li>
+</ul>
+</li>
+<li>
+<p>Netflix 和 Amazon</p>
+<ul>
+<li>“两个比萨团队”，没有团队应该大到两个比萨不够吃</li>
+</ul>
+</li>
+</ul>
+<h3 id="适应沟通途径"><a class="header-anchor" href="#适应沟通途径"></a>适应沟通途径</h3>
+<ul>
+<li>当协调成本增加后，人们要么设法降低成本，要么停止更改数据</li>
+</ul>
+<h3 id="服务所有权"><a class="header-anchor" href="#服务所有权"></a>服务所有权</h3>
+<ul>
+<li>所有权程度的增加会增加自治和交付速度</li>
+</ul>
+<h3 id="共享服务的原因"><a class="header-anchor" href="#共享服务的原因"></a>共享服务的原因</h3>
+<ul>
+<li>
+<p>难以分割</p>
+<ul>
+<li>拆分成本太高</li>
+</ul>
+</li>
+<li>
+<p>特性团队</p>
+<ul>
+<li>小团队负责一系列我需要的所有功能，即使功能跨组件（甚至服务）</li>
+<li>大范围采用特性团队后，所有服务都是共享的</li>
+<li>微服务根据业务领域划分而非技术，更容易进行以特性为导向的开发</li>
+</ul>
+</li>
+<li>
+<p>交付瓶颈</p>
+<ul>
+<li>如果某个服务突然出现大量的变量需求？</li>
+</ul>
+</li>
+</ul>
+<h3 id="内部开源"><a class="header-anchor" href="#内部开源"></a>内部开源</h3>
+<ul>
+<li>
+<p>守护者角色</p>
+<ul>
+<li>核心团队+不受信任的提交者</li>
+</ul>
+</li>
+<li>
+<p>成熟</p>
+<ul>
+<li>往往 1.0 后才接受外部提交</li>
+</ul>
+</li>
+<li>
+<p>工具</p>
+<ul>
+<li>版本控制、CI、CD</li>
+</ul>
+</li>
+</ul>
+<h3 id="限界上下文和团队结构"><a class="header-anchor" href="#限界上下文和团队结构"></a>限界上下文和团队结构</h3>
+<ul>
+<li>可能的话，团队结构和限界上下文保持一致</li>
+</ul>
+<h3 id="孤儿服务"><a class="header-anchor" href="#孤儿服务"></a>孤儿服务</h3>
+<ul>
+<li>长时间不需要更改的服务</li>
+</ul>
+<h3 id="反向的康威定律"><a class="header-anchor" href="#反向的康威定律"></a>反向的康威定律</h3>
+<ul>
+<li>系统设计能改变组织结构吗？</li>
+</ul>
+<h3 id="人"><a class="header-anchor" href="#人"></a>人</h3>
+<ul>
+<li>“不管一开始看起来是什么样，它永远是人的问题”</li>
+</ul>
+<h2 id="ch11-规模化微服务"><a class="header-anchor" href="#ch11-规模化微服务"></a>Ch11: 规模化微服务</h2>
+<h3 id="故障无处不在"><a class="header-anchor" href="#故障无处不在"></a>故障无处不在</h3>
+<ul>
+<li>大规模后的故障是必然发生的</li>
+<li>即使买最好的工具、最昂贵的硬件也必然发生</li>
+<li>少花些精力在阻止故障发生，而想办法从故障中恢复</li>
+</ul>
+<h3 id="多少是太多"><a class="header-anchor" href="#多少是太多"></a>多少是太多</h3>
+<ul>
+<li>
+<p>系统的非功能性需求取决于用户</p>
+<ul>
+<li>如内部系统的自动扩容可能无意义</li>
+</ul>
+</li>
+<li>
+<p>理解以下需求</p>
+<p>在现场交付时，需要先量化这些指标</p>
+<ul>
+<li>
+<p>响应时间/延迟</p>
+<ul>
+<li>如：200 并发下，90%的响应在 2s 内</li>
+</ul>
+</li>
+<li>
+<p>可用性</p>
+<ul>
+<li>能接受服务出现故障吗？</li>
+</ul>
+</li>
+<li>
+<p>数据持久性</p>
+<ul>
+<li>多大比较的数据丢失是可以接受的</li>
+<li>数据应该保存多久</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="功能降级"><a class="header-anchor" href="#功能降级"></a>功能降级</h3>
+<ul>
+<li>
+<p>依赖多个服务时，不能因为一个系统宕机导致整个调用链都失败（否则可用性和单块系统没区别）</p>
+</li>
+<li>
+<p>具体的决策依赖业务</p>
+<ul>
+<li>有些服务是致命的，有些则是可以绕过的</li>
+</ul>
+</li>
+</ul>
+<h3 id="架构性安全措施"><a class="header-anchor" href="#架构性安全措施"></a>架构性安全措施</h3>
+<ul>
+<li>目标：确保如果真的出错，不会引起严重的级联影响</li>
+<li>处理慢下游比处理宕机下游要难得多</li>
+</ul>
+<h3 id="反脆弱的组织"><a class="header-anchor" href="#反脆弱的组织"></a>反脆弱的组织</h3>
+<ul>
+<li>
+<p>Netflix 通过引发故障来确保系统的容错</p>
+</li>
+<li>
+<p>Chaos Monkey</p>
+<ul>
+<li>随机停掉服务器或机器（生产环境）</li>
+</ul>
+</li>
+<li>
+<p>拥抱故障</p>
+</li>
+<li>
+<p>如何应对？</p>
+<ul>
+<li>
+<p>超时</p>
+<ul>
+<li>给所有跨进程的调用都加上超时</li>
+</ul>
+</li>
+<li>
+<p>断路器</p>
+<ul>
+<li>被动 &amp; 手动</li>
+<li>被动断路器依赖于业务定义</li>
+</ul>
+</li>
+<li>
+<p>舱壁</p>
+<ul>
+<li>必要情况下可以“自闭”</li>
+<li>例如为每个下游服务的连接使用不同连接池</li>
+<li>例如将功能分离成独立的微服务</li>
+<li>可以把断路器作为密封舱壁的自动机制</li>
+</ul>
+</li>
+<li>
+<p>隔离</p>
+<ul>
+<li>在实现上游时，允许下游服务离线</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="幂等"><a class="header-anchor" href="#幂等"></a>幂等</h3>
+<ul>
+<li>
+<p>多次调用的效果与一次调用相同</p>
+</li>
+<li>
+<p>实际要完全实现幂等挺困难</p>
+<ul>
+<li>如需要保存已经处理的事件</li>
+<li>多个 worker 可能在窗口内会处理多个事件</li>
+</ul>
+</li>
+</ul>
+<h3 id="扩展-scale"><a class="header-anchor" href="#扩展-scale"></a>扩展(scale?)</h3>
+<ul>
+<li>
+<p>防止单点故障，负载加强性能</p>
+</li>
+<li>
+<p>更强大的主机（垂直扩展）</p>
+</li>
+<li>
+<p>拆分负载</p>
+<ul>
+<li>之前在单机上的微服务拆分到多机上</li>
+</ul>
+</li>
+<li>
+<p>分散风险</p>
+<ul>
+<li>“两地三机房”</li>
+</ul>
+</li>
+<li>
+<p>负载均衡</p>
+<ul>
+<li>避免单点故障</li>
+<li>SSL 终止</li>
+</ul>
+</li>
+<li>
+<p>基于 worker 的系统</p>
+<ul>
+<li>即任务提交到队列，由 worker 运行</li>
+<li>woker 本身不需要很高的可靠性，但任务队列需求</li>
+</ul>
+</li>
+<li>
+<p>重新设计</p>
+<ul>
+<li>最初的架构可能无法应对很大负载</li>
+</ul>
+</li>
+</ul>
+<h3 id="扩展数据库"><a class="header-anchor" href="#扩展数据库"></a>扩展数据库</h3>
+<ul>
+<li>
+<p>（单点）瓶颈到了数据库上</p>
+</li>
+<li>
+<p>区分“可用性”和“数据的持久性”</p>
+<ul>
+<li>例如对数据库备份，数据不丢，但服务不可用</li>
+</ul>
+</li>
+<li>
+<p>扩展读取</p>
+<ul>
+<li>只读复本（如 MySQL 主从）</li>
+<li>最终一致性</li>
+</ul>
+</li>
+<li>
+<p>扩展写操作</p>
+<ul>
+<li>
+<p>分片</p>
+<ul>
+<li>分片如何处理跨分片查询？</li>
+<li>如何添加新节点？</li>
+<li>写入分片可能会扩展写容量，但不会提高弹性</li>
+<li>一致性哈希</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>共享数据库基础设施</p>
+</li>
+<li>
+<p>CQRS</p>
+<ul>
+<li>读写分离</li>
+<li>Event Sourcing</li>
+</ul>
+</li>
+</ul>
+<h3 id="缓存"><a class="header-anchor" href="#缓存"></a>缓存</h3>
+<ul>
+<li>
+<p>HTTP 协议本身允许缓存(GET)</p>
+</li>
+<li>
+<p>客户端、代理、服务器缓存</p>
+</li>
+<li>
+<p>HTTP 缓存(cache)</p>
+<ul>
+<li>
+<p>Cache-control + Expires</p>
+<ul>
+<li>一般适用于静态资源</li>
+</ul>
+</li>
+<li>
+<p>ETag</p>
+</li>
+</ul>
+</li>
+<li>
+<p>写缓存(buffer)</p>
+<ul>
+<li>
+<p>writebehind 缓存</p>
+<ul>
+<li>类比操作系统写入磁盘前缓存在内存</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>为弹性使用缓存(buffer)</p>
+<ul>
+<li>下游失效时先缓存请求</li>
+</ul>
+</li>
+<li>
+<p>隐藏源服务</p>
+<ul>
+<li>缓存雪崩，缓存服务宕机，导致大量请求打到源服务</li>
+<li>一种方法：第一时间不要对源服务发起请求</li>
+<li>源服务定期填写缓存，客户端在 miss 时发布通知</li>
+</ul>
+</li>
+<li>
+<p>保持简单</p>
+<ul>
+<li>不需要不要用</li>
+</ul>
+</li>
+<li>
+<p>缓存可能中毒</p>
+</li>
+</ul>
+<h3 id="自动伸缩"><a class="header-anchor" href="#自动伸缩"></a>自动伸缩</h3>
+<ul>
+<li>响应型伸缩</li>
+<li>预测型伸缩</li>
+<li>事实上比起响应负载，更多应用于响应故障</li>
+</ul>
+<h3 id="cap"><a class="header-anchor" href="#cap"></a>CAP</h3>
+<ul>
+<li>CP 还是 AP？P 是一定需要的</li>
+<li>对于具体的服务，要求可能不同</li>
+</ul>
+<h3 id="服务发现"><a class="header-anchor" href="#服务发现"></a>服务发现</h3>
+<ul>
+<li>
+<p>DNS</p>
+<ul>
+<li>标准</li>
+<li>更新很痛苦（TTL）</li>
+<li>DNS 指向负载均衡</li>
+</ul>
+</li>
+<li>
+<p>动态服务注册</p>
+<ul>
+<li>ZK</li>
+<li>Consul</li>
+<li>Eureka</li>
+</ul>
+</li>
+<li>
+<p>自己构建</p>
+</li>
+<li>
+<p>别忘了人的需求（查看、监控）</p>
+</li>
+</ul>
+<h3 id="文档服务"><a class="header-anchor" href="#文档服务"></a>文档服务</h3>
+<ul>
+<li>API 文档</li>
+<li>Swagger</li>
+<li>HAL 和 HAL 浏览器</li>
+<li>自描述系统（UDDI)</li>
+</ul>
+<h2 id="ch12-总结"><a class="header-anchor" href="#ch12-总结"></a>Ch12: 总结</h2>
+<h3 id="微服务原则"><a class="header-anchor" href="#微服务原则"></a>微服务原则</h3>
+<ul>
+<li>
+<p>围绕业务概念建模</p>
+</li>
+<li>
+<p>接受自动化文化</p>
+</li>
+<li>
+<p>隐藏内部实现细节</p>
+</li>
+<li>
+<p>一切去中心化</p>
+</li>
+<li>
+<p>可独立部署（不影响当前服务）</p>
+</li>
+<li>
+<p>隔离失败</p>
+<ul>
+<li>不要像使用本地调用那样处理远程调用</li>
+<li>反脆弱信条</li>
+</ul>
+</li>
+<li>
+<p>高度可观察</p>
+<ul>
+<li>日志、监控</li>
+</ul>
+</li>
+</ul>
+<h3 id="什么时候不使用"><a class="header-anchor" href="#什么时候不使用"></a>什么时候不使用</h3>
+<ul>
+<li>不了解领域，无法很好做拆分</li>
+<li>基础设施不完善前</li>
+</ul></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2020/Book-Notes-Building-Microservices/';
+var disqus_title = '《微服务设计》';
+var disqus_url = 'https://lotabout.me/2020/Book-Notes-Building-Microservices/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

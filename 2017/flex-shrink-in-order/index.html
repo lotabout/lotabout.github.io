@@ -1,0 +1,99 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;p&gt;当子元素的宽度（或高度）超过父元素时，如果父元素设置了 &lt;code&gt;display: flex&lt;/code&gt;，则子元素将按比例缩小自己的宽度（或高度），但现在我们希望子元素按一定的优先级缩小。即：当宽度不足时，优先缩小某一个子元素，当达到该元素的最小宽度（&lt;code&gt;min-width&lt;/code&gt;）时，再开始缩小另外的元素。下面是一个示例图：&lt;/p&gt;
+&lt;img src=&quot;/2017/flex-shrink-in-order/expected.gif&quot; class=&quot;&quot; title=&quot;Expected Behavior&quot;&gt;
+&lt;p&gt;可以看到，当宽度不足时，上例中优先缩小了最右的元素，当最右元素达到最小宽度
+100px 时开始缩小左边的元素，依此类推。&lt;/p&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>CSS 子元素依次收缩的实现 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/css/" rel="tag">css</a><a class="post-tag-link" href="/tags/flex-shrink/" rel="tag">flex-shrink</a></div><div class="post-time">2017-09-29</div></div></div><div class="container post-header"><h1>CSS 子元素依次收缩的实现</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#基本设置"><span class="toc-number">1.</span> <span class="toc-text">基本设置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#内置的支持？"><span class="toc-number">2.</span> <span class="toc-text">内置的支持？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#合适的比例？"><span class="toc-number">3.</span> <span class="toc-text">合适的比例？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#flex-shrink-如何计算？"><span class="toc-number">4.</span> <span class="toc-text">flex-shrink 如何计算？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#宽度可以是小数？"><span class="toc-number">5.</span> <span class="toc-text">宽度可以是小数？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">6.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#扩展阅读"><span class="toc-number">7.</span> <span class="toc-text">扩展阅读</span></a></li></ol></details></div><div class="container post-content"><p>当子元素的宽度（或高度）超过父元素时，如果父元素设置了 <code>display: flex</code>，则子元素将按比例缩小自己的宽度（或高度），但现在我们希望子元素按一定的优先级缩小。即：当宽度不足时，优先缩小某一个子元素，当达到该元素的最小宽度（<code>min-width</code>）时，再开始缩小另外的元素。下面是一个示例图：</p>
+<img src="/2017/flex-shrink-in-order/expected.gif" class="" title="Expected Behavior">
+<p>可以看到，当宽度不足时，上例中优先缩小了最右的元素，当最右元素达到最小宽度
+100px 时开始缩小左边的元素，依此类推。</p>
+<a id="more"></a>
+<p>本文我们将分析 flexbox 中的 <code>flex-shrink</code> 属性，来实现上述效果。本文假设你熟悉 flexbox 的基本用法。</p>
+<h2 id="基本设置"><a class="header-anchor" href="#基本设置"></a>基本设置</h2>
+<p>话不多说，先把主要的框架搭上，参见下面的 <a href="https://jsfiddle.net/lotabout/xozxdz3z/6/" target="_blank" rel="noopener">jsfiddle</a>：</p>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/xozxdz3z/6/embedded/result,html,css,js/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>在上面的例子中，只设置了父元素为 <code>display: flex</code> 及第一个元素为 <code>flex: none</code>
+，即不参与 flexbox 的伸缩的计算，只占与它本身宽度相同的宽度。</p>
+<p>如果在输入框中输入，可以看到：当宽度不足时，三个子元素一起收缩，出现 <code>...</code> 字样。这是因为，flex 元素的子元素的默认 flex 设置为 <code>flex: 0 1 auto</code>。即收缩的比值为 <code>1</code>。</p>
+<p>题外话，设置 <code>flex</code> 属性相当于设置 3 个值，即 <code>flex: flex-grow, flex-shrink, flex-basis</code>。所以官方提倡直接设置 <code>flex</code> 属性而不是分别设置三个。</p>
+<h2 id="内置的支持？"><a class="header-anchor" href="#内置的支持？"></a>内置的支持？</h2>
+<p>我们通过查找文档发现，<code>flex-shrink</code> 的作用是指定缩小的系数，即如果一个元素 A
+的 <code>flex-shrink: 2</code> 而元素 B 为 <code>flex-shrink: 1</code>，当需要缩小 30px 才能不超出父元素宽度时，A 与 B 按 <code>2:1</code> 收缩，即 A 元素缩小 20px 而 B 元素缩小 10px。</p>
+<p>这样看来，<code>flex-shrink</code> 并不适合我们上面所说的任务。因为只要设置了
+flex-shrink，那么元素就一定会缩小，也就达不到前文需要的效果了。</p>
+<p>也许你从标题里也猜到了，是的，flexbox 并没有提供任何机制，来设置伸缩的优先级。所以我们只能进一步思考，如何才能做到？</p>
+<h2 id="合适的比例？"><a class="header-anchor" href="#合适的比例？"></a>合适的比例？</h2>
+<p>于是我们的第一反应就是：如果把其中一个元素的 <code>flex-shrink</code> 设置得很大，而另一个很小不就可以了？嗯，有道理！于是我们先忽略第二个子元素，将它设置为
+<code>flex:none</code>，第三个元素设置为 <code>flex: 0 1</code>，第四个元素 <code>flex: 0 1000</code>，即它的缩小的系数是第三个元素的 1000 倍！</p>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/xozxdz3z/8/embedded/result,html,css,js/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>输上几个字符，居然就成功了！</p>
+<p>然后如果仔细观察输入的情况，会发现输入到一定长度时，虽然最后一个元素还没有达到
+<code>min-width</code>，第三个元素也发生了收缩：</p>
+<img src="/2017/flex-shrink-in-order/wrong.gif" class="" title="Wrong Answer">
+<p>难道是缩小系数还不够大？调成 10000 试试。还真的就成功了！但为什么 1000/1 不够大，而 10000/1 就能正常工作；需要多大的比例还能实现一个元素优先收缩的效果？</p>
+<h2 id="flex-shrink-如何计算？"><a class="header-anchor" href="#flex-shrink-如何计算？"></a>flex-shrink 如何计算？</h2>
+<p>显然我们之前据说的计算方法是错误的，那 <code>flex-shrink</code> 真正的作用方式如何呢？</p>
+<p>这里引述一个教程：<a href="http://madebymike.com.au/writing/understanding-flexbox/" target="_blank" rel="noopener">understanding
+flexbox</a> 的例子。</p>
+<p>首先，缩放的系数是由 <code>flex-shrink</code> 的值乘于 <code>flex-basis</code> 的值共同决定的，而这么做的原因即使指定了相同的 <code>flex-shrink</code>，较大的元素（较大的 basis）也会显得收缩了更多，也符合人的直观印象。</p>
+<p>得到这个比例之后，再除于所有子元素的系数之和作为最终的缩小的比例，用这个比例乘于总共需要缩小的宽度，就是该元素需要缩小的宽度了。还是看看例子吧：</p>
+
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">.flex-container&#123; width: 600px; &#125;</span><br><span class="line">.flex-item-1&#123; flex-basis: 100px; flex-shrink: 1; &#125;</span><br><span class="line">.flex-item-2&#123; flex-basis: 400px; flex-shrink: 1; &#125;</span><br><span class="line">.flex-item-3&#123; flex-basis: 400px; flex-shrink: 1; &#125;</span><br><span class="line">Total basis: 900px</span><br><span class="line">Space remaining: -300px</span><br><span class="line">Item 1 shrink factor: (1×100) &#x2F; (100px + 400px + 400px) &#x3D; .111 × -300px &#x3D; -33.333px</span><br><span class="line">Item 2 shrink factor: (1×400) &#x2F; (100px + 400px + 400px) &#x3D; .444 × -300px &#x3D; -133.333px</span><br><span class="line">Item 3 shrink factor: (1×400) &#x2F; (100px + 400px + 400px) &#x3D; .444 × -300px &#x3D; -133.333px</span><br></pre></td></tr></table></figure>
+<h2 id="宽度可以是小数？"><a class="header-anchor" href="#宽度可以是小数？"></a>宽度可以是小数？</h2>
+<p>我们知道 CSS 的最小单位是像素，即 <code>px</code>，那计算出来的小数有何作用？经过一番搜索，又学习到了新的知识：
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect" target="_blank" rel="noopener">getBoundingClientRect()</a>，它可以返回一个 DOM 元素的位置和大小信息，最为重要的是，它返回信息的类型是 <strong>浮点型</strong>！这意味着浏览器是需要存储小数级别的信息的！</p>
+<p>我们打印出了一些信息：</p>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/xozxdz3z/10/embedded/result,html,css,js/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>下面是在我本机上得到的输出结果，下面是在第三个元素缩小之前：</p>
+<img src="/2017/flex-shrink-in-order/before-shrink.png" class="" title="Before Shrink">
+<p>下面是第三个元素缩小之后：</p>
+<img src="/2017/flex-shrink-in-order/after-shrink.png" class="" title="After Shrink">
+<p>上面这两张图只能对比第三个元素的信息，这里直接说下，在第四个元素收缩之前，它的大小是 <code>191px</code>。在第三个元素收缩时（即变成 <code>...</code>）时：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">总宽度: 600px (去掉父元素的 border 2px)</span><br><span class="line">总缩小宽度：600-60-176-186-191 &#x3D; -13px</span><br><span class="line">第3个元素的 shrink factor: (1×186)    &#x2F; (186px + 1000×191px)</span><br><span class="line">                           &#x3D; 0.00094674680015273484 × -13px &#x3D; -0.01230770840198555292px</span><br><span class="line">第4个元素的 shrink factor: (1000×191) &#x2F; (186px + 1000×191px)</span><br><span class="line">                           &#x3D; 0.99905325319984726515 * -13px &#x3D; -12.98769229159801444695px</span><br></pre></td></tr></table></figure>
+<p>因此，计算后第 3 个元素的宽度为 <code>186 - 0.01230770840198555292 = 185.98769229159801444708</code> 并不等于图片中的结果 <code>185.98333740234375</code>。恭喜，发现了一个很深的坑。</p>
+<p>问题其实在于，浏览器会保留多少精度。这是一个没有标准定义的内容，叫作 “subpixel
+rendering”。一个简单的例子就是指定 3 个 <code>width: 33.33333%</code> 的 div 时，由于精度问题，浏览器可能并不会占满 100%。</p>
+<p>那精度到底是多少呢？这个精度叫作
+<a href="http://trac.webkit.org/wiki/LayoutUnit" target="_blank" rel="noopener">LayoutUnit</a>，Chrome 是 <code>1/64px</code>，而
+Firefox 是 <code>1/60px</code>。</p>
+<p>我们这里取整：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">185.98769229159801444708 * 60</span><br><span class="line">&#x3D;&gt; 11159.26153749588086682480</span><br><span class="line">11159 &#x2F; 60</span><br><span class="line">&#x3D;&gt; 185.98333333333333333333</span><br></pre></td></tr></table></figure>
+<p>当然，由于 <code>1/60</code> 的精度是无限的，还是会有精度丢失，这里看到 <code>185.98 &lt; 186</code>
+因此导致元素 3 发生了 overflow。</p>
+<p>最后，如果你愿意计算，这个 flex-shrink 的大小是跟各个元素的宽度相关的，在这个特定的例子里，假设元素 3 宽度为 <code>a</code>，元素 4 宽度为 <code>b</code>，元素 4 的 <code>min-width</code>
+为 <code>c</code>，则要使元素 3 保持正常，则要满足 <code>a/(a + bx) * (b-c) &lt; 1/60</code>，即使 a
+元素缩小的量小于一个 LayoutUnit，即 <code>x &gt; (60*a*(b-c) -a)/b</code>，算得约 5316。</p>
+<p>当然，由于我们输入的字符并不是 1px 的，所以可能相差几倍也不太重要。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<ol>
+<li>想让子元素按优先级收缩，可以通过设置大倍率的 flex-shrink 完成。</li>
+<li>flex-shrink 的算法与 flex-grow 不同，需要先与 flex-basis 相乘得到 shrink
+factor。</li>
+<li>浏览器的 pixel 最小单位称为 LayoutUnit，Chrome 为 <code>1/64px</code>，Firefox 为
+<code>1/60px</code>。</li>
+</ol>
+<h2 id="扩展阅读"><a class="header-anchor" href="#扩展阅读"></a>扩展阅读</h2>
+<ol>
+<li><a href="https://developer.mozilla.org/en-US/docs/Web/CSS/flex-shrink" target="_blank" rel="noopener">MDN: flex-shrink</a></li>
+<li><a href="http://madebymike.com.au/writing/understanding-flexbox/" target="_blank" rel="noopener">Understanding Flexbox</a></li>
+<li><a href="http://cruft.io/posts/percentage-calculations-in-ie/" target="_blank" rel="noopener">Browser Rounding and Fractional Pixels</a></li>
+<li><a href="http://trac.webkit.org/wiki/LayoutUnit" target="_blank" rel="noopener">LayoutUnit</a></li>
+</ol></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2017/flex-shrink-in-order/';
+var disqus_title = 'CSS 子元素依次收缩的实现';
+var disqus_url = 'https://lotabout.me/2017/flex-shrink-in-order/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

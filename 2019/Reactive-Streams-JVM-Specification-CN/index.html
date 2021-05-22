@@ -1,0 +1,436 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="原文：&lt;a href=&quot;https://github.com/reactive-streams/reactive-streams-jvm#specification&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;Reactive
+Streams&lt;/a&gt;。文章只翻译 Specification 部分，用于自己理解。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Reactive Streams JVM Specification 翻译 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Reactive/" rel="tag">Reactive</a><a class="post-tag-link" href="/tags/Streams/" rel="tag">Streams</a><a class="post-tag-link" href="/tags/java/" rel="tag">java</a></div><div class="post-time">2019-12-23</div></div></div><div class="container post-header"><h1>Reactive Streams JVM Specification 翻译</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-publisher"><span class="toc-number">1.</span> <span class="toc-text">1. Publisher</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-subscriber"><span class="toc-number">2.</span> <span class="toc-text">2. Subscriber</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-subscription"><span class="toc-number">3.</span> <span class="toc-text">3. Subscription</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-processor"><span class="toc-number">4.</span> <span class="toc-text">4.Processor</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#异步处理-vs-同步处理"><span class="toc-number">5.</span> <span class="toc-text">异步处理 vs 同步处理</span></a></li></ol></details></div><div class="container post-content"><p>原文：<a href="https://github.com/reactive-streams/reactive-streams-jvm#specification" target="_blank" rel="noopener">Reactive
+Streams</a>。文章只翻译 Specification 部分，用于自己理解。</p>
+<h2 id="1-publisher"><a class="header-anchor" href="#1-publisher"></a>1. Publisher</h2>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Publisher</span>&lt;<span class="title">T</span>&gt; </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">subscribe</span><span class="params">(Subscriber&lt;? <span class="keyword">super</span> T&gt; s)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>规则</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>Publisher</code> 发送给 <code>Subscriber</code> 的 <code>onNext</code> 信号数<strong>必须</strong>小于或等于 <code>Subscriber</code> 通过 <code>Subscription</code> 发送的请求数</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则是为了说明 Publisher 发送的元素不能超过 Subscribers 的请求。这里有一个隐含但重要的结论：由于发送请求与响应请求存在 happens-before 的关系，所以这里其实要求 <code>Subscriber</code> 发送请求在先，接收响应在后</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>Publisher</code> 发送的元素数<strong>可能</strong>小于 <code>Subscriber</code> 的请求数，并以 <code>onComplete</code> 或 <code>onError</code> 结束</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则是为了说明 Publisher 无法保证收到多少请求就发送多少元素；有可能就是没办法生成这么多元素；有可能过程中出错了；也有可能提前退出了。</td>
+</tr>
+<tr>
+<td>3</td>
+<td>发送给 <code>Subscriber</code> 的 <code>onSubscribe</code>、<code>onNext</code>、<code>onError</code> 及 <code>onComplete</code> 信号必须有序</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的用意是：当且仅当每个信号的建立存在 happens-before 的关系时，才允许（包括从多线程中）信号的触发</td>
+</tr>
+<tr>
+<td>4</td>
+<td>如果 <code>Publisher</code> 失败了，<strong>必须</strong>发送 <code>onError</code> 信号</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的用意是指出当 Publisher 检测到它无法继续执行时，Publisher 有职责通知 Subscriber，这样 Subscriber 才有机会去处理错误，或清理资源</td>
+</tr>
+<tr>
+<td>5</td>
+<td>如果 <code>Publisher</code> 成功结束（Stream 元素有限），则<strong>必须</strong>发送 <code>onComplete</code> 信号</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的用意是指出 Publisher 到达终止状态时，有职责通知 Subscriber，让它们能做相应的处理，清理资源等</td>
+</tr>
+<tr>
+<td>6</td>
+<td>如果 <code>Publisher</code> 向 <code>Subscriber</code> 发送了 <code>onError</code> 或 <code>onComplete</code> 信号，则<strong>必须</strong>认为 <code>Subscriber</code> 的 <code>Subscription</code> 被取消了</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的用意是确保不管 <code>Subscription</code> 是自己取消了，还是 <code>Publisher</code> 发送了 <code>onError</code> 或 <code>onComplete</code> 的信号，这个 Subscription 都会有同样的行为</td>
+</tr>
+<tr>
+<td>7</td>
+<td>一旦 Publisher 到达了终止状态 (<code>onError</code>, <code>onComplete</code>)，则<strong>要求</strong>没有后续的信号发出</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的是要确保 onError 和 onComplete 是 Publisher 与 Subscriber 间交互的最终状态</td>
+</tr>
+<tr>
+<td>8</td>
+<td>如果 <code>Subscription</code> 被取消了，则最终(eventually) <strong>必须</strong>停止向它的 <code>Subscriber</code>  发送信号</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则是要确保 Subscriber 尊重调用 Subscription.cancel() 方法取消的 Subscriber。之所以是 <strong>最终</strong> 停止，是因为可能由于异步处理导致信号的传播有延迟</td>
+</tr>
+<tr>
+<td>9</td>
+<td><code>Publisher</code> 在向 <code>Subscriber</code> 发送其它所有信号前<strong>必须</strong>先调用它的 <code>onSubscribe</code> 方法，并<strong>必须</strong>正常返回，除非 <code>Subscriber</code> 是 <code>null</code>，这时<strong>必须</strong>向调用方抛出 <code>java.lang.NullPointerException</code>，其它任何情况下的出错（或被 <code>Subscriber</code> 拒绝）都只能通过调用 <code>onError</code> 方法（当然要在调用 <code>onSubscribe</code> 之后）</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则要确保 <code>onSubscribe</code> 总是先于其它信号被发送，这样能保证 <code>Subscriber</code> 在处理其它信号前能执行初始化逻辑。同时<code>onSubscribe</code> <strong>不能</strong>调用多次。如果 <code>Subscriber</code> 参数为 <code>null</code>，则这个错误除了调用方外无处汇报，于是只能抛出 <code>java.lang.NullPointerException</code>。可能的情形：一个有状态的 <code>Publisher</code> 可能底层依赖的资源有限，或用光了，或已经处在终止状态</td>
+</tr>
+<tr>
+<td>10</td>
+<td><code>Publisher.subscribe</code> <strong>可以</strong>被多次调用，前提是参数<strong>必须</strong>是不同的 <code>Subscriber</code></td>
+</tr>
+<tr>
+<td>💡</td>
+<td>本规则是让 <code>subscribe</code> 方法的调用方认识到，不应该假设一个通用的 <code>Publisher</code> 和 <code>Subscriber</code> 支持重复注册 <code>Subscriber</code>。此外，它还要求无论调用 <code>subscribe</code> 多少次，它的语义都应保持不变</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>Publisher</code> <strong>可以</strong>支持多个 <code>Subscriber</code> 并决定每个 <code>Subscription</code> 是单播还是多播</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>本规则的目的是使 Publisher 的实现可以灵活地决定他们要支持多少个 Subscriber（如果有的话），以及如何分配元素。</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-subscriber"><a class="header-anchor" href="#2-subscriber"></a>2. Subscriber</h2>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Subscriber</span>&lt;<span class="title">T</span>&gt; </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onSubscribe</span><span class="params">(Subscription s)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onNext</span><span class="params">(T t)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onError</span><span class="params">(Throwable t)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onComplete</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>Subscriber</code> <strong>必须</strong>通过 <code>Subscription.request(long n)</code> 发送请求，接收 <code>onNext</code> 信号</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则确认 <code>Subscriber</code> 需要负责决定何时接收请求，接收多少请求。为了避免由于重入 Subscription 方法导致的信号重排，<strong>强烈建议</strong> 同步的 Subscriber 实现在信号处理方法的末尾调用 <code>Subscription</code> 方法。同时<strong>强烈建议</strong> Subscriber 一次性请求它能处理的信号数目上限，一次只请求一个元素会导致本质上底效的 <code>stop-and-wait</code> 协议</td>
+</tr>
+<tr>
+<td>2</td>
+<td>如果 <code>Subscriber</code> 可能对其 <code>Publisher</code> 的响应能力产生负面影响，则<strong>强烈建议</strong>异步分发信号</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>从执行的角度上，Subscriber 不应该阻碍 Publisher 的执行。换句话说，Subscriber 不应该把 Publisher 的 CPU 抢光</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>Subscriber.onComplete()</code> 和 <code>Subscriber.onError(Throwable t)</code> 方法<strong>不能</strong>调用 <code>Subscription</code> 或 <code>Publisher</code> 的其它任何方法</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则是为了防止在处理结束信号时，在 Publisher、Subscription 和 Subscriber 间出现环、竞争</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>Subscriber.onComplete()</code> 和 <code>Subscriber.onError(Throwable t)</code> 在接收到对应信号时<strong>必须</strong>认为 Subscription 已经被取消了</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则是为了确保 <code>Subscriber</code> 尊重 Publisher 的终止信号。概念上在接收到 onComplete 或 onError 信号时，Subscription 就已经无效了</td>
+</tr>
+<tr>
+<td>5</td>
+<td>如果一个 <code>Subscriber</code> 已经有了活跃的 <code>Subscription</code>，则对于新的 <code>Subscription</code>，在接收到 <code>onSubscribe</code> 信号后需要调用 <code>Subscription.cancel()</code></td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则防止两个或多个 Publisher 尝试与同一个 Subscriber 交互。通过强制这个规则，由于多余的 <code>Subscription</code> 会被取消，所以可以防止资源泄露。如果无法遵守这个规则，则可能会违反 Publisher 的规则 1 等其它规则。此类违规行为可能导致难以发现的 bug</td>
+</tr>
+<tr>
+<td>6</td>
+<td>如果 <code>Subscription</code> 已经没用了，则 <code>Subscriber</code> <strong>必须</strong>调用 <code>Subscription.cancel()</code></td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则强调 Subscribers 不能在 Subscription 没有时随意丢弃它们，而必须调用 <code>cancel</code> 方法，这样 Subscription 的资源才能安全地、及时地被回收。示例：一个 Subscriber 只关心某个元素，之后会取消它的 Subscription 来向 Publisher 表示结束</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Subscriber <strong>必须</strong>保证所有对 Subscription 的请求和取消方法的调用都是顺序执行的</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的目的是，当且仅当每个调用之间建立 happens-before 的关系时，才允许调用请求和取消的方法（包括从多线程中调用）</td>
+</tr>
+<tr>
+<td>8</td>
+<td><code>Subscriber</code> 在调用 <code>Subscription.cancel</code> 方法后，如果还有其它未完成的元素请求，则<strong>必须</strong>准备好接收一个或多个 <code>onNext</code> 信号。<code>Subscription.cancel()</code> 方法无法保证立即处理底层的清理操作</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则强调在调用 <code>cancel</code> 方法和 <code>Publisher</code> 觉察之间可能存在时间差</td>
+</tr>
+<tr>
+<td>9</td>
+<td>无论前面还有没有 <code>Subscription.request(long n)</code> 的调用，<code>Subscriber</code> 都<strong>必须</strong>准备好接收 <code>onComplete</code> 信号</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则确定请求与完成之间没有关联，完全有可能流提前结束了。同时也消除了为了等待完成而进行轮询的需求。</td>
+</tr>
+<tr>
+<td>10</td>
+<td>无论前面还有没有 <code>Subscription.request(long n)</code> 的调用，<code>Subscriber</code> 都<strong>必须</strong>准备好接收 <code>onError</code> 信号</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则确定 Publisher 是否失败与请求是否发送之间毫无关联。这意味着 Subscriber 不需要通过轮询来看 Publisher 是不是无法响应它的请求</td>
+</tr>
+<tr>
+<td>11</td>
+<td><code>Subscriber</code> <strong>必须</strong>保证所有对其信号方法的调用都发生在处理这些信号之前(happens-before)。亦即 Subscriber 需要妥善地将信号发布给相应的处理逻辑</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该方法的目的是确定 Subscriber 的实现有职责保证对信号的处理是线程安全的，参考 <a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-17.html#jls-17.4.5" target="_blank" rel="noopener">JMM definition of Happens-Before in section 17.4.5</a></td>
+</tr>
+<tr>
+<td>12</td>
+<td>对于给定的 <code>Subscriber</code>(object equality)，<code>Subscriber.onSubscribe</code> 只能被调用最多一次</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则强调需要假设同一个 Subscriber 最多只能 subscribe 最多一次。注：<code>object equality</code> 指 <code>a.equals(b)</code></td>
+</tr>
+<tr>
+<td>13</td>
+<td>调用 <code>onSubscribe</code>、<code>onNext</code>、<code>onError</code> 或 <code>onComplete</code> 方法时<strong>必须</strong>正常返回，除非参数是 <code>null</code>，这时必须抛 <code>java.lang.NullPointerException</code> 给调用方。其它所有情况下，如果 <code>Subscriber</code> 要表达出错了，只能取消它的 <code>Subscription</code>。如果违反了该规则，<strong>必须</strong>认为所有与该 <code>Subscriber</code> 关联的 <code>Subscription</code> 都是取消了的，且调用方<strong>必须</strong>以某种适合于运行环境的方式抛出错误。</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则想要厘清 Subscriber 方法的语义及违反该规则时 <code>Publisher</code> 应有的行为。 “以某种适合于运行环境的方式抛出错误”可能意味着打日志，或者让某人或某样事物意味到这个错误，毕竟这个错误没办法通知到出错的 Subscriber</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-subscription"><a class="header-anchor" href="#3-subscription"></a>3. Subscription</h2>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Subscription</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">request</span><span class="params">(<span class="keyword">long</span> n)</span></span>;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">cancel</span><span class="params">()</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>Subscription.request</code> 和 <code>Subscription.cancel</code> 方法<strong>只能</strong>在 <code>Subscriber</code> 中调用</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的用意是指出 Subscription 代表的是 Subscriber 和 Publisher 的唯一关联。Subscriber 决定着何时请求新的元素，何时不再需要新的元素（译注：即 pull 模式）</td>
+</tr>
+<tr>
+<td>2</td>
+<td>在 <code>onNext</code> 或 <code>onSubscribe</code> 方法中，<code>Subscription</code> <strong>必须</strong>允许 <code>Subscriber</code> 同步调用 <code>Subscription.request</code></td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则旨在厘清 <code>request</code> 方法的具体实现必须是可重入的，防止在 <code>request</code> 和 <code>onNext</code>（以及最后的 <code>onComplete</code> / <code>onError</code> 方法) 的互相调用中导致栈溢出。这也暗示了 Publisher 可以是“同步的”，即在调用 <code>request</code> 的线程中调用 <code>onNext</code>。</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>Subscription.request</code> 方法<strong>必须</strong>指定 <code>Publisher</code> 与 <code>Subscriber</code> 同步递归调用的上限</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则是上一条规则的补充，为递归的层数做了限制。<strong>建议</strong>具体的实现将这个上限定为 <code>1</code>，用以节省堆栈空间。一个不应该的无限递归示例：Subscriber.onNext -&gt; Subscription.request -&gt; Subscriber.onNext -&gt; …, 不加限制的话会使线程堆栈崩溃</td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>Subscription.request</code> <strong>应该</strong>及时返回，以保证调用方能及时响应其它情况</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的用意是指出 <code>request</code> 方法的本意是非阻塞(non-obstructing)的，它应该在调用线程中尽可能快地运行，尽可能避免做一些重 CPU 的操作，导致调用线程的停滞</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>Subscription.cancel</code> <strong>必须</strong>及时返回以尊重调用方的响应能力，<strong>必须</strong>保持幂等，<strong>必须</strong>保证线程安全</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的用意是指出 <code>cancel</code> 方法的本意是非阻塞(non-obstructing)的，它应该在调用线程中尽可能快地运行，尽可能避免做一些重 CPU 的操作，导致调用线程的停滞。另外同样重要的是，要可以多次调用它而不产生不利影响</td>
+</tr>
+<tr>
+<td>6</td>
+<td>在 <code>Subscription</code> 被取消后，后续的 <code>Subscription.request(long n)</code> <strong>必须</strong>什么都不做(NOP)</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的目的是强调取消 subscription 和后续 request 表现为 No-op 之间存在因果关系</td>
+</tr>
+<tr>
+<td>7</td>
+<td>在 <code>Subscription</code> 被取消后，后续的 <code>Subscription.cancel()</code> <strong>必须</strong>什么都不做(NOP)</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则已被 3.5 取代</td>
+</tr>
+<tr>
+<td>8</td>
+<td>在 <code>Subscription</code> 未被取消前，<code>Subscription.request(long n)</code> <strong>必须</strong>向对应的 subscriber 发出指定数量的请求</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的是要确保“请求”是一个可以累加的操作，同时保证对元素的请求被传达到 Publisher</td>
+</tr>
+<tr>
+<td>9</td>
+<td>在 <code>Subscription</code> 未被取消前，如果调用 <code>Subscription.request(long n)</code> 方法时参数是 <code>&lt;=0</code>，则<strong>必须</strong>发送 <code>onError</code> 信号抛出 <code>java.lang.IllegalArgumentException</code>，异常的错误信息<strong>应当</strong>描述请求的数量小于等于 0 是非法的</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的目的是防止错误的实现不抛出异常，直接处理请求。由于请求的操作是可累加的，请求负数或 0 个元素很可能代表了 Subscriber 计算错误</td>
+</tr>
+<tr>
+<td>10</td>
+<td>在 <code>Subscription</code> 未被取消前，<code>Subscription.request(long n)</code> 方法<strong>可以</strong>同步地调用该 subscriber(或其它 subscriber) 的 <code>onNext</code> 方法</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的目的是强调可以创建同步的 Publisher，它们可以在调用自己的线程上执行自己的逻辑</td>
+</tr>
+<tr>
+<td>11</td>
+<td>在 <code>Subscription</code> 未被取消前，<code>Subscription.request(long n)</code> 方法<strong>可以</strong>同步地调用该 subscriber(或其它 subscriber) 的 <code>onError</code> 或 <code>onComplete</code> 方法</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的目的是强调可以创建同步的 Publisher，它们可以在调用自己的线程上执行自己的逻辑</td>
+</tr>
+<tr>
+<td>12</td>
+<td>在 <code>Subscription</code> 未被取消前，<code>Subscription.cancel</code> <strong>必须</strong>保证调用后会通知 <code>Publisher</code>，让其最终(eventually)停止向自己发送信号。当然<strong>不要求</strong>立马生效</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的目的是强调 Publisher 最终要尊重 subscription 想要取消的意愿，同时也承认可能需要花上一定的时间才能真正停止信号的发送</td>
+</tr>
+<tr>
+<td>13</td>
+<td>在 <code>Subscription</code> 未被取消前，调用 <code>Subscription.cancel</code> 方法<strong>必须</strong>向 <code>Publisher</code> 发送请求，让其最终(eventually)释放对相应的 Subscriber 的引用</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的用意是保证在 Subscription 失效后，相应的 Subscriber 被正确地 GC。虽然规范不推荐用同一个 Subscriber 重新注册（见 2.12），但规范中没有说不允许，否则的话就需要把历史注册过的 Subscriber 都存起来</td>
+</tr>
+<tr>
+<td>14</td>
+<td>在 <code>Subscription</code> 未被取消前，如果 <code>Publisher</code> 是有状态的，且当前没有其它 <code>Subscription</code> 存在，则调用 <code>Subscription.cancel</code> <strong>可能</strong>导致它进入 <code>shut-down</code> 状态（参考 1.9）</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的目的是允许 Publisher 在发送 <code>onSubscribe</code> 之后向新的 Subscriber 发送 <code>onComplete</code> 或 <code>onError</code> 信号，以响应现有 Subscriber 的取消信号</td>
+</tr>
+<tr>
+<td>15</td>
+<td>调用 <code>Subscription.cancel</code> <strong>必须</strong>正常返回</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则不允许具体实现在调用 <code>cancel</code> 方法时抛出异常</td>
+</tr>
+<tr>
+<td>16</td>
+<td>调用 <code>Subscription.request</code> <strong>必须</strong>正常返回</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则不允许具体实现在调用 <code>request</code> 方法时抛出异常</td>
+</tr>
+<tr>
+<td>17</td>
+<td><code>Subscription</code> <strong>必须</strong>支持调用 <code>request</code> 无数次，且<strong>至少</strong>支持到 2^63-1 (<code>java.lang.Long.MAX_VALUE</code>) 次。等于或超过2^63-1 (<code>java.lang.Long.MAX_VALUE</code>) 的请求，<code>Publisher</code> 可以认为是“实际上无限的”</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则是为了说明 Subscriber 可以在任意次数的请求中请求大于 0（见 3.9）的无上限的元素个数。由于在当前及可见的硬件资源下，不太可能产生超过 2^63 - 1 个元素（每纳秒产生一个元素需要 292 年），因此允许 Publisher 只处理到这个上限</td>
+</tr>
+</tbody>
+</table>
+<p><code>Subscription</code> 只会被一个 <code>Publisher</code> 和一个 <code>Subscriber</code> 共享，用于它们间的数据交换。这也是为什么 <code>subscribe()</code> 方法不会返回创建的 <code>Subscription</code> 而是返回
+<code>void</code>。<code>Subscription</code> 只会通过 <code>onSubscribe</code> 回调方法传递给 <code>Subscriber</code>。</p>
+<h2 id="4-processor"><a class="header-anchor" href="#4-processor"></a>4.Processor</h2>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Processor</span>&lt;<span class="title">T</span>, <span class="title">R</span>&gt; <span class="keyword">extends</span> <span class="title">Subscriber</span>&lt;<span class="title">T</span>&gt;, <span class="title">Publisher</span>&lt;<span class="title">R</span>&gt; </span>&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>Processor</code> 代表一个处理阶段，它即是 <code>Subscriber</code> 也是 <code>Publisher</code>，当然也必须遵守二者的规则</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则指是创建 Processor 的行为，并且遵守 Publisher 和 Subscriber 的规则</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>Processor</code> <strong>可以</strong>选择在接到 <code>onError</code> 信号后恢复执行。如何它这么做了，则<strong>必须</strong>认为 <code>Subscription</code> 被取消了，不然地话，它<strong>必须</strong>立即将 <code>onError</code> 信号传递给它的 Subscriber。</td>
+</tr>
+<tr>
+<td>💡</td>
+<td>该规则的目的是说明具体的实现可以不仅仅实现简单的数据变换</td>
+</tr>
+</tbody>
+</table>
+<p>虽然不是强制要求，通常在最后一个 <code>Subscriber</code> 取消它的 <code>Subscription</code> 后，最好能取消 <code>Processor</code> 上游的 <code>Subscription</code>，以此将取消的信号传递给上游。</p>
+<h2 id="异步处理-vs-同步处理"><a class="header-anchor" href="#异步处理-vs-同步处理"></a>异步处理 vs 同步处理</h2>
+<p>Reactive Streams API 规定所有对元素的处理(<code>onNext</code>)或结束信号(<code>onError</code>,
+<code>onComplete</code>) <strong>不可以</strong>阻塞 <code>Publisher</code>。然而具体的 <code>on*</code> 处理程序可以同步或异步地处理事件。</p>
+<p>考虑以下示例：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">nioSelectorThreadOrigin map(f) filter(p) consumeTo(toNioSelectorOutput)</span><br></pre></td></tr></table></figure>
+<p>它的源头和目标都是异步的。我们假设源头的目标都是 event loop 的 selector。则
+<code>Subscription.request(n)</code> 必须从目标一路链接到源头。每个具体的实现可以选择如何完成该操作。</p>
+<p>下面示例中的 <code>|</code> 字符代表发送一个异步的信号（加入队列并等待执行），<code>R#</code> 代表资源（可能是线程）。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">nioSelectorThreadOrigin | map(f) | filter(p) | consumeTo(toNioSelectorOutput)</span><br><span class="line">-------------- R1 ----  | - R2 - | -- R3 --- | ---------- R4 ----------------</span><br></pre></td></tr></table></figure>
+<p>这个例子中，三个消费者 <code>map</code>, <code>filter</code>, <code>consumeTo</code> 中的每一个都是异步进行调度。这些任务可能通过同一个 event loop(trampoline)，在不同的线程上处理等，总之想怎么搞就怎么搞。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">nioSelectorThreadOrigin map(f) filter(p) | consumeTo(toNioSelectorOutput)</span><br><span class="line">------------------- R1 ----------------- | ---------- R2 ---------------</span><br></pre></td></tr></table></figure>
+<p>这个例子里只有最后一步是异步调度的，将工作提交到 NioSelectorOutput event loop
+中，而 <code>map</code> 和 <code>filter</code> 则是在原来的线程上执行的。</p>
+<p>当然其它的实现也可以把这些操作融合到最终的消费者上：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">nioSelectorThreadOrigin | map(f) filter(p) consumeTo(toNioSelectorOutput)</span><br><span class="line">--------- R1 ---------- | ------------------ R2 -------------------------</span><br></pre></td></tr></table></figure>
+<p>所有这些变种都可以认为是“异步流”。每一种都有自己的用途，也都有自己在包括性能和实现难度上的各种权衡。</p>
+<p>Reactive Streams 协议赋予了实现去灵活管理资源、调度、混用异步同步的自由。底线是它得是一个非阻塞的、异步的、动态 push-pull 的流。</p>
+<p>为了保证所有 <code>Publisher</code>/<code>Subscription</code>/<code>Subscriber</code>/<code>Processor</code> 的这些 API 都能被实现成真正的异步，所有方法的返回值都定义成了 <code>void</code>。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2019/Reactive-Streams-JVM-Specification-CN/';
+var disqus_title = 'Reactive Streams JVM Specification 翻译';
+var disqus_url = 'https://lotabout.me/2019/Reactive-Streams-JVM-Specification-CN/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

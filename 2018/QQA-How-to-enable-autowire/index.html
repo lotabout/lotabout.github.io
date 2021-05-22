@@ -1,0 +1,48 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="&lt;p&gt;&lt;code&gt;@Autowired&lt;/code&gt; 是 Spring 提供的一个注解，作用是自动装配 Bean 所需要的依赖。但
+&lt;code&gt;@Autowired&lt;/code&gt; 只是告诉 Spring 当前的 Bean 依赖了其它的 Bean，那么如何让 Spring
+真正“启用”自动装配的功能呢？&lt;/p&gt;
+&lt;p&gt;（Quick Question and Answer 系列旨在对小问题做简短解答）&lt;/p&gt;"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>QQA: 如何启用 @Autowired | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/QQA/" rel="tag">QQA</a><a class="post-tag-link" href="/tags/autowire/" rel="tag">autowire</a><a class="post-tag-link" href="/tags/java/" rel="tag">java</a></div><div class="post-time">2018-03-30</div></div></div><div class="container post-header"><h1>QQA: 如何启用 @Autowired</h1></div><div class="container post-content"><p><code>@Autowired</code> 是 Spring 提供的一个注解，作用是自动装配 Bean 所需要的依赖。但
+<code>@Autowired</code> 只是告诉 Spring 当前的 Bean 依赖了其它的 Bean，那么如何让 Spring
+真正“启用”自动装配的功能呢？</p>
+<p>（Quick Question and Answer 系列旨在对小问题做简短解答）</p>
+<a id="more"></a>
+<h2 id="错误示范"><a class="header-anchor" href="#错误示范"></a>错误示范</h2>
+<p>我们知道在 Spring 可以指定 Configuration Class 来提供 Bean，有时我们会看到下面的代码：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AServiceImpl</span> <span class="keyword">implements</span> <span class="title">AService</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> BService bService;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    AService(BService bService) &#123;</span><br><span class="line">        <span class="keyword">this</span>.bService = bService;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>与此同时在 Configuration Class 里：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">XConfig</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> BService <span class="title">bService</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> BServiceImpl();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> AService <span class="title">aService</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> AServiceImpl(bService());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>一方面，我们用 <code>@Autowired</code> 指定了 <code>AServiceImpl</code> 里要依赖 <code>BService</code>，别一方面我们在 Configuration Class 里 <strong>手工</strong> 创建了 <code>AService</code> 的 Bean，而这个依赖
+<code>bService</code> 也是我们自己指定的。因此 <code>@Autowired</code> 完全没有用……</p>
+<h2 id="正确做法"><a class="header-anchor" href="#正确做法"></a>正确做法</h2>
+<p>从上面例子我们可以想到，要利用 <code>@Autowired</code>，我们要让框架来创建 Bean，那怎么做呢？</p>
+<p><strong>(1) 为 Bean 加上注解 <code>@Component</code></strong></p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">AServiceImpl</span> <span class="keyword">implements</span> <span class="title">AService</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> BService bService;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    AService(BService bService) &#123;</span><br><span class="line">        <span class="keyword">this</span>.bService = bService;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>@Component</code> 的意义是告诉 Spring 当前的类是一个 Bean。</p>
+<p><strong>(2) 在 Configuration Class 加上注解 <code>@ComponentScan</code></strong></p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@ComponentScan</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">XConfig</span> </span>&#123;</span><br><span class="line">    <span class="comment">// no need to define @Bean here</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>@ComponentScan</code> 是告诉 Spring 在 <code>XConfig.java</code> 所有的 package （及子 package
+）中寻找带注解 <code>@Component</code> 的类并为其创建对应的 Bean。在创建的时候，Spring 就会查找类中是否有 <code>@Autowired</code> 注解的字段/方法/…… 并为其自动装配所需依赖。</p>
+<h2 id="只为别人的类创建-bean"><a class="header-anchor" href="#只为别人的类创建-bean"></a>只为别人的类创建 Bean</h2>
+<p>一般来说 Configuration Class 里不需要手工创建 Bean。但有一些类可能不是你自己写的/管的，所以没有办法为它们加上 <code>@Autowired</code>，这时只得手工指定依赖并创建 Bean
+了。创建过程中，如果需要用到加了 <code>@Component</code> 的类，如下例的 <code>AService</code>，可以把它们作为参数，这样 Spring 在创建 OtherBean 时会自动装配 <code>AService</code>。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@ComponentScan</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">XConfig</span> </span>&#123;</span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> OtherBean <span class="title">otherBean</span><span class="params">(AService aService)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> AServiceImpl(aService);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/QQA-How-to-enable-autowire/';
+var disqus_title = 'QQA: 如何启用 @Autowired';
+var disqus_url = 'https://lotabout.me/2018/QQA-How-to-enable-autowire/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

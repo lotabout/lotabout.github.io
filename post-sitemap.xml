@@ -1,0 +1,939 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type="text/xsl" href="sitemap.xsl"?>
+<urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    <url>
+        <loc>https://lotabout.me</loc>
+        <changefreq>daily</changefreq>
+        <priority>1</priority>
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/think-twice-before-utilizing-meta-programming/</loc>
+        <lastmod>2021-05-22T10:33:50.889Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/true-color-for-tmux-and-vim/</loc>
+        <lastmod>2021-05-22T10:33:50.889Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2015/write-a-C-interpreter-0/</loc>
+        <lastmod>2021-05-22T10:33:50.889Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2015/write-a-C-interpreter-1/</loc>
+        <lastmod>2021-05-22T10:33:50.889Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/write-a-C-interpreter-7/</loc>
+        <lastmod>2021-05-22T10:33:50.889Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/write-a-C-interpreter-9/</loc>
+        <lastmod>2021-05-22T10:33:50.889Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/write-a-C-interpreter-4/</loc>
+        <lastmod>2021-05-22T10:33:50.889Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/write-a-C-interpreter-5/</loc>
+        <lastmod>2021-05-22T10:33:50.889Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/write-a-C-interpreter-6/</loc>
+        <lastmod>2021-05-22T10:33:50.889Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/thoughts-of-closure/</loc>
+        <lastmod>2021-05-22T10:33:50.889Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2017/understand-python-asyncio/</loc>
+        <lastmod>2021-05-22T10:33:50.889Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2015/write-a-C-interpreter-2/</loc>
+        <lastmod>2021-05-22T10:33:50.889Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2015/write-a-C-interpreter-3/</loc>
+        <lastmod>2021-05-22T10:33:50.889Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/write-a-C-interpreter-8/</loc>
+        <lastmod>2021-05-22T10:33:50.889Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2017/underscore-source-code-comment/</loc>
+        <lastmod>2021-05-22T10:33:50.889Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/how-big-is-2-power-128/</loc>
+        <lastmod>2021-05-22T10:33:50.885Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/how-system-load-is-calculated/</loc>
+        <lastmod>2021-05-22T10:33:50.885Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/kernel-density-estimation/</loc>
+        <lastmod>2021-05-22T10:33:50.885Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/max-level-of-skiplist/</loc>
+        <lastmod>2021-05-22T10:33:50.885Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/paradox-of-structure/</loc>
+        <lastmod>2021-05-22T10:33:50.885Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/performance-optimization/</loc>
+        <lastmod>2021-05-22T10:33:50.885Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/premature-optimization/</loc>
+        <lastmod>2021-05-22T10:33:50.885Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/python-fileinput-module/</loc>
+        <lastmod>2021-05-22T10:33:50.885Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/rargs/</loc>
+        <lastmod>2021-05-22T10:33:50.885Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/reactor-pattern/</loc>
+        <lastmod>2021-05-22T10:33:50.885Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/kafka-introduction/</loc>
+        <lastmod>2021-05-22T10:33:50.885Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/rust-lifetime/</loc>
+        <lastmod>2021-05-22T10:33:50.885Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/segment-tree/</loc>
+        <lastmod>2021-05-22T10:33:50.885Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/skip-list/</loc>
+        <lastmod>2021-05-22T10:33:50.885Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2017/rust-error-handling/</loc>
+        <lastmod>2021-05-22T10:33:50.885Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2017/flex-shrink-in-order/</loc>
+        <lastmod>2021-05-22T10:33:50.881Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2017/comment-on-10-tips-for-writing-better-code/</loc>
+        <lastmod>2021-05-22T10:33:50.881Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/f-divergence-GAN/</loc>
+        <lastmod>2021-05-22T10:33:50.881Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/decision-tree/</loc>
+        <lastmod>2021-05-22T10:33:50.881Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/When-Monad-Fails/</loc>
+        <lastmod>2021-05-22T10:33:50.877Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/brain-chains/</loc>
+        <lastmod>2021-05-22T10:33:50.877Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/Weighted-Random-Sampling/</loc>
+        <lastmod>2021-05-22T10:33:50.877Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/binary-indexed-tree/</loc>
+        <lastmod>2021-05-22T10:33:50.877Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/What-is-this-thing-called-science/</loc>
+        <lastmod>2021-05-22T10:33:50.877Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/Write-a-Mustache-Template-Engine/</loc>
+        <lastmod>2021-05-22T10:33:50.877Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/UUID-Generator-Benchmark/</loc>
+        <lastmod>2021-05-22T10:33:50.869Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2015/Vim-%E5%B0%8F%E6%8A%80%E5%B7%A7%E2%80%94%E2%80%94%E5%90%88%E5%B9%B6%E8%A1%8C%E5%9D%97/</loc>
+        <lastmod>2021-05-22T10:33:50.869Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2015/Vim-%E5%B0%8F%E6%8A%80%E5%B7%A7%EF%BC%8D%E5%88%A0%E9%99%A4%E8%A1%8C%E6%9C%AB%E7%A9%BA%E6%A0%BC/</loc>
+        <lastmod>2021-05-22T10:33:50.869Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2015/Vim-%E6%9C%80%E5%A4%A7%E5%8C%96%E5%BD%93%E5%89%8D%E7%AA%97%E5%8F%A3/</loc>
+        <lastmod>2021-05-22T10:33:50.869Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/WGAN/</loc>
+        <lastmod>2021-05-22T10:33:50.869Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/Token-Authentication-via-Spring-Security/</loc>
+        <lastmod>2021-05-22T10:33:50.869Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/Understanding-Python-MetaClass/</loc>
+        <lastmod>2021-05-22T10:33:50.869Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/Webflux-vs-Sync/</loc>
+        <lastmod>2021-05-22T10:33:50.869Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/Timestamp-revealed/</loc>
+        <lastmod>2021-05-22T10:33:50.865Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/Thoughts-on-Expression-Problem/</loc>
+        <lastmod>2021-05-22T10:33:50.865Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/ReentrantLock-vs-Synchronized/</loc>
+        <lastmod>2021-05-22T10:33:50.857Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/SSH-Port-Forwarding/</loc>
+        <lastmod>2021-05-22T10:33:50.857Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/Spark-Window-Function-Introduction/</loc>
+        <lastmod>2021-05-22T10:33:50.857Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2021/Spring-Bean-LifeCycle/</loc>
+        <lastmod>2021-05-22T10:33:50.857Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/TCP-connection-establish-and-termination/</loc>
+        <lastmod>2021-05-22T10:33:50.857Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2015/Test-of-Hexo/</loc>
+        <lastmod>2021-05-22T10:33:50.857Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/Things-about-keepalive/</loc>
+        <lastmod>2021-05-22T10:33:50.857Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2017/Shorten-Feedback-Loop/</loc>
+        <lastmod>2021-05-22T10:33:50.857Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2017/Side-Effects/</loc>
+        <lastmod>2021-05-22T10:33:50.857Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/QQA-How-does-nginx-health-check-work/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/QQA-How-to-enable-autowire/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/QQA-Isolation-Level-of-Database/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/QQA-MySQL-collate/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/QQA-Python-str-vs-repr/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/QQA-Spring-Data-query-attribute-in-collection/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/QQA-Understanding-jstat-gc-output/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/QQA-What-is-Sequential-Consistency/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/QQA-What-is-Single-System-Image/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/QQA-What-is-double-checked-locking-idiom/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/QQA-What-is-servlet/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/QQA-Why-Prometheus-increase-return-float/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/QQA-Why-should-bidirectional-associations-be-managed-manually/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2021/QQA-how-to-lazy-initialize-spring-beans/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/QQA-send-vs-sync-in-rust/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/QQA-where-do-spring-boot-s-unpacked-jars-goes/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/QQA-why-use-getters-and-setters/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2017/Python-Decorator/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2017/Python-Generator/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/Raft-Consensus-Algorithm/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/Reactive-Streams-JVM-Specification-CN/</loc>
+        <lastmod>2021-05-22T10:33:50.853Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/Maven-Profile-and-Spring-Profile/</loc>
+        <lastmod>2021-05-22T10:33:50.849Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/Max-Subsequence-Sum/</loc>
+        <lastmod>2021-05-22T10:33:50.849Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/OAuth-2-workflow/</loc>
+        <lastmod>2021-05-22T10:33:50.849Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2017/Notes-on-Java-Annotation-Processor/</loc>
+        <lastmod>2021-05-22T10:33:50.849Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/Let-s-Build-a-C-Interpreter-0/</loc>
+        <lastmod>2021-05-22T10:33:50.833Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/Let-s-Build-a-C-Interpreter-1/</loc>
+        <lastmod>2021-05-22T10:33:50.833Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/Kubernetes-Introduction/</loc>
+        <lastmod>2021-05-22T10:33:50.833Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2021/Linux-Available-Memory/</loc>
+        <lastmod>2021-05-22T10:33:50.833Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/Logistic-Regression-Notes/</loc>
+        <lastmod>2021-05-22T10:33:50.833Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2021/Linux-TCP-Options/</loc>
+        <lastmod>2021-05-22T10:33:50.833Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/Hexo-Auto-Deploy-to-Github/</loc>
+        <lastmod>2021-05-22T10:33:50.829Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/Integrate-clipboard-with-SSH/</loc>
+        <lastmod>2021-05-22T10:33:50.829Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/JSONP/</loc>
+        <lastmod>2021-05-22T10:33:50.829Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/Java-Concurrency-0-Shared-Mutable-State/</loc>
+        <lastmod>2021-05-22T10:33:50.829Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/Java-volatile-keyword/</loc>
+        <lastmod>2021-05-22T10:33:50.829Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/Benchmark-ForkJoinPool/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/C3-Algorithm/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2017/CSS-position-sticky/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2016/CSS-vertical-center/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/Comment-on-Challenges-with-distributed-systems/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/Declarative-vs-Imperative-language/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2017/Estimate-Rice-Production-In-History/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2017/Git-Those-Don-t-Learn-by-Yourself/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2015/Closure-%E5%86%85%E6%B6%B5%E7%90%86%E8%A7%A3/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2019/Data-Synchronization-in-Distributed-System/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/Dependency-Inversion-Principle/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2021/Explicit-is-Better-than-implicit/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/Git-merge-vs-rebase/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/HTML-5-Drag-and-Drop/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/God-Damn-MySQL-Locks/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/Book-Notes-Building-Microservices/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/Book-Notes-InnoDB-Engine-2nd-edition/</loc>
+        <lastmod>2021-05-22T10:33:50.825Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/Active-Health-Check-With-Ribbon-Example/</loc>
+        <lastmod>2021-05-22T10:33:50.821Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/Back-Pressure/</loc>
+        <lastmod>2021-05-22T10:33:50.821Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2020/Ansible-Introduction/</loc>
+        <lastmod>2021-05-22T10:33:50.821Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
+        <loc>https://lotabout.me/2018/Back-Propagation-Note/</loc>
+        <lastmod>2021-05-22T10:33:50.821Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+</urlset>
+<!-- XML Sitemap generated by Hexo SEO Friendly Sitemap Generator -->

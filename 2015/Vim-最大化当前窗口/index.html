@@ -1,0 +1,38 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="在编辑/查看文件时，时常遇到的一个需求是：临时最大化当前窗口（vim 术语中的
+window，tmux 中的 pane）。Vim 原生并不支持该操作，但我们可以利用原生的标签页（tab page）来模拟这样的行为。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Vim 最大化当前窗口 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/FAQ/" rel="tag">FAQ</a><a class="post-tag-link" href="/tags/vim/" rel="tag">vim</a></div><div class="post-time">2015-11-12</div></div></div><div class="container post-header"><h1>Vim 最大化当前窗口</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#"><span class="toc-number">1.</span> <span class="toc-text">问题描述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#"><span class="toc-number">2.</span> <span class="toc-text">解决方案</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#"><span class="toc-number">3.</span> <span class="toc-text">原理</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#"><span class="toc-number">4.</span> <span class="toc-text">题外话</span></a></li></ol></details></div><div class="container post-content"><p>在编辑/查看文件时，时常遇到的一个需求是：临时最大化当前窗口（vim 术语中的
+window，tmux 中的 pane）。Vim 原生并不支持该操作，但我们可以利用原生的标签页（tab page）来模拟这样的行为。</p>
+<h1>问题描述</h1>
+<p>在编辑/查看文件是，通常我们会将 Vim 进行分屏（split, vsplit）。有时代码太长，我们希望最大化当前窗口，这可以通过 <code>:only</code> 实现。只是之后就复原不到原先的分屏了。</p>
+<p>所以我们需要一个临时最大化当前窗口，之后再还原到最大化前的分屏的功能。</p>
+<h1>解决方案</h1>
+<p>利用 Vim 自带的 tab page (<code>:h tagpage</code>) 功能来模拟该功能。在 <code>.vimrc</code> 中加入如下代码：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">function! Zoom ()</span><br><span class="line">    &quot; check if is the zoomed state (tabnumber &gt; 1 &amp;&amp; window &#x3D;&#x3D; 1)</span><br><span class="line">    if tabpagenr(&#39;$&#39;) &gt; 1 &amp;&amp; tabpagewinnr(tabpagenr(), &#39;$&#39;) &#x3D;&#x3D; 1</span><br><span class="line">        let l:cur_winview &#x3D; winsaveview()</span><br><span class="line">        let l:cur_bufname &#x3D; bufname(&#39;&#39;)</span><br><span class="line">        tabclose</span><br><span class="line"></span><br><span class="line">        &quot; restore the view</span><br><span class="line">        if l:cur_bufname &#x3D;&#x3D; bufname(&#39;&#39;)</span><br><span class="line">            call winrestview(cur_winview)</span><br><span class="line">        endif</span><br><span class="line">    else</span><br><span class="line">        tab split</span><br><span class="line">    endif</span><br><span class="line">endfunction</span><br><span class="line"></span><br><span class="line">nmap &lt;leader&gt;z :call Zoom()&lt;CR&gt;</span><br></pre></td></tr></table></figure>
+<p>之后可以通过 <code>&lt;leader&gt;z</code> 来临时最大化，当处于最大化时复原成原先的分屏。（默认的 <code>&lt;leader&gt;</code> 是 <code>\</code>  键）</p>
+<h1>原理</h1>
+<p><code>tab split</code> 命令会将当前窗口在新标签页中打开，形成了将当前窗口最大化的假象。</p>
+<p>而我们如何判断当前窗口是已经最大化的呢？这里的逻辑是：<code>标签页数量 &gt; 1</code> 且 <code>当前窗口数 == 1</code>。</p>
+<p>所以如果你使用了多标签，且当前标签只有一个窗口，上面的逻辑就错误地将你的标签页关闭了。但我个人的情况一般是最大化，查看，之后就还原，所以不会出现这个情况。</p>
+<p>代码中的 <code>winsaveview</code> 与 <code>winresetview</code> 用来将最大化时的窗口信息（光标位置等等）应用到最大化前的窗口。</p>
+<h1>题外话</h1>
+<p>强烈建议把 <code>&lt;leader&gt;</code> 设置成空格！</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">let mapleader &#x3D; &quot;\&lt;Space&gt;&quot;</span><br></pre></td></tr></table></figure></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2015/Vim-最大化当前窗口/';
+var disqus_title = 'Vim 最大化当前窗口';
+var disqus_url = 'https://lotabout.me/2015/Vim-%E6%9C%80%E5%A4%A7%E5%8C%96%E5%BD%93%E5%89%8D%E7%AA%97%E5%8F%A3/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

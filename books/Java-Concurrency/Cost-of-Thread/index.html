@@ -1,0 +1,392 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>线程的代价 - Java 并发知识</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+        <link rel="stylesheet" href="../css/lotabout.css">
+        
+
+        
+        <!-- MathJax -->
+        <script async type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Java 并发知识</a></li><li class="chapter-item expanded affix "><li class="part-title">理解线程安全</li><li class="chapter-item expanded "><a href="../Ideal-World/index.html"><strong aria-hidden="true">1.</strong> 理想的并发世界</a></li><li class="chapter-item expanded "><a href="../Cruel-World/index.html"><strong aria-hidden="true">2.</strong> 残酷的现实</a></li><li class="chapter-item expanded "><a href="../Happens-Before/index.html"><strong aria-hidden="true">3.</strong> Happens Before</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/index.html"><strong aria-hidden="true">4.</strong> 常见线程安全问题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/TOCTOU.html"><strong aria-hidden="true">4.1.</strong> TOCTOU</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Double-Checked-Locking.html"><strong aria-hidden="true">4.2.</strong> Double Checked Locking</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Compound-Actions.html"><strong aria-hidden="true">4.3.</strong> 复合操作</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Summary.html"><strong aria-hidden="true">4.4.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Best-Practice/index.html"><strong aria-hidden="true">5.</strong> 良好的并发编程习惯</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Best-Practice/Confinement.html"><strong aria-hidden="true">5.1.</strong> 封闭</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Immutability.html"><strong aria-hidden="true">5.2.</strong> 不可变</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Threadsafe-Data-Types.html"><strong aria-hidden="true">5.3.</strong> 利用线程安全类</a></li></ol></li><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/index.html"><strong aria-hidden="true">6.</strong> 思考题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/Spring-Bean-Initialization.html"><strong aria-hidden="true">6.1.</strong> Spring Bean 初始化如何线程安全</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">线程与线程池</li><li class="chapter-item expanded "><a href="../Amdahl-Law/index.html"><strong aria-hidden="true">7.</strong> Amdahl 定律</a></li><li class="chapter-item expanded "><a href="../Cost-of-Thread/index.html" class="active"><strong aria-hidden="true">8.</strong> 线程的代价</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/index.html"><strong aria-hidden="true">9.</strong> 线程池</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Pool/Concepts.html"><strong aria-hidden="true">9.1.</strong> 线程池相关概念</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Predefined.html"><strong aria-hidden="true">9.2.</strong> 预定义的线程池</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Usage.html"><strong aria-hidden="true">9.3.</strong> 线程池使用</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Interrupt.html"><strong aria-hidden="true">9.4.</strong> 线程的中断</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Shutdown.html"><strong aria-hidden="true">9.5.</strong> 如何优雅退出</a></li></ol></li><li class="chapter-item expanded "><strong aria-hidden="true">10.</strong> 线程调度</li><li class="chapter-item expanded affix "><li class="part-title">源码分析</li><li class="chapter-item expanded "><a href="../Source-Unsafe/index.html"><strong aria-hidden="true">11.</strong> Unsafe</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/index.html"><strong aria-hidden="true">12.</strong> Atomic</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicInteger.html"><strong aria-hidden="true">12.1.</strong> AtomicInteger</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicIntegerArray.html"><strong aria-hidden="true">12.2.</strong> AtomicIntegerArray</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Striped64.html"><strong aria-hidden="true">12.3.</strong> Striped64</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Adder.html"><strong aria-hidden="true">12.4.</strong> Adder</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/FieldUpdater.html"><strong aria-hidden="true">12.5.</strong> FieldUpdater</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/StampedReference.html"><strong aria-hidden="true">12.6.</strong> StampedReference</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-AQS/AQS.html"><strong aria-hidden="true">13.</strong> AbstractQueuedSynchronizer</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-AQS/blocking-exclusive.html"><strong aria-hidden="true">13.1.</strong> 互斥锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/blocking-shared.html"><strong aria-hidden="true">13.2.</strong> 共享锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/timeout.html"><strong aria-hidden="true">13.3.</strong> 超时</a></li><li class="chapter-item expanded "><a href="../Source-AQS/interrupt.html"><strong aria-hidden="true">13.4.</strong> 中断</a></li><li class="chapter-item expanded "><a href="../Source-AQS/cancellation.html"><strong aria-hidden="true">13.5.</strong> 取消</a></li><li class="chapter-item expanded "><a href="../Source-AQS/condition.html"><strong aria-hidden="true">13.6.</strong> 条件变量</a></li><li class="chapter-item expanded "><a href="../Source-AQS/Summary.html"><strong aria-hidden="true">13.7.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-Lock/Lock.html"><strong aria-hidden="true">14.</strong> Lock</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantLock.html"><strong aria-hidden="true">14.1.</strong> ReentrantLock</a></li><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantReadWriteLock.html"><strong aria-hidden="true">14.2.</strong> ReentrantReadWriteLock</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Java 并发知识</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#线程的代价" id="线程的代价">线程的代价</a></h1>
+<p>在 Java 中使用线程，通常不鼓励直接创建线程，而推荐使用线程池。在《Java 并发编程实战》的第 6 章中提到这几个问题：</p>
+<ul>
+<li>线程生命周期的开销高。如线程的创建和销毁，需要操作系统辅助</li>
+<li>资源消耗。大量如空闲的线程会占用内存，大量线程竞争 CPU 时会有额外开销</li>
+<li>稳定性。通常操作系统限制了一些资源，如最大线程数，线程的栈大小等。过多线程会可能会出错</li>
+</ul>
+<p>本章我们来具体聊一聊这些代价有多大。我们会尽量给一些量化的结论，但不要太过绝对化，生产中还要以实际的性能测试结果为准。</p>
+<h2><a class="header" href="#线程创建" id="线程创建">线程创建</a></h2>
+<p>在 Java 中创建一个线程分为两步：</p>
+<pre><code class="language-java">Thread thread = new Thread(() -&gt; ...);
+thread.start();
+</code></pre>
+<p>其中 <code>new</code> 操作只是调用了 <code>Thread::init</code> 方法做了一些初始化的操作，此时还没有跟操作系统交互。Java 的线程是直接与操作系统线程是 <code>1:1</code> 的，在 <code>Thread::start</code>
+时会调用操作系统的 API 创建 native thread（例如 Linux 下会调用 glibc 的
+<code>pthread_create</code> 创建）。</p>
+<p>我们用 <a href="https://openjdk.java.net/projects/code-tools/jmh/">JMH</a> 框架做了一个简单的测试，测试代码如下：</p>
+<pre><code class="language-java">@BenchmarkMode({Mode.AverageTime})
+@OutputTimeUnit(TimeUnit.MICROSECONDS)
+@State(Scope.Benchmark)
+@Warmup(iterations = 3)
+public class MyBenchmark {
+
+    @Param({&quot;1000&quot;, &quot;2000&quot;, &quot;3000&quot;})
+    private int numThreadsToCreate;
+
+    @Benchmark
+    public void threadCreation(Blackhole bh) throws InterruptedException {
+        List&lt;Thread&gt; threads = new ArrayList&lt;&gt;(numThreadsToCreate);
+        for (int i = 0; i &lt; numThreadsToCreate; i++) {
+            threads.add(new Thread(() -&gt; bh.consume(1)));
+        }
+        bh.consume(threads);
+
+        for (Thread thread : threads) {
+            thread.start();
+        }
+
+        for (Thread thread : threads) {
+            thread.join();
+        }
+    }
+}
+</code></pre>
+<p>最终的得到的结果：</p>
+<ul>
+<li><code>new Thread</code> 大概是每个线程 <code>2us</code></li>
+<li><code>Thread::start</code> 大概每个线程 <code>70us</code></li>
+</ul>
+<p>换句话说，每秒可以创建约 1.4w 个线程，对于通常的使用来说，绝对是够用的。</p>
+<h2><a class="header" href="#内存消耗" id="内存消耗">内存消耗</a></h2>
+<p>Java（操作系统）会为每个线程的堆栈分配内存，线程一天不退出，内存一天就不释放（注意栈的内存属于“堆外内存”）。</p>
+<p>Java 中可以通过 <code>-Xss</code> 来设置，在调用诸如 <code>pthread_create</code> 等方法时，JVM 会将
+<code>Xss</code> 的值作为参数，决定了创建线程的栈空间大小，默认是 <code>1024KB</code>。那么理论上，你创建了 1000 个线程，就占用了约 1G 的内存，是很可怕的。</p>
+<p>不过，操作系统有个机制叫作“虚拟内存”，如果只是申请内存，那么操作系统只分配了虚拟内存（可以理解为只做登记），只有当真正去访问这些内存时，操作系统才会将虚拟内内存映射到物理内存上，才真正消耗物理内存。</p>
+<p>当然，如果是在 32 位机器上，虚拟内存的空间也只有 4G，如果申请的虚拟内存用完，程序也申请不到更多的内存了。但是现在几乎是 64 位的机器，不需要担心虚拟内存被分配完的情况。</p>
+<p>因此：<strong>除非线程栈真的被使用了，否则几乎不占用物理内存</strong>。</p>
+<p>那么如何验证上面的信息呢？首先我们可以通过下面命令，在 Java 程序结束后打印内存使用情况<sup class="footnote-reference"><a href="#NMT">1</a></sup>：</p>
+<ol>
+<li>启动程序时加上参数 <code>-XX:NativeMemoryTracking=summary</code></li>
+<li>等命令启动后使用 <code>jcmd &lt;pid&gt; VM.native_memory summary</code> 查看内存详情</li>
+<li>也可以通过 <code>XX:+UnlockDiagnosticVMOptions -XX:NativeMemoryTracking=summary -XX:+PrintNMTStatistics</code> 在程序结束后打印相关信息</li>
+</ol>
+<p>如何，我们创建 1000 个线程，线程启动后 sleep 100s。</p>
+<pre><code>Java Heap (reserved=4194304KB, committed=262144KB)
+          (mmap: reserved=4194304KB, committed=262144KB)
+
+    Class (reserved=1066165KB, committed=14261KB)
+          (classes #590)
+          (malloc=9397KB #1569)
+          (mmap: reserved=1056768KB, committed=4864KB)
+
+   Thread (reserved=1048931KB, committed=1048931KB)
+          (thread #1021)  # &lt;- 创建了 1000+ 线程
+          (stack: reserved=1044480KB, committed=1044480KB) # 占用了 1020M 虚拟内存
+          (malloc=3256KB #5110)
+          (arena=1195KB #2040)
+...
+</code></pre>
+<p>含义如下：</p>
+<ul>
+<li><code>thread #1021</code> 表示创建了 1021 个线程</li>
+<li><code>reserved=1044480KB</code> 代表保留了内存，如启动参数 <code>-Xms100m -Xmx1000m</code>，则
+Heap 的 reserved 会对应 1000m</li>
+<li><code>committed=1048931KB</code> 代表真正分配的虚拟内存(malloc/mmap)，但注意不代表真正占用的物理内存</li>
+</ul>
+<p>那么如何确认实际占用的物理内存呢？在 MacOS 下可以使用 <code>vmmap &lt;pid&gt;</code>，Linux 下使用 <code>pmap &lt;pid&gt;</code> 来查看，这里以 vmmap 的输出为例：</p>
+<pre><code>REGION TYPE           START - END             [ VSIZE  RSDNT  DIRTY   SWAP] PRT/MAX SHRMOD PURGE    REGION DETAIL
+...
+Stack       000070000d532000-000070000d5b4000 [  520K    36K    36K     0K] rw-/rwx SM=PRV          thread 1
+Stack       000070000d5b8000-000070000d6b7000 [ 1020K   108K   108K     0K] rw-/rwx SM=ZER          thread 2
+Stack       000070000d6b8000-000070000d7ba000 [ 1032K     8K     8K     0K] rw-/rwx SM=PRV          thread 3
+Stack       000070000d7bb000-000070000d8bd000 [ 1032K     8K     8K     0K] rw-/rwx SM=PRV          thread 4
+Stack       000070000d8be000-000070000d9c0000 [ 1032K     8K     8K     0K] rw-/rwx SM=PRV          thread 5
+...
+Stack       000070003b540000-000070003b63f000 [ 1020K    12K    12K     0K] rw-/rwx SM=ZER          thread 729
+Stack       000070003b643000-000070003b742000 [ 1020K    12K    12K     0K] rw-/rwx SM=ZER          thread 730
+Stack       000070003b746000-000070003b845000 [ 1020K    12K    12K     0K] rw-/rwx SM=ZER          thread 731
+...
+</code></pre>
+<p>从 REGION TYPE 和 DETAIL 列可以得知这些是为线程分配的栈空间，其中的 VSIZE 代表虚拟内存，RSDNT 代表驻留内存（物理内存）。可以看到大概分配了 1020K 虚拟内存，但实际占用只有 12K。</p>
+<p>同样的，除非有特殊需求，否则其实日常使用中，线程实际上占不了多少内存。</p>
+<h2><a class="header" href="#线程切换" id="线程切换">线程切换</a></h2>
+<p>在并发编程里，线程切换的开销也是常常提到的一个。线程切换（Context Switching），也叫上下文切换，指的是操作系统在中断线程运行时保存线程的上下文信息，之后恢复运行时再恢复上下文信息的操作。一般有这么几种情形：</p>
+<ol>
+<li>多任务：例如线程运行时间太长被操作系统抢占，或线程调用了阻塞方法，主动暂停等。</li>
+<li>处理中断信号：如我们敲了键盘，从硬盘读取的数据准备就绪等，一般发生在操作系统底层。</li>
+<li>用户态与内核态的切换：当操作系统在用户态与内核态切换时（如调用 <code>read</code> 读取数据），可能需要线程切换。</li>
+</ol>
+<p>当许多线程长时间运行时，不可避免地会发生一些线程切换操作，由于 CPU 数量有限，通常线程越多，发生的切换也越多。类比的话可以理解成开车，由于道路拥堵，每辆车都走走停停，花费了更多的时间。</p>
+<p>问题在于，一次线程切换的开销是多少？准确的测试需要很多细节的把控，这里引用文章
+<a href="https://eli.thegreenplace.net/2018/measuring-context-switching-and-memory-overheads-for-linux-threads/">Measuring context switching and memory overheads for Linux
+threads</a>
+的结论：</p>
+<p><img src="https://eli.thegreenplace.net/images/2018/plot-launch-switch.png" alt="Cost of context switching" /></p>
+<p>换言之，操作系统层面，一次线程切换大概需要 <code>1~2us</code>。日常情景下也是可以忽略的。</p>
+<p>（如果想观察线程切换的频率，可以通过 <code>vmstat</code> 查看系统全局的切换情况，或用
+<code>pidstat -wt -p &lt;pid&gt;</code> 查看某个进程的所有线程的切换情况）</p>
+<h2><a class="header" href="#开销之外" id="开销之外">开销之外</a></h2>
+<p>要注意的是，性能测试程序往往太片面，无法准确反映所有情况下的开销，所以正确看待上面结果的方式是：对开销的数量级有概念，不要过分迷信数字本身。实际编码时要以程序本身的性能测试结果为准。</p>
+<p>同时我们也看到，绝大多数情况下，线程创建的开销、线程的内存占用及线程切换等开销都不太会成为瓶颈。因此虽然“线程池”技术本身的确能减少一些开销，但在我看来这并不能成为使用线程池的主要理由。</p>
+<p>如果我们仔细挖掘，会发现我们使用线程执行任务，初衷是要并行执行任务，但是如果任务多了，我们其实有一些衍生的管理、编排的需求，例如：</p>
+<ul>
+<li>顺序管理。任务按照什么顺序执行？（FIFO、LIFO、优先级）？</li>
+<li>资源管理。同时有多少任务能并发执行？允许有多少任务等待？</li>
+<li>错误处理。如果负载过多，需要取消任务，应该选哪个？如何通知该任务？</li>
+<li>生命周期管理。如何在线程开始或结束时做一些操作？</li>
+</ul>
+<p>上面列举的只是能想到的部分需求。其实推而广之，通常开始时我们只关注“任务”本身，但量变引起质变，数量多了，相应的会衍生出许多的管理、编排的需求。我们看到
+Hadoop/Spark 会有资源管理、任务队列、错误记录等管理需求；微服务多了，我们也会需要像 Kubernetes 这样的容器编排工具做相应的管理。</p>
+<p>在 Java 并发中，答案是“线程池”，即使无关乎开销，它也是必需品。</p>
+<h2><a class="header" href="#小结" id="小结">小结</a></h2>
+<p>本节中，我们对线程的一些开销做了量化：</p>
+<ul>
+<li>创建、启动线程，约 <code>70~80us</code></li>
+<li>内存占用，由于虚拟内存的机制，会按需占用物理内存，实验中看到初始占用 <code>10~20K</code>。</li>
+<li>线程切换，引用了其它文章的数据，每次约 <code>1~2us</code></li>
+</ul>
+<p>再次强调这些具体的数字只做参考，关注数量级即可，实际要以程序的性能测试为准。</p>
+<p>结论是，绝大多数情况下，这些开销都是微乎其微的，在性能测试前是不应该考虑的因素，也不应该是我们使用“线程池”的理由。使用线程池，更应该看重的是它的管理、编排的能力。这也是并发任务的量变引起的质变需求。</p>
+<hr />
+<div class="footnote-definition" id="NMT"><sup class="footnote-definition-label">1</sup>
+<p>参考 <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/troubleshoot/tooldescr007.html">Native Memory Tracking</a></p>
+</div>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../Amdahl-Law/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../Thread-Pool/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../Amdahl-Law/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="../Thread-Pool/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+        <!-- Google Analytics Tag -->
+        <script type="text/javascript">
+            var localAddrs = ["localhost", "127.0.0.1", ""];
+
+            // make sure we don't activate google analytics if the developer is
+            // inspecting the book locally...
+            if (localAddrs.indexOf(document.location.hostname) === -1) {
+                (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+                ga('create', 'UA-39956831-2', 'auto');
+                ga('send', 'pageview');
+            }
+        </script>
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

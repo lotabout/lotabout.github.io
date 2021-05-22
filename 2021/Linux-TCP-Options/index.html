@@ -1,0 +1,789 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="本文对
+&lt;a href=&quot;https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;ip-sysctl.txt&lt;/a&gt;
+中关于 IP 和 TCP 部分的配置做了翻译，同时加了一些个人的理解，旨在见文知义。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Linux sysctl 网络相关参数 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/ip/" rel="tag">ip</a><a class="post-tag-link" href="/tags/sysctl/" rel="tag">sysctl</a><a class="post-tag-link" href="/tags/tcp/" rel="tag">tcp</a></div><div class="post-time">2021-05-01</div></div></div><div class="container post-header"><h1>Linux sysctl 网络相关参数</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#ip-未分类"><span class="toc-number">1.</span> <span class="toc-text">IP 未分类</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ip-forward-boolean"><span class="toc-number">1.1.</span> <span class="toc-text">ip_forward - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ip-default-ttl-integer"><span class="toc-number">1.2.</span> <span class="toc-text">ip_default_ttl - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ip-no-pmtu-disc-integer"><span class="toc-number">1.3.</span> <span class="toc-text">ip_no_pmtu_disc - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#min-pmtu-integer"><span class="toc-number">1.4.</span> <span class="toc-text">min_pmtu - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ip-forward-use-pmtu-boolean"><span class="toc-number">1.5.</span> <span class="toc-text">ip_forward_use_pmtu - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#fwmark-reflect-boolean"><span class="toc-number">1.6.</span> <span class="toc-text">fwmark_reflect - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#fib-multipath-use-neigh-boolean"><span class="toc-number">1.7.</span> <span class="toc-text">fib_multipath_use_neigh - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#fib-multipath-hash-policy-integer"><span class="toc-number">1.8.</span> <span class="toc-text">fib_multipath_hash_policy - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#fib-sync-mem-unsigned-integer"><span class="toc-number">1.9.</span> <span class="toc-text">fib_sync_mem - UNSIGNED INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ip-forward-update-priority-integer"><span class="toc-number">1.10.</span> <span class="toc-text">ip_forward_update_priority - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#route-max-size-integer"><span class="toc-number">1.11.</span> <span class="toc-text">route&#x2F;max_size - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#neigh-default-gc-thresh1-integer"><span class="toc-number">1.12.</span> <span class="toc-text">neigh&#x2F;default&#x2F;gc_thresh1 - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#neigh-default-gc-thresh2-integer"><span class="toc-number">1.13.</span> <span class="toc-text">neigh&#x2F;default&#x2F;gc_thresh2 - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#neigh-default-gc-thresh3-integer"><span class="toc-number">1.14.</span> <span class="toc-text">neigh&#x2F;default&#x2F;gc_thresh3 - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#neigh-default-unres-qlen-bytes-integer"><span class="toc-number">1.15.</span> <span class="toc-text">neigh&#x2F;default&#x2F;unres_qlen_bytes - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#neigh-default-unres-qlen-integer"><span class="toc-number">1.16.</span> <span class="toc-text">neigh&#x2F;default&#x2F;unres_qlen - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#mtu-expires-integer"><span class="toc-number">1.17.</span> <span class="toc-text">mtu_expires - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#min-adv-mss-integer"><span class="toc-number">1.18.</span> <span class="toc-text">min_adv_mss - INTEGER</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ip-分片"><span class="toc-number">2.</span> <span class="toc-text">IP 分片</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ipfrag-high-thresh-long-integer"><span class="toc-number">2.1.</span> <span class="toc-text">ipfrag_high_thresh - LONG INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ipfrag-low-thresh-long-integer"><span class="toc-number">2.2.</span> <span class="toc-text">ipfrag_low_thresh - LONG INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ipfrag-time-integer"><span class="toc-number">2.3.</span> <span class="toc-text">ipfrag_time - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ipfrag-max-dist-integer"><span class="toc-number">2.4.</span> <span class="toc-text">ipfrag_max_dist - INTEGER</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#inet-peer-存储"><span class="toc-number">3.</span> <span class="toc-text">INET peer 存储</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#inet-peer-threshold-integer"><span class="toc-number">3.1.</span> <span class="toc-text">inet_peer_threshold - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#inet-peer-minttl-integer"><span class="toc-number">3.2.</span> <span class="toc-text">inet_peer_minttl - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#inet-peer-maxttl-integer"><span class="toc-number">3.3.</span> <span class="toc-text">inet_peer_maxttl - INTEGER</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#tcp-变量"><span class="toc-number">4.</span> <span class="toc-text">TCP 变量</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#somaxconn-integer"><span class="toc-number">4.1.</span> <span class="toc-text">somaxconn - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-abort-on-overflow-boolean"><span class="toc-number">4.2.</span> <span class="toc-text">tcp_abort_on_overflow - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-adv-win-scale-integer"><span class="toc-number">4.3.</span> <span class="toc-text">tcp_adv_win_scale - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-allowed-congestion-control-string"><span class="toc-number">4.4.</span> <span class="toc-text">tcp_allowed_congestion_control - STRING</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-app-win-integer"><span class="toc-number">4.5.</span> <span class="toc-text">tcp_app_win - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-autocorking-boolean"><span class="toc-number">4.6.</span> <span class="toc-text">tcp_autocorking - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-available-congestion-control-string"><span class="toc-number">4.7.</span> <span class="toc-text">tcp_available_congestion_control - STRING</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-base-mss-integer"><span class="toc-number">4.8.</span> <span class="toc-text">tcp_base_mss - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-mtu-probe-floor-integer"><span class="toc-number">4.9.</span> <span class="toc-text">tcp_mtu_probe_floor - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-min-snd-mss-integer"><span class="toc-number">4.10.</span> <span class="toc-text">tcp_min_snd_mss - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-congestion-control-string"><span class="toc-number">4.11.</span> <span class="toc-text">tcp_congestion_control - STRING</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-dsack-boolean"><span class="toc-number">4.12.</span> <span class="toc-text">tcp_dsack - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-early-retrans-integer"><span class="toc-number">4.13.</span> <span class="toc-text">tcp_early_retrans - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-ecn-integer"><span class="toc-number">4.14.</span> <span class="toc-text">tcp_ecn - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-ecn-fallback-boolean"><span class="toc-number">4.15.</span> <span class="toc-text">tcp_ecn_fallback - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-fack-boolean"><span class="toc-number">4.16.</span> <span class="toc-text">tcp_fack - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-fin-timeout-integer"><span class="toc-number">4.17.</span> <span class="toc-text">tcp_fin_timeout - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-frto-integer"><span class="toc-number">4.18.</span> <span class="toc-text">tcp_frto - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-fwmark-accept-boolean"><span class="toc-number">4.19.</span> <span class="toc-text">tcp_fwmark_accept - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-invalid-ratelimit-integer"><span class="toc-number">4.20.</span> <span class="toc-text">tcp_invalid_ratelimit - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-keepalive-time-integer"><span class="toc-number">4.21.</span> <span class="toc-text">tcp_keepalive_time - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-keepalive-probes-integer"><span class="toc-number">4.22.</span> <span class="toc-text">tcp_keepalive_probes - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-keepalive-intvl-integer"><span class="toc-number">4.23.</span> <span class="toc-text">tcp_keepalive_intvl - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-l3mdev-accept-boolean"><span class="toc-number">4.24.</span> <span class="toc-text">tcp_l3mdev_accept - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-low-latency-boolean"><span class="toc-number">4.25.</span> <span class="toc-text">tcp_low_latency - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-max-orphans-integer"><span class="toc-number">4.26.</span> <span class="toc-text">tcp_max_orphans - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-max-syn-backlog-integer"><span class="toc-number">4.27.</span> <span class="toc-text">tcp_max_syn_backlog - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-max-tw-buckets-integer"><span class="toc-number">4.28.</span> <span class="toc-text">tcp_max_tw_buckets - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-mem-vector-of-3-integers-min-pressure-max"><span class="toc-number">4.29.</span> <span class="toc-text">tcp_mem - vector of 3 INTEGERs: min, pressure, max</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-min-rtt-wlen-integer"><span class="toc-number">4.30.</span> <span class="toc-text">tcp_min_rtt_wlen - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-moderate-rcvbuf-boolean"><span class="toc-number">4.31.</span> <span class="toc-text">tcp_moderate_rcvbuf - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-mtu-probing-integer"><span class="toc-number">4.32.</span> <span class="toc-text">tcp_mtu_probing - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-probe-interval-unsigned-integer"><span class="toc-number">4.33.</span> <span class="toc-text">tcp_probe_interval - UNSIGNED INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-probe-threshold-integer"><span class="toc-number">4.34.</span> <span class="toc-text">tcp_probe_threshold - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-no-metrics-save-boolean"><span class="toc-number">4.35.</span> <span class="toc-text">tcp_no_metrics_save - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-no-ssthresh-metrics-save-boolean"><span class="toc-number">4.36.</span> <span class="toc-text">tcp_no_ssthresh_metrics_save - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-orphan-retries-integer"><span class="toc-number">4.37.</span> <span class="toc-text">tcp_orphan_retries - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-recovery-integer"><span class="toc-number">4.38.</span> <span class="toc-text">tcp_recovery - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-reordering-integer"><span class="toc-number">4.39.</span> <span class="toc-text">tcp_reordering - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-max-reordering-integer"><span class="toc-number">4.40.</span> <span class="toc-text">tcp_max_reordering - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-retrans-collapse-boolean"><span class="toc-number">4.41.</span> <span class="toc-text">tcp_retrans_collapse - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-retries1-integer"><span class="toc-number">4.42.</span> <span class="toc-text">tcp_retries1 - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-retries2-integer"><span class="toc-number">4.43.</span> <span class="toc-text">tcp_retries2 - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-rfc1337-boolean"><span class="toc-number">4.44.</span> <span class="toc-text">tcp_rfc1337 - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-rmem-vector-of-3-integers-min-default-max"><span class="toc-number">4.45.</span> <span class="toc-text">tcp_rmem - vector of 3 INTEGERs: min, default, max</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-sack-boolean"><span class="toc-number">4.46.</span> <span class="toc-text">tcp_sack - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-comp-sack-delay-ns-long-integer"><span class="toc-number">4.47.</span> <span class="toc-text">tcp_comp_sack_delay_ns - LONG INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-comp-sack-nr-integer"><span class="toc-number">4.48.</span> <span class="toc-text">tcp_comp_sack_nr - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-slow-start-after-idle-boolean"><span class="toc-number">4.49.</span> <span class="toc-text">tcp_slow_start_after_idle - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-stdurg-boolean"><span class="toc-number">4.50.</span> <span class="toc-text">tcp_stdurg - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-synack-retries-integer"><span class="toc-number">4.51.</span> <span class="toc-text">tcp_synack_retries - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-syncookies-integer"><span class="toc-number">4.52.</span> <span class="toc-text">tcp_syncookies - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-fastopen-integer"><span class="toc-number">4.53.</span> <span class="toc-text">tcp_fastopen - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-fastopen-blackhole-timeout-sec-integer"><span class="toc-number">4.54.</span> <span class="toc-text">tcp_fastopen_blackhole_timeout_sec - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-fastopen-key-list-of-comma-separated-32-digit-hexadecimal-integers"><span class="toc-number">4.55.</span> <span class="toc-text">tcp_fastopen_key - list of comma separated 32-digit hexadecimal INTEGERs</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-syn-retries-integer"><span class="toc-number">4.56.</span> <span class="toc-text">tcp_syn_retries - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-timestamps-integer"><span class="toc-number">4.57.</span> <span class="toc-text">tcp_timestamps - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-min-tso-segs-integer"><span class="toc-number">4.58.</span> <span class="toc-text">tcp_min_tso_segs - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-pacing-ss-ratio-integer"><span class="toc-number">4.59.</span> <span class="toc-text">tcp_pacing_ss_ratio - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-pacing-ca-ratio-integer"><span class="toc-number">4.60.</span> <span class="toc-text">tcp_pacing_ca_ratio - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-tso-win-divisor-integer"><span class="toc-number">4.61.</span> <span class="toc-text">tcp_tso_win_divisor - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-tw-reuse-integer"><span class="toc-number">4.62.</span> <span class="toc-text">tcp_tw_reuse - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-window-scaling-boolean"><span class="toc-number">4.63.</span> <span class="toc-text">tcp_window_scaling - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-wmem-vector-of-3-integers-min-default-max"><span class="toc-number">4.64.</span> <span class="toc-text">tcp_wmem - vector of 3 INTEGERs: min, default, max</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-notsent-lowat-unsigned-integer"><span class="toc-number">4.65.</span> <span class="toc-text">tcp_notsent_lowat - UNSIGNED INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-workaround-signed-windows-boolean"><span class="toc-number">4.66.</span> <span class="toc-text">tcp_workaround_signed_windows - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-thin-linear-timeouts-boolean"><span class="toc-number">4.67.</span> <span class="toc-text">tcp_thin_linear_timeouts - BOOLEAN</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-limit-output-bytes-integer"><span class="toc-number">4.68.</span> <span class="toc-text">tcp_limit_output_bytes - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-challenge-ack-limit-integer"><span class="toc-number">4.69.</span> <span class="toc-text">tcp_challenge_ack_limit - INTEGER</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tcp-rx-skb-cache-boolean"><span class="toc-number">4.70.</span> <span class="toc-text">tcp_rx_skb_cache - BOOLEAN</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#后记"><span class="toc-number">5.</span> <span class="toc-text">后记</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">6.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>本文对
+<a href="https://www.kernel.org/doc/Documentation/networking/ip-sysctl.txt" target="_blank" rel="noopener">ip-sysctl.txt</a>
+中关于 IP 和 TCP 部分的配置做了翻译，同时加了一些个人的理解，旨在见文知义。</p>
+<p>（博主不是搞网络的，也不是搞内核的，如有错误请指正）</p>
+<h2 id="ip-未分类"><a class="header-anchor" href="#ip-未分类"></a>IP 未分类</h2>
+<h3 id="ip-forward-boolean"><a class="header-anchor" href="#ip-forward-boolean"></a>ip_forward - BOOLEAN</h3>
+<ul>
+<li><code>0</code> 代表关闭</li>
+<li>非 <code>0</code> 代表开启。</li>
+</ul>
+<p>注：可以简单理解为开启了就是路由器了</p>
+<h3 id="ip-default-ttl-integer"><a class="header-anchor" href="#ip-default-ttl-integer"></a>ip_default_ttl - INTEGER</h3>
+<p>向外发送的 IP 报文（非转发报文）的默认 TTL(Time to Live) 值。</p>
+<ul>
+<li>范围为 1 到 255</li>
+<li>默认值 64</li>
+</ul>
+<p>注：TTL 即“跳”。当前的实现里，每过一个路由会减少一跳，TTL 为 0 时会被路由器丢弃。</p>
+<h3 id="ip-no-pmtu-disc-integer"><a class="header-anchor" href="#ip-no-pmtu-disc-integer"></a>ip_no_pmtu_disc - INTEGER</h3>
+<p>是否关闭路径 MTU 发现功能 (Path MTU Discovery)</p>
+<ul>
+<li>0: 开启 MTU 发现（默认值 ）</li>
+<li>1:，代表关闭，此时如果接收到“需要分片”的 ICMP 报文，则会将路径上的 PMTU
+设置成 <code>min_pmtu</code>。如果不希望 IP 报文被分片，则需要手工修改系统的<code>min_pmtu</code></li>
+<li>2: 接收到的路径 MTU 发现消息会被丢弃，发送帧的处理同模式 1</li>
+<li>3: 为强化的 PMTU 发现模式。（具体功能比较复杂，看不懂）</li>
+</ul>
+<p>注：MTU(Max Transmission Unit) 指的是每个网络包的有效载荷，是链路层的概念。以太网的 MTU 默认是 1500B（注意不包含以太网的包头包尾），但因为它是链路层的概念，上层的 IP 数据包头部、TCP 数据包头部的长度也要算在内，因此扣除 IP 头部的20B
+，以及 TCP 头部的 20B，TCP 包的 payload 也只能是 1460B 了。</p>
+<p>路径 MTU 指的是路径上所有 MTU 的最小值，注意 MTU 是有方向的，A -&gt; B 的路径 MTU
+不等于 B-&gt; A 的路径 MTU。</p>
+<p>路径 MTU 发现依赖两个要素：IP 头中的 DF 标志以及 ICMP 的“需要分片”报文。当 IP
+报文设置了 DF 标志，如果某个路由的 MTU 小于报文大小，则因为设置了 DF 标志，路由会丢弃这个 IP 包，并返回“需要分片” ICMP 报文，报文里会携带路由的 MTU，这样发送方就可以逐步学习到路径上的最小 MTU（参考 <sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>）。</p>
+<h3 id="min-pmtu-integer"><a class="header-anchor" href="#min-pmtu-integer"></a>min_pmtu - INTEGER</h3>
+<p>最小的路径 MTU，默认为 <code>522</code></p>
+<h3 id="ip-forward-use-pmtu-boolean"><a class="header-anchor" href="#ip-forward-use-pmtu-boolean"></a>ip_forward_use_pmtu - BOOLEAN</h3>
+<p>默认情况在转发报文时不信任 PMTU 的结果，因为很容易伪造，会导致不需要的分组碎片。除非上面跑着自己的应用程序需要使用 PMTU，一般不需要。</p>
+<ul>
+<li>0（默认） 代表不使用 PMTU</li>
+<li>1 代表使用 PMTU</li>
+</ul>
+<h3 id="fwmark-reflect-boolean"><a class="header-anchor" href="#fwmark-reflect-boolean"></a>fwmark_reflect - BOOLEAN</h3>
+<p>控制内核产生的 IPv4 包的 fwmark，只对不与端口绑定的包生效，如 TCP RST 报文、
+ICMP echo 应答报文。如果选项设置为 <code>0</code>，则这些包的 fwmark 被设置为 0,如果选项设置为 <code>1</code>，则这些应答报文的 fwmark 会被设置为它们应答的原报文的值。</p>
+<p>注：fwmark 是 firewall mark 的简称。Linux（及其它操作系统）通常允许指定一些规则（如通过 iptables），将一些符合规则的网络包打上标签，即为 fwmark。fwmark 可以用在路由的转发规则（基于策略的路由 <code>ip rule</code>）中，达到诸如：满足某个条件的包走哪个网卡的功能。</p>
+<p>fwmark_reflect 解决的是这样的问题<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>：假设有机器是多网卡，正常情况下我们需要让包“从哪来到哪去”，于是会使用 fwmark 写规则。除了“从哪来到哪去”的需求，还会有“不要回答”的需求，例如有人攻击了机器，我们不希望机器回答如destination port unreachable 的 ICMP 报文，因为这样会透露一些机器的信息。但是我们希望将这些报文路由到内部的审计端口中，而不是发回原始的端口，有了
+fwmark_reflect 就可以方便地对 ICMP 做标记从而做更复杂的路由策略了。</p>
+<h3 id="fib-multipath-use-neigh-boolean"><a class="header-anchor" href="#fib-multipath-use-neigh-boolean"></a>fib_multipath_use_neigh - BOOLEAN</h3>
+<p>有多路径的路由下决定下一跳时，是否考虑已经存在的邻居表的状态。如果关闭选项，则不使用邻居表信息，数据包被定向到的下一跳有可能是不通的。需要在编译内核时开启
+<code>CONFIG_IP_ROUTE_MULTIPATH</code> 选项时才可使用。</p>
+<ul>
+<li>0: 关闭（默认）</li>
+<li>1: 开启</li>
+</ul>
+<p>注：与该参数相关的是 ECMP(Equal Cost Multi Path) 功能，是路由里的一项技术。简单地说，它是一种通过一致性哈希将包发送到一组权重相同的网络设备的方式。虽然边缘路由器通常不关心包发到哪里，但一般希望同一个 Flow （四元组：源IP/Port、目标
+IP/port）的包以相同的路径经过各个设备<sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup>。</p>
+<p>注：邻居表<sup class="footnote-ref"><a href="#fn4" id="fnref4">[4]</a></sup>存储了当前主机物理连接的主机的地址信息（MAC），
+Linux 通过 ARP 协议来管理、更新。</p>
+<h3 id="fib-multipath-hash-policy-integer"><a class="header-anchor" href="#fib-multipath-hash-policy-integer"></a>fib_multipath_hash_policy - INTEGER</h3>
+<p>ECMP 使用的哈希算法，内核编译时开启了 <code>CONFIG_IP_ROUTE_MULTIPATH</code> 选项才生效。</p>
+<ul>
+<li>0 - L3 (source and destination addresses plus flow label) 默认值</li>
+<li>1 - L4  (standard 5-tuple)</li>
+<li>2 - Layer 3 or inner Layer 3 if present</li>
+</ul>
+<p>注：在 ECMP 中，要对一个包进行负载均衡，做哈希时会依赖多种信息<sup class="footnote-ref"><a href="#fn5" id="fnref5">[5]</a></sup>:</p>
+<ul>
+<li>L3: 指 IP 层，会使用如下信息做哈希<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;source address, destination address&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li>L4: 指 TCP/UDP 层，会使用如下信息做哈希<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;source address, destination address, protocol, source port, destination port&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li>IPv6 L3: 会使用如下信息做哈希，IPv6 因为有 Flow Label，所以 L3 也可以达到 L4
+的效果<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">&#123;source address, destination address, flow label, next header (protocol)&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="fib-sync-mem-unsigned-integer"><a class="header-anchor" href="#fib-sync-mem-unsigned-integer"></a>fib_sync_mem - UNSIGNED INTEGER</h3>
+<p>在 synchronize_rcu 被强制触发前可用于存储 fib 条目的脏内存</p>
+<ul>
+<li>默认值 512KB</li>
+<li>最小值 64KB</li>
+<li>最大值 64MB</li>
+</ul>
+<p>注：RCU<sup class="footnote-ref"><a href="#fn6" id="fnref6">[6]</a></sup> 可以理解成内核的一个读写锁机制，它将“更新”操作分解成“移除”和“清理”两个步骤。例如一个指针 P，现在指向 A，要更新成指向 B，则会先将 P 置为 NULL，此时不会有新的读者引用 A，再等待老的引用了 A 的读者退出，此时可以清理
+A 对应的资源，再将 P 指向 B。<code>synchronize_rcu</code> 指的是该机制中等待已有读者退出的 API。</p>
+<h3 id="ip-forward-update-priority-integer"><a class="header-anchor" href="#ip-forward-update-priority-integer"></a>ip_forward_update_priority - INTEGER</h3>
+<p>转发一个 IPv4 的包后，是否要用 IP 头中的 TOS 字段来更新 SKB 优先级。新的 SKB
+优先级通过 <code>rt_tos2priority</code> 映射表获得（参见 <code>man tc-prio</code>）</p>
+<ul>
+<li>0: 不更新优先级</li>
+<li>1: 更新优先级（默认）</li>
+</ul>
+<p>注：SKB 指的是 socket buffer，SKB 结构中有个字段 <code>priority</code> 用来指定报文在
+outgoing 队列的优先级。而 TOS<sup class="footnote-ref"><a href="#fn7" id="fnref7">[7]</a></sup> 是 IP 协议中用来指定 IP 报文优先级的字段。因此该选项相当于是指定在转发 IP 报文时，要不要支持 TOS 功能。</p>
+<h3 id="route-max-size-integer"><a class="header-anchor" href="#route-max-size-integer"></a>route/max_size - INTEGER</h3>
+<p>内核中允许的最大路由条数。如果使用了大量的网卡或加了很多路由项，则考虑加大该参数。从 3.6 开始，对 ipv4 该参数不再推荐使用，因为不再使用路由缓存。</p>
+<h3 id="neigh-default-gc-thresh1-integer"><a class="header-anchor" href="#neigh-default-gc-thresh1-integer"></a>neigh/default/gc_thresh1 - INTEGER</h3>
+<p>最小保存条数。当邻居表中的条数小于该数值，则 GC 不会做任何清理</p>
+<ul>
+<li>默认值 128</li>
+</ul>
+<h3 id="neigh-default-gc-thresh2-integer"><a class="header-anchor" href="#neigh-default-gc-thresh2-integer"></a>neigh/default/gc_thresh2 - INTEGER</h3>
+<p>高于该阈值时，GC 会变得更激进，此时存在时间大于 5s 的条目会被清理</p>
+<ul>
+<li>默认值 512</li>
+</ul>
+<h3 id="neigh-default-gc-thresh3-integer"><a class="header-anchor" href="#neigh-default-gc-thresh3-integer"></a>neigh/default/gc_thresh3 - INTEGER</h3>
+<p>允许的最大临时条目数。当使用的网卡数很多，或直连了很多其它机器时考虑增大该参数。</p>
+<ul>
+<li>默认值：1024</li>
+</ul>
+<h3 id="neigh-default-unres-qlen-bytes-integer"><a class="header-anchor" href="#neigh-default-unres-qlen-bytes-integer"></a>neigh/default/unres_qlen_bytes - INTEGER</h3>
+<p>对每个未解析的地址，所有排队报文允许占用的最大字节数。（Linux 3.3 新增）。负值无效且返回错误。</p>
+<ul>
+<li>
+<p>默认值：<code>SK_WMEM_MAX</code>（与 <code>net.core.wmem_default</code> 相同）</p>
+<p>具体值随架构和内核版本有变化，一般需要能允许中等大小的 256 个报文排队</p>
+</li>
+</ul>
+<h3 id="neigh-default-unres-qlen-integer"><a class="header-anchor" href="#neigh-default-unres-qlen-integer"></a>neigh/default/unres_qlen - INTEGER</h3>
+<p>对每个未解析的地址，允许排队的最大报文数。（Linux 3.3 不推荐使用）：建议用新的
+<code>unres_qlen_bytes</code> 参数，Linux 3.3 之前默认参数为 3，有时会有意料之外的包丢失，现在的值是通过 <code>unres_qlen_bytes</code> 和真实的包大小计算得到的。</p>
+<h3 id="mtu-expires-integer"><a class="header-anchor" href="#mtu-expires-integer"></a>mtu_expires - INTEGER</h3>
+<p>缓存的 PMTU 信息过期时间，秒</p>
+<h3 id="min-adv-mss-integer"><a class="header-anchor" href="#min-adv-mss-integer"></a>min_adv_mss - INTEGER</h3>
+<p>通告 MSS（Advertised MSS）由第一跳路由的 MTU 决定，但不能小于这个值。</p>
+<h2 id="ip-分片"><a class="header-anchor" href="#ip-分片"></a>IP 分片</h2>
+<h3 id="ipfrag-high-thresh-long-integer"><a class="header-anchor" href="#ipfrag-high-thresh-long-integer"></a>ipfrag_high_thresh - LONG INTEGER</h3>
+<p>重组 IP 分片时使用的最大内存</p>
+<p>注：一旦用尽，分片处理程序会丢弃分片，直到 ipfrag_low_thresh。</p>
+<h3 id="ipfrag-low-thresh-long-integer"><a class="header-anchor" href="#ipfrag-low-thresh-long-integer"></a>ipfrag_low_thresh - LONG INTEGER</h3>
+<p>(linux-4.17 开始弃用) 重组 IP 分片使用的内存下限，超过该值后内会通过移除不完整的分片队列来释放资源。过程中内核依旧会接收新的分片。</p>
+<h3 id="ipfrag-time-integer"><a class="header-anchor" href="#ipfrag-time-integer"></a>ipfrag_time - INTEGER</h3>
+<p>一个 IP 分片在内存中保留的最大时间，秒</p>
+<h3 id="ipfrag-max-dist-integer"><a class="header-anchor" href="#ipfrag-max-dist-integer"></a>ipfrag_max_dist - INTEGER</h3>
+<p>该参数定义了同一个 IP 源的数据分片所允许的最大“失序程度”。IP 分片乱序到达的情况并非不常见，但如果从某个源 IP 上已经收到了许多分片，而其中的某个分片队列的分片还不完整，则多半该队列中的一片或多片数据已经丢失了。<code>ipfrag_max_dist</code> 为正时，分片在加入重组队列前会做一个额外的检查：如果某个队列两次加入新分片期间，来自某个源 IP 的分片数量超过了 <code>ipfrag_max_dist</code> ，则认为该队列的某些分片已经丢失，现有的队列会被丢弃，被替换成了一个新队列。<code>ipfrag_max_dist</code> 为<code>0</code>时关闭该检查。</p>
+<p>如果该值过小，如 <code>1</code> 或 <code>2</code>，则正常的重排序现象也会引发不必要的队列丢弃，进而导致性能下降；而过大的值，如 <code>50000</code> 则会导致不同 IP 数据报文的分片错误重组在一起的可能性，导致数据出错。</p>
+<ul>
+<li>默认值：64</li>
+</ul>
+<p>注：TCP/IP 详解一书中提到，一般 TCP 会尽量通过设置 MSS 来使底层的 IP 报文不分片。</p>
+<h2 id="inet-peer-存储"><a class="header-anchor" href="#inet-peer-存储"></a>INET peer 存储</h2>
+<p>注：INET peer 是 IP 层的实现概念。与本机有交互的主机就叫 IP peer。出于性能的考虑，Linux 会为每个主机保存一些 IP 相关的信息，其中最重要的是 IP 的数据包 ID
+(packet ID) <sup class="footnote-ref"><a href="#fn8" id="fnref8">[8]</a></sup>。</p>
+<h3 id="inet-peer-threshold-integer"><a class="header-anchor" href="#inet-peer-threshold-integer"></a>inet_peer_threshold - INTEGER</h3>
+<p>允许的最大存储的估计值。当存储大于该阈值后，系统会激进地丢弃 peer 条目。该阈值同时也决定了 peer 条目的 TTL 以及两次 GC 的时间间隔。条目数据越多，TTL 越短，
+GC 越频繁。</p>
+<h3 id="inet-peer-minttl-integer"><a class="header-anchor" href="#inet-peer-minttl-integer"></a>inet_peer_minttl - INTEGER</h3>
+<p>条目的最小 TTL。在 IP 报文重组端，要保证大于分片的 TTL。当条目池使用的存储小于 <code>inet_peer_threshold</code> 时，则该最小的 TTL 是系统能保证满足的，如果超过阈值则可能被提前回收。单位为秒。</p>
+<h3 id="inet-peer-maxttl-integer"><a class="header-anchor" href="#inet-peer-maxttl-integer"></a>inet_peer_maxttl - INTEGER</h3>
+<p>条目的最大 TTL。在没有内存压力的前提下，没被使用的条目超过该时间就会失效。单位为秒。</p>
+<h2 id="tcp-变量"><a class="header-anchor" href="#tcp-变量"></a>TCP 变量</h2>
+<ul>
+<li>参考：<a href="https://man7.org/linux/man-pages/man7/tcp.7.html" target="_blank" rel="noopener">https://man7.org/linux/man-pages/man7/tcp.7.html</a></li>
+</ul>
+<h3 id="somaxconn-integer"><a class="header-anchor" href="#somaxconn-integer"></a>somaxconn - INTEGER</h3>
+<p>socket API <code>listen</code> 允许设置的积压（backlog）。默认值为 <code>4096</code>（Linux 5.4 之前为 <code>128</code>）。更多的关于 TCP socket 调参，也可以参考 <code>tcp_max_syn_backlog</code></p>
+<p>注<sup class="footnote-ref"><a href="#fn9" id="fnref9">[9]</a></sup>：</p>
+<ul>
+<li>该值是在 <code>listen</code> 中不设置 backlog 时的默认值，而 <code>tcp_max_syn_backlog</code> 是上限。</li>
+<li>这是个常调的参数。TCP 三次握手的 server 端有两个队列，一个是 syn queue，存储接收到第一次握手 SYN 连接（SYN_RECV）信息，当第三次握手 ACK 到来时，会将连接信息从 syn queue 移到 accept queue，等待调用 <code>accept()</code> 取走连接信息，这里设置的是 accept queue 的大小。</li>
+<li>当第三次握手 ACK 到来，在尝试将连接从 syn queue 移动到 accept queue 时，如果
+accept queue 满了，则会完全忽略该 ACK，server 一段时间认为还没收到 ACK，会重发SYN+ACK，client 会重发 ACK。</li>
+<li>当 accept queue 满了，即使 syn queue 没满，新的 SYN 也会被忽略</li>
+</ul>
+<p>在 Linux 中的术语中，SYN queue 一般称为 SYN backlog，accept queue 就称为
+accept queue。为什么 <code>socket</code> 选项的参数称为 <code>backlog</code> 呢？猜想 socket API 是
+BSD 风格的，而在 BSD 风格的实现中，并没有两个 queue。</p>
+<h3 id="tcp-abort-on-overflow-boolean"><a class="header-anchor" href="#tcp-abort-on-overflow-boolean"></a>tcp_abort_on_overflow - BOOLEAN</h3>
+<p>如果用户程序调用 accept 的速度太慢，新的连接没法被及时 accept，则重置连接（通过发送 RST）。该值默认为 False，意味着如果瞬时涌入了大量连接，server 会等待负载（accept 能力）慢慢恢复。<strong>只有</strong>在你真的确认用户程序没法更快 accept 连接的时候才设置成 True。设置这个参数可能会损害 client（如虽然服务还在，只是负载高，但 client 认为服务不存在）</p>
+<p>注：这里和在 <a href="#somaxconn-integer">somaxconn</a> 中提到的 accept queue 满了有关，当接到 ACK 时队列满了，默认情况下是完全忽略该 ACK，这样 server 认为在一段时间内没有收到 ACK，会重发 SYN+ACK，client 重发 ACK，server 接收第二个 ACK 时如果
+accept queue 又有空间了，就能恢复连接。如果 <code>tcp_abort_on_overflow</code> 设置成
+True 且发生接到 ACK 时 accept queue 满的情况，则会直接重置连接。</p>
+<h3 id="tcp-adv-win-scale-integer"><a class="header-anchor" href="#tcp-adv-win-scale-integer"></a>tcp_adv_win_scale - INTEGER</h3>
+<p>指定计算缓冲 Overhead 的方式：如果 <code>tcp_adv_win_scale &gt; 0</code> 则为
+<code>bytes/2^tcp_adv_win_scale</code> 否则为<code>bytes - bytes/2^(-tcp_adv_win_scale)</code>。</p>
+<ul>
+<li>默认值：1（低版本默认值是 2）</li>
+<li>可选值：[-31, 31]</li>
+</ul>
+<p>注：所谓的缓冲 overhead 指的是<sup class="footnote-ref"><a href="#fn10" id="fnref10">[10]</a></sup>：正常一个 TCP 的报文，除了包中的数据(payload)外，还会有 TCP 头、IP 头、以太头等；此外内核在存储报文时，还会有 <code>sk_buff</code> 和 <code>skb_shared_info</code> 等开销。因此在 TCP 层计算通告窗口时，需要把这部分排除在外。注意的是 <code>tcp_adv_win_scale</code> 的实际作用其实是指定数据和额外开销的比例的，和 <a href="#tcp-app-win-integer">tcp_app_win</a> 区分开。</p>
+<p>注：<a href="https://man7.org/linux/man-pages/man7/tcp.7.html" target="_blank" rel="noopener">man 7 tcp</a> 中提到 socket
+的缓冲区分为内核部分和应用部分，其中内核部分用来维护 TCP Window，应用部分的作用是“used to isolate the network from scheduling and application latencies”，具体指的应该是上面说的 <code>skb_shared_info</code> 结构，对 TCP 本身没什么用，但对其它模块有用。</p>
+<h3 id="tcp-allowed-congestion-control-string"><a class="header-anchor" href="#tcp-allowed-congestion-control-string"></a>tcp_allowed_congestion_control - STRING</h3>
+<p>设置允许普通进程(non-privileged process)使用的拥塞控制算法。这个参数的值阈是
+<code>tcp_available_congestion_control</code> 参数的子集。默认值为 “reno” 加上
+<code>tcp_congestion_control</code> 参数设置的算法。</p>
+<p>注：可以通过 <code>setsockopt</code> API 的 <code>TCP_CONGESTION</code> 参数为某个连接单独设置拥塞控制算法。</p>
+<h3 id="tcp-app-win-integer"><a class="header-anchor" href="#tcp-app-win-integer"></a>tcp_app_win - INTEGER</h3>
+<p>保留 <code>max(window/2^tcp_app_win, mss)</code> 大小的缓冲作为用户缓冲（参考
+<a href="#tcp-adv-win-scale-integer">tcp_adv_win_scale</a>）。当值为 <code>0</code> 时有特殊含义，代表不保留。</p>
+<ul>
+<li>默认值：31</li>
+</ul>
+<p>注：在 TCP 初始化
+(<a href="https://github.com/torvalds/linux/blob/master/net/ipv4/tcp_input.c#L504" target="_blank" rel="noopener">tcp_init_buffer_space</a>)
+缓冲时会为 application 预留一些空间，即由该值指定。与
+<a href="#tcp-adv-win-scale-integer">tcp_adv_win_scale</a> 不同的是，<code>tcp_adv_win_scale</code>
+是用来指定 overhead 在计算时的比例的，在初始化时，在窗口增长时都会用到，但
+<code>tcp_app_win</code> 只会在初始化时用到。</p>
+<h3 id="tcp-autocorking-boolean"><a class="header-anchor" href="#tcp-autocorking-boolean"></a>tcp_autocorking - BOOLEAN</h3>
+<p>是否开遍 TCP auto corking: 当应用程序连续调用 <code>write()/sendmsg()</code> 系统调用写入小量数据，内核会尽量将这些调用合并，减少需要发送的数据包数量。当同一个流(flow)
+至少有一个之前的数据包在 Qdisc 队列或设备发送队列中等待时才会做合并。选项开启的情况下，应用层依旧可以使用 <code>TCP_CORK</code> 选项来决定是否启用合并功能。</p>
+<ul>
+<li>默认值：1（开启）</li>
+</ul>
+<p>注：Qdisc 队列指的是 Queueing Discipling 队列，是 IP 协议栈与驱动队列之间的队列，实现的是 Linux 内核的流量管理功能，包括流量分类、优先级排序和整流功能
+<sup class="footnote-ref"><a href="#fn11" id="fnref11">[11]</a></sup>。</p>
+<h3 id="tcp-available-congestion-control-string"><a class="header-anchor" href="#tcp-available-congestion-control-string"></a>tcp_available_congestion_control - STRING</h3>
+<p>只读选项，列出可用的拥塞控制算法。</p>
+<h3 id="tcp-base-mss-integer"><a class="header-anchor" href="#tcp-base-mss-integer"></a>tcp_base_mss - INTEGER</h3>
+<p>MTU 探测中 <code>search_low</code> 的初始值，在开启 MTU 探测时，同时作为连接的初始 MSS 值。</p>
+<ul>
+<li>默认值：512</li>
+</ul>
+<p>注：这里的 MTU 探测（PLPMTUD packetization layer Path MTU discovery，又称 MTU
+Probing） 与前文的路径 MTU 发现（PMTUD）不太一样，PMTUD 发现依赖 ICMP需要分片的报文来确认 MTU 大太，可以理解成是 IP 层的。现在出于安全性问题，很多设备会禁用 ICMP 报文，PLPMTUD 是由 <a href="https://tools.ietf.org/html/rfc4821" target="_blank" rel="noopener">RFC4821</a> 引入，尝试解决没有 ICMP 报文情况下的 MTU 发现。简单地说，在 TCP 层实现的话，依赖的是 TCP 的超时机制来确认包丢失，在开启 SACK 机制的情况下也会利用 SACK 信息。</p>
+<p>注：PLPMTUD 也有自己的问题<sup class="footnote-ref"><a href="#fn12" id="fnref12">[12]</a></sup>，如容易把拥塞控制相关的丢包划分为 MTU 问题，长期运行时最终使用的 MTU 值可能较小；同时没有为 IPv6 实现相关功能。</p>
+<h3 id="tcp-mtu-probe-floor-integer"><a class="header-anchor" href="#tcp-mtu-probe-floor-integer"></a>tcp_mtu_probe_floor - INTEGER</h3>
+<p>开启 MTU 探测时，该参数限定允许 <code>search_low</code> 到达的最小值。</p>
+<ul>
+<li>默认值：48</li>
+</ul>
+<p>注：该参数是 Linux 5.4 由这个
+<a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=c04b79b6cfd714144f6a2cf359603d82ee631e62" target="_blank" rel="noopener">commit</a>
+加入。commit 中解释了如果因为丢包严重，会导致 MTU “卡” 在 <code>48</code> 上（之前的默认值），现在加了个参数可供调整。</p>
+<p>注：为什么之前默认值是 <code>48</code>？因为 <a href="https://tools.ietf.org/html/rfc791" target="_blank" rel="noopener">IPv4</a>指出 “Every internet module must be able to forward a datagram of 68 octets
+without further fragmentation”，即 IP 设备至少应该支持 68B，扣除 20B 的 TCP 头，得到最小支持 48B MSS。</p>
+<h3 id="tcp-min-snd-mss-integer"><a class="header-anchor" href="#tcp-min-snd-mss-integer"></a>tcp_min_snd_mss - INTEGER</h3>
+<p>TCP 的 SYN 和 SYNACK 报文通常会携带 ADVMSS 选项，来通告 MSS 信息，如果通告的
+MSS 小于 <code>tcp_min_snd_mss</code>，则 Linux 会偷偷地将 MSS 提高到 <code>tcp_min_snd_mss</code>
+的值。</p>
+<ul>
+<li>默认值：48</li>
+</ul>
+<h3 id="tcp-congestion-control-string"><a class="header-anchor" href="#tcp-congestion-control-string"></a>tcp_congestion_control - STRING</h3>
+<p>设置新连接的拥塞控制算法，保底的算法是 “reno”，总是可用，其它可选的算法得看内核的配置。对于 passive 连接（即对 server）来说，新连接会继承 listener 通过
+<code>setsockopt(listenfd, SOL_TCP, TCP_CONGESTION, &quot;name&quot; ...)</code> 配置的算法。</p>
+<ul>
+<li>默认值是在内核中配置时设置的</li>
+</ul>
+<h3 id="tcp-dsack-boolean"><a class="header-anchor" href="#tcp-dsack-boolean"></a>tcp_dsack - BOOLEAN</h3>
+<p>开启 DSACK(duplicate SACK).</p>
+<ul>
+<li>默认值：1 开启</li>
+</ul>
+<p>注：SACK 指的是 selective ACK，允许在 ACK 时通过 TCP 选项指定接收到了哪些乱序包，这样发送方能更有针对性的重传可能丢失的包。基本的 SACK 没有指定接收到重复报文时做何处理，DSACK 就是这基础上的扩展，它允许发送包含小于或等于累积 ACK 的
+SACK 块，这样重复块的信息也可以通过 SACK 传递。当然 DSACK 也有自己的一些问题，这里不展开。</p>
+<h3 id="tcp-early-retrans-integer"><a class="header-anchor" href="#tcp-early-retrans-integer"></a>tcp_early_retrans - INTEGER</h3>
+<p>是否开启 TLP(Tail loss probe) 机制。注意 TLP 机制需要 RACK 机制才能正常工作（参见下文的 <a href="#tcp-recovery-integer">tcp_recovery</a>）。</p>
+<ul>
+<li>默认值：3</li>
+<li>可选值：
+<ul>
+<li>0：关闭</li>
+<li>3 或 4：开启</li>
+</ul>
+</li>
+</ul>
+<p>注：默认情况下，TCP 在检测到 3 次重复 ACK（dupack，和 DSACK 是两个事）后触发快速重传，即不等超时就重传某个包。当接收方在接到失序报文会对已有的包 ACK 发送重复的 ACK（如收到 #1 发送 ACK-1，收到 #3 会发送 ACK-1，对 #1 ACK 了两次）。但是对于尾包丢失，由于后面没有其它包，则无法触发重复 ACK，也无法触发快速重传。</p>
+<p>注<sup class="footnote-ref"><a href="#fn13" id="fnref13">[13]</a></sup>：TLP 会发送一个 loss probe 包，来产生足够的 SACK/FACK 的信息来触发 fast
+recovery。根据 Google 的测试，TLP 能够有效的避免较长的 RTO 超时，进而提高TCP性能。</p>
+<h3 id="tcp-ecn-integer"><a class="header-anchor" href="#tcp-ecn-integer"></a>tcp_ecn - INTEGER</h3>
+<p>用来控制 TCP 使用的 Explicit Congestion Notification (ECN) 机制。ECN 只有在
+TCP 连接双方协商支持时才启用。这个功能允许路由在丢包之前就通知有拥塞的存在，以此来减少因为真正拥塞导致的丢包。</p>
+<ul>
+<li>可选值：
+<ul>
+<li>0: 关闭 ECN，不主动开启也不被动响应</li>
+<li>1: 开启 ECN，主动开启，被动响应</li>
+<li>2: 开启 ECN，不主动开启，被动响应</li>
+</ul>
+</li>
+<li>默认值：2</li>
+</ul>
+<p>注<sup class="footnote-ref"><a href="#fn14" id="fnref14">[14]</a></sup>：ECN 需要 TCP 和 IP 的支持，TCP 连接建立时协商是否使用 ECN。如果开启，则当中间路由遇到拥塞时，会修改 IP 头中的 TOS 字段的最右两位，置为拥塞。接收方需要使用 TCP 头中的 ECE 标记回传这个拥塞信息。当某一方接收到 TCP 报文带有 ECE 位时，会减少拥塞窗口，同时设置 CWR 位来确认阻塞指示。当然还有一些其它机制来保证安全性。</p>
+<h3 id="tcp-ecn-fallback-boolean"><a class="header-anchor" href="#tcp-ecn-fallback-boolean"></a>tcp_ecn_fallback - BOOLEAN</h3>
+<p>如果内核检测到 ECN 连接工作不正常，则会回退到非 ECN 模式。当前该选项实现了
+RFC3168 第 6.1.1.1. 节中的内容，但不排除未来也会在该选项下实现其它检测算法的可能性。如果 <a href="#tcp-ecn-integer">tcp_ecn</a> 选项或单个路由的 ECN 功能关闭时该选项不生效。</p>
+<ul>
+<li>默认值：1 开启回退</li>
+</ul>
+<h3 id="tcp-fack-boolean"><a class="header-anchor" href="#tcp-fack-boolean"></a>tcp_fack - BOOLEAN</h3>
+<p>开启 TCP FACK(Forward Acknowledgement) 支持。选项废弃了，新版内核不再生效。</p>
+<p>注<sup class="footnote-ref"><a href="#fn15" id="fnref15">[15]</a></sup>：FACK 是拥塞控制中快速恢复（Fast Recovery）阶段相关的机制，它主要解决有多个报文丢失的情况下，通过准确估计（当前连接）还在网络中传输的报文大小，在恢复阶段做出精确的拥塞控制。计算的方式如下：</p>
+<ul>
+<li>记录 SACK 的最大序号数为 <code>snd.fack</code></li>
+<li>定义 awnd 代表正在网络中传输的数据：<code>awnd = snd.nxt - snd.fack</code>，这里假设了不存在乱序报文</li>
+<li>在重传时，awnd 要加上重传的数据：<code>awnd = snd.nxt - snd.fack + retran_data</code></li>
+</ul>
+<p>于是在拥塞时，cwnd 会根据算法改变，此时为了充分利用带宽，可以使用如下方法控制包的发送：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">while (awnd &lt; cwnd)</span><br><span class="line">    sendsomething()</span><br></pre></td></tr></table></figure>
+<p>该方法比起 Reno 通过接收到的 dupack 数量来调整 cwnd 值更为精确。对于快速恢复的触发也有变化：</p>
+<p>正常 Reno 算法会在 <code>dupacks == 3</code> 时触发快速恢复，如果丢失多个包，则 ACK 数量也随之减少，导致等待重传的时间变长，而 FACK 额外增加了一个触发条件：<code>(snd.fack – snd.una) &gt; (3*MSS)</code>，即假设没有乱序包的情况下，如果该条件成立，则说明网络中丢失了 3 个包，等价于 <code>dupacks == 3</code>，可以触发重传和快速恢复。</p>
+<p>注：在 Linux 4.15<sup class="footnote-ref"><a href="#fn16" id="fnref16">[16]</a></sup> 中移除了 FACK 的支持，使用 RACK 机制替代。</p>
+<h3 id="tcp-fin-timeout-integer"><a class="header-anchor" href="#tcp-fin-timeout-integer"></a>tcp_fin_timeout - INTEGER</h3>
+<p>孤儿连接（orphaned connection，指不再被任何应用使用的连接）在 <code>FIN_WAIT_2</code> 状态中等待的时间，超时后在本地会被丢弃。虽然 <code>FIN_WAIT_2</code> 完全是合法的 TCP 状态，但如果另一端已经挂了，如果没有超时机制，则会永远等待下去。</p>
+<ul>
+<li>默认值：60 秒</li>
+</ul>
+<p>注：TCP 四次挥手包含两轮协商，分别包含双方的 FIN+ACK，本地的 FIN+ACK 结束后即进入 FIN_WAIT_2，等待另一方的 FIN。不能永远等待另一方的 FIN。</p>
+<h3 id="tcp-frto-integer"><a class="header-anchor" href="#tcp-frto-integer"></a>tcp_frto - INTEGER</h3>
+<p>开启 F-RTO (Forward RTO-Recovery) 支持。F-RTO 在 RFC5682 中定义，它是 TCP 重传超时的一个增强算法，能更好地处理 RTT 经常波动的情况（如无线网）。F-RTO 仅需要发送端做修改，不需要接收端的任何支持。</p>
+<ul>
+<li>0: 关闭 F-RTO</li>
+<li>1: 开启 F-RTO 的基础算法</li>
+<li>2: 如果一条流使用了 SACK，则开启 SACK 增强的 F-RTO 算法。默认值。</li>
+</ul>
+<p>注<sup class="footnote-ref"><a href="#fn17" id="fnref17">[17]</a></sup>：RTO 解决的是虚假重传的问题，由于链路的 RTT 波动太大，导致发送方还没来得及接收 ACK 就触发了 RTO 超时重传。F-RTO 是一种发送端的无效 RTO 超时重传检测方法。在 RTO 超时重传了第一个数据包之后，F-RTO 会检测之后收到的 ACK 报文来判断刚刚的超时重传是否是虚假重传，然后根据判断结果决定是接着进行重传还是发送新的未发送数据。</p>
+<h3 id="tcp-fwmark-accept-boolean"><a class="header-anchor" href="#tcp-fwmark-accept-boolean"></a>tcp_fwmark_accept - BOOLEAN</h3>
+<p>开启选项时，如果连接某个 listening socket 的连接没有设置 socket mark，则会将
+accepting socket 的 mark 设置成传入的 SYN 报文的 mark。这会导致该连接的后续所有报文（从 SYNACK 开始）都会被打上对应的 fwmark。当然 listening socket 的 mark
+保持不变。同时如果 listening socket 已经通过 <code>setsockopt(SOL_SOCKET, SO_MARK, ...)</code> 设置了 mark，则不受该选项影响。</p>
+<ul>
+<li>默认值：0 不开启</li>
+</ul>
+<p>注：基础知识：Server 端有两种 socket，一种是诸如 80 端口这样的监听端口
+(listening socket)，客户端会连接服务端的 listening socket，当服务端 accept 时，会在在服务端为该连接赋予一个 accepting socket，后续连接通过 accepting socket
+通信。</p>
+<p>注：fwmark 相关内容在 <a href="#fwmark-reflect-boolean">fwmark_reflect</a> 中有介绍，
+<code>tcp_fwmark_accept</code> 用来实现“哪来回哪去”的功能。</p>
+<h3 id="tcp-invalid-ratelimit-integer"><a class="header-anchor" href="#tcp-invalid-ratelimit-integer"></a>tcp_invalid_ratelimit - INTEGER</h3>
+<p>限制响应无效报文的重复 ACK 的最大速率，报文无效的判定：</p>
+<ol>
+<li>序列号在当前窗口范围之外</li>
+<li>ACK 号在当前窗口范围之外</li>
+<li>PAWS（序号回绕检查：Protection Against Wrapped Sequence numbers）检查失败</li>
+</ol>
+<p>这个选项有助于缓解简单的 “ack loop” 的 DoS 攻击，一些怀有恶意的中间设备会尝试以某些方式修改 TCP 报文头，让连接的某一方认为另一方在发送错误的 TCP 报文，导致为这些错误报文无止境地发送重复 ACK。</p>
+<ul>
+<li>0: 关闭速率限制，其它值代表两次无效报文重复 ACK 间的间隔（毫秒）</li>
+<li>默认值：500 毫秒</li>
+</ul>
+<h3 id="tcp-keepalive-time-integer"><a class="header-anchor" href="#tcp-keepalive-time-integer"></a>tcp_keepalive_time - INTEGER</h3>
+<p>当 keepalive 开启时，等待多长时间开始发送 keepalive 消息</p>
+<ul>
+<li>默认：7200（2 小时）</li>
+</ul>
+<p>注<sup class="footnote-ref"><a href="#fn18" id="fnref18">[18]</a></sup>：keepalive 是 TCP 的保活机制，严格来说并不是 TCP 规范中的内容。这个机制一般是为服务器的应用程序提供，希望知道客户主机是否崩溃或离开。保活探测报文为一个空报文段（或只包含一个字节），它的序列号等于对方主机发送的 ACK 报文的最大序号减
+1, 因为这一序号的数据已经被成功接收，因此对接收方没有影响，而返回的响应可以确定连接是否还正常工作。</p>
+<h3 id="tcp-keepalive-probes-integer"><a class="header-anchor" href="#tcp-keepalive-probes-integer"></a>tcp_keepalive_probes - INTEGER</h3>
+<p>判定连接失效前，发送的保活探测报文的数量，默认值为 9.</p>
+<h3 id="tcp-keepalive-intvl-integer"><a class="header-anchor" href="#tcp-keepalive-intvl-integer"></a>tcp_keepalive_intvl - INTEGER</h3>
+<p>保活探测报文发送间隔。乘于 <code>tcp_keepalive_probes</code> 就等于探测触发到关闭连接之间的时间。</p>
+<ul>
+<li>默认值：75（秒），即链接会在重试约 11 分钟后被关闭</li>
+</ul>
+<h3 id="tcp-l3mdev-accept-boolean"><a class="header-anchor" href="#tcp-l3mdev-accept-boolean"></a>tcp_l3mdev_accept - BOOLEAN</h3>
+<p>开启该选项允许子 socket 继承 L3 master device 的索引号。即允许有一个“全局”的
+listen socket，能监听所有的 L3 master 域（即监听所有的 VRF 设备），通过该
+listen socket 建立的连接会被绑定在连接创建时使用的 L3 域上。只有当内核编译时加上 <code>CONFIG_NET_L3_MASTER_DEV</code> 选项才可用。</p>
+<ul>
+<li>默认值：0（关闭）</li>
+</ul>
+<p>注：L3 master device(L3mdev) 是内核为了支持 VRF(Virtual Routing Forwarding) 而添加的功能，但本身是独立于 VRF 存在的。L3 指的是网络栈第 3 层：网络层。可以把
+L3mdev 理解成虚拟的网卡，不过只在 L3 层生效，它有独立的路由表。</p>
+<h3 id="tcp-low-latency-boolean"><a class="header-anchor" href="#tcp-low-latency-boolean"></a>tcp_low_latency - BOOLEAN</h3>
+<p>如果开启该选项，则 TCP 做决定时会倾向于低延时而非高吞吐。如果关闭选项，则倾向高吞吐。Linux 4.14 开始，该选项依旧存在，但会被忽略。</p>
+<h3 id="tcp-max-orphans-integer"><a class="header-anchor" href="#tcp-max-orphans-integer"></a>tcp_max_orphans - INTEGER</h3>
+<p>最大的孤儿连接，孤儿连接指的是不与任何用户文件描述符绑定的 TCP socket 但仍归系统管理中。如果孤儿连接超过了该选项的值，则连接会被立马回收并打出警告信息。这个选项的目的是防止简单的 DoS 攻击，我们不应该去依赖这个行为或者人为减小该值。反之在默认值无法满足网络条件需要时增大它。注意每个孤儿连接会消耗约 64K 的不可
+swap的内存。</p>
+<p>默认初始值等于内核参数 <code>NR_FILE</code>，默认值会随着系统内存调整。</p>
+<h3 id="tcp-max-syn-backlog-integer"><a class="header-anchor" href="#tcp-max-syn-backlog-integer"></a>tcp_max_syn_backlog - INTEGER</h3>
+<p>SYN 队列中允许的最大连接数，具体来说是处于 SYN_RECV 状态的连接，这个状态代表还没有收到三次握手中最后一个 ACK 的连接。这个限制是针对单个 listener 的。对内存少的机器默认值是 128, 对内存多的机器来说会对应增加。如果机器的负载比较大，可以尝试增大该值。同时也别忘了看看 <a href="#somaxconn-integer">somaxconn</a> 参数。另外一个
+SYN_RECV 状态的 socket 占用大概 304B 内存。</p>
+<p>注：如果实际连接数超过了该值，内核就会开始丢弃连接。</p>
+<h3 id="tcp-max-tw-buckets-integer"><a class="header-anchor" href="#tcp-max-tw-buckets-integer"></a>tcp_max_tw_buckets - INTEGER</h3>
+<p>系统同时允许存在的处于 TIME_WAIT 状态的 socket 最大数量。如果实际数量超过了该值，则会立即回收 TIME_WAIT socket 并打印警告信息。和
+<a href="#tcp-max-orphans-integer">tcp_max_orphans</a> 一样，该参数也是用于防范一些简单的
+DoS 攻击，我们不应该去减少这个值，在网络需要的情况下可以适当增加该值。</p>
+<p>注：和 TIME_WAIT 有关的还有个参数 <code>tcp_tw_recycle</code> 是用来快速回收处于
+TIME_WAIT 状态的连接的，在 Linux 4.11 之后也被废弃了。</p>
+<h3 id="tcp-mem-vector-of-3-integers-min-pressure-max"><a class="header-anchor" href="#tcp-mem-vector-of-3-integers-min-pressure-max"></a>tcp_mem - vector of 3 INTEGERs: min, pressure, max</h3>
+<p>包含 3 个值：</p>
+<ul>
+<li>min: 使用内存在 <code>min</code> 页之下时，TCP 不关心内存使用</li>
+<li>pressure: 当 TCP 分配的内存超出了 <code>pressure</code> 页，则会减少它的内存占用，进入
+pressure 模式，直到分配的内存小于 <code>min</code> 时退出</li>
+<li>max: 所有 TCP socket 队列允许使用的最大内存</li>
+</ul>
+<p>默认值在启动时根据系统的内存进行推断。</p>
+<h3 id="tcp-min-rtt-wlen-integer"><a class="header-anchor" href="#tcp-min-rtt-wlen-integer"></a>tcp_min_rtt_wlen - INTEGER</h3>
+<p>Linux 会用一个带窗口的 filter 去计算连接的最小 RTT，该参数控制窗口的大小。更小的窗口意味着对 RTT 变化更敏感，如果最小 RTT 在变大，更小的窗口能更快应用更大的最小 RTT。反之窗口超大，就更能抵抗短时间内的 RTT 膨胀，例如由拥塞引起的 RTT 变大。单位是秒。</p>
+<ul>
+<li>默认值：300 (5min)</li>
+<li>可选值：0 ~ 86400 (1 day)</li>
+</ul>
+<p>注：这个算法的实现可以在这个讨论中找到：<a href="https://patchwork.ozlabs.org/project/netdev/patch/1445057867-32257-3-git-send-email-ycheng@google.com/" target="_blank" rel="noopener">tcp: track min RTT using windowed
+min-filter</a></p>
+<h3 id="tcp-moderate-rcvbuf-boolean"><a class="header-anchor" href="#tcp-moderate-rcvbuf-boolean"></a>tcp_moderate_rcvbuf - BOOLEAN</h3>
+<p>如果开启，则 TCP 会自动调整接收缓存的大小，在不超过 <code>tcp_rmem[2]</code> 的前提下，尽量达到该连接满吞吐的要求。默认开启。</p>
+<h3 id="tcp-mtu-probing-integer"><a class="header-anchor" href="#tcp-mtu-probing-integer"></a>tcp_mtu_probing - INTEGER</h3>
+<p>是否开启 MTU 探测功能（即 PLPMTUD Packetization-Layer Path MTU Discovery）。</p>
+<ul>
+<li>0: 关闭（默认值）</li>
+<li>1: 默认关闭，在检测到 IMCP 黑洞问题时开启</li>
+<li>2: 始终开启，使用 <a href="#tcp-base-mss-integer">tcp_base_mss</a> 作为初始值</li>
+</ul>
+<p>注：PLPMTUD 机制在 <a href="#tcp-base-mss-integer">tcp_base_mss</a> 做了简单介绍</p>
+<h3 id="tcp-probe-interval-unsigned-integer"><a class="header-anchor" href="#tcp-probe-interval-unsigned-integer"></a>tcp_probe_interval - UNSIGNED INTEGER</h3>
+<p>控制开始 PLPMTUD 重新检测的时机，默认是每 10 分钟重新检测，由
+<a href="https://tools.ietf.org/html/rfc4821" target="_blank" rel="noopener">RFC4821</a> 规定。</p>
+<h3 id="tcp-probe-threshold-integer"><a class="header-anchor" href="#tcp-probe-threshold-integer"></a>tcp_probe_threshold - INTEGER</h3>
+<p>控制 PLPMTUD 何时停止探测，如果最终搜索范围的间隔小于某个数字时停止，默认值是
+8 字节。</p>
+<h3 id="tcp-no-metrics-save-boolean"><a class="header-anchor" href="#tcp-no-metrics-save-boolean"></a>tcp_no_metrics_save - BOOLEAN</h3>
+<p>默认情况下，当一个连接关闭时，TCP 会在 route cache 中记录一些连接相关的指标，这些指标在随后建立的新连接中可以被当作初始条件使用。通常这种做法会提高整体的性能，但有一些特殊情况下也可能会降低性能。如果这个开关开启，则关闭连接时<strong>不会</strong>
+记录指标。</p>
+<h3 id="tcp-no-ssthresh-metrics-save-boolean"><a class="header-anchor" href="#tcp-no-ssthresh-metrics-save-boolean"></a>tcp_no_ssthresh_metrics_save - BOOLEAN</h3>
+<p>控制 TCP 是否将 ssthresh 记录在 route cache 中，默认值是 1 代表不记录。</p>
+<p>注：<code>ssthresh</code> 是拥塞控制中，慢启动的阈值，窗口超过阈值后进入拥塞避免。</p>
+<h3 id="tcp-orphan-retries-integer"><a class="header-anchor" href="#tcp-orphan-retries-integer"></a>tcp_orphan_retries - INTEGER</h3>
+<p>该值影响的是本地已关闭但超时重传还没有被 ACK 的 TCP 连接的超时。更多信息参考
+<a href="#tcp-retries2-integer">tcp_retries2</a>。</p>
+<p>默认值是 8，如果你的机器是一个高负载的 WEB 服务器，可以考虑调低该值，因为这样的 socket 可能占用不少资源，同时参考
+<a href="#tcp-max-orphans-integer">tcp_max_orphans</a></p>
+<h3 id="tcp-recovery-integer"><a class="header-anchor" href="#tcp-recovery-integer"></a>tcp_recovery - INTEGER</h3>
+<p>这个值是一个 bitmap，用来开启一些还在实验的丢包恢复的功能</p>
+<ul>
+<li><code>0x1</code>，（默认）为丢包重传和丢尾包的情况开启 RACK 丢包检测，对 SACK 连接来说，它已经包含了 <a href="https://tools.ietf.org/html/rfc6675" target="_blank" rel="noopener">RFC6675</a> 的恢复并且禁用相关功能</li>
+<li><code>0x2</code>，使用静态的 RACK 重排序窗口，置为 (min_rtt/4)</li>
+<li><code>0x4</code>，不使用 RACK 的启发式 DUPACK 阈值</li>
+</ul>
+<p>注：RACK<sup class="footnote-ref"><a href="#fn19" id="fnref19">[19]</a></sup> 全称 (Recent ACK)，作用是在快速发现并重传那些曾经重传后再次丢失的数据包，旨在替代 DUPACK 等重传机制。传统的一些重传机制依赖计算 ACK 包的数量，包括
+DUPACK，FACK 等，在很多情况下这个方法不可靠。于是 RACK 使用的是基于超时的算法（通过时间戳和 SACK 信息），RACK 会维护一个窗口，当 ACK 到来时，RACK 会将窗口中“过期”的包标记为“丢失”，进行重传，而对于“未过期”的包，有可能丢失也有可能是乱序，会等到超时后再处理。</p>
+<h3 id="tcp-reordering-integer"><a class="header-anchor" href="#tcp-reordering-integer"></a>tcp_reordering - INTEGER</h3>
+<p>TCP 重排序级别的初始值，TCP 协议栈会动态地在初始值和
+<a href="#tcp-max-reordering-integer">tcp_max_reordering</a> 之间做调整。一般不要改默认值。</p>
+<ul>
+<li>默认值：3</li>
+</ul>
+<p>注<sup class="footnote-ref"><a href="#fn20" id="fnref20">[20]</a></sup>：该参数的含义是告诉内核，重排序的情况有多严重，这样内核就会假设数据包发生了重排序而不是丢了。如果 TCP 认为丢包了，则会进入慢启动，因为它会认为包是因为链路上的拥塞而丢失的。同时如果内核在使用 FACK 算法，也会回退到普通算法。</p>
+<h3 id="tcp-max-reordering-integer"><a class="header-anchor" href="#tcp-max-reordering-integer"></a>tcp_max_reordering - INTEGER</h3>
+<p>TCP 数据流中最大的重排序级别。默认值为 300，是一个比较保守的值，如果链路使用了
+per packet 的负载均衡（例如 bounding rr 模式），则可以考虑增加该值的大小。</p>
+<h3 id="tcp-retrans-collapse-boolean"><a class="header-anchor" href="#tcp-retrans-collapse-boolean"></a>tcp_retrans_collapse - BOOLEAN</h3>
+<p>开启后，在重传时会试图发送满大小的包。这是对一些有 BUG 的打印机的绕过方式。</p>
+<ul>
+<li>默认：开启</li>
+</ul>
+<h3 id="tcp-retries1-integer"><a class="header-anchor" href="#tcp-retries1-integer"></a>tcp_retries1 - INTEGER</h3>
+<p>该值决定了经过多少次 RTO 超时重传没被 ACK 后，TCP 向 IP 层传递“消极建议”（如重新评估当前的 IP 路径）。参考 <a href="#tcp-retries2-integer">tcp_retries2</a>。</p>
+<p><a href="https://tools.ietf.org/html/rfc1122" target="_blank" rel="noopener">RFC1122</a> 推荐至少等待 3 次重传，这也是默认值。</p>
+<h3 id="tcp-retries2-integer"><a class="header-anchor" href="#tcp-retries2-integer"></a>tcp_retries2 - INTEGER</h3>
+<p>该值决定了在多少次 RTO 重传仍未得到 ACK 后，TCP 将放弃该连接。给定值为 N，假设
+TCP 使用的是指数回退机制，初始 RTO 为 <code>TCP_RTO_MIN</code>，则连接会重传 N 次，第
+(N+1) 次 RTO 时放弃连接。</p>
+<p>默认值是 15，按上面的逻辑，关闭前会有 924.6s 的超时，它也是合理超时的一个下界。TCP 在超过该时间后的第一个 RTO 超时时放弃该连接。</p>
+<p><a href="https://tools.ietf.org/html/rfc1122" target="_blank" rel="noopener">RFC1122</a> 推荐至少等待 100s，对应该值至少为 8.</p>
+<p>注<sup class="footnote-ref"><a href="#fn21" id="fnref21">[21]</a></sup>：逻辑上来说，TCP 有两个值 R1 和 R2 来决定如何重传同一个报文。R1 表示 TCP 在向 IP 层传递“消极建议”（如重新评估当前的 IP 路径）之前，愿意重传的次数。R2（大于 R1）指示 TCP 应该放弃当前连接的时机。R1 对应的<a href="#tcp-retries1-integer">tcp_retries1</a>，R2 对应
+<a href="#tcp-retries2-integer">tcp_retries2</a>。</p>
+<h3 id="tcp-rfc1337-boolean"><a class="header-anchor" href="#tcp-rfc1337-boolean"></a>tcp_rfc1337 - BOOLEAN</h3>
+<p>如果开启了，则 TCP 协议栈的行为会符合
+<a href="https://tools.ietf.org/html/rfc1337" target="_blank" rel="noopener">RFC1337</a>，如果不开启，则行为不符合 RFC
+的描述，但依旧会防止暗杀 TIME_WAIT 的连接。</p>
+<ul>
+<li>默认值：0</li>
+</ul>
+<h3 id="tcp-rmem-vector-of-3-integers-min-default-max"><a class="header-anchor" href="#tcp-rmem-vector-of-3-integers-min-default-max"></a>tcp_rmem - vector of 3 INTEGERs: min, default, max</h3>
+<p>这个选项包含 3 个值：</p>
+<ul>
+<li>
+<p>min，默认 4K。代表 TCP socket 接收缓冲的最小值。即使在内存紧张的情况下也会得到保证</p>
+</li>
+<li>
+<p>default，默认 87380B，TCP socket 接收缓冲的初始值，该参数会覆盖其它协议设置的 <code>net.core.rmem_default</code> 值。在
+<a href="#tcp-adv-win-scale-integer">tcp_adv_win_scale</a> 为默认值，
+<a href="#tcp-app-win-integer">tcp_app_win</a> 为 0 的设置下，87380B 能对应拥有大小为
+65535B 的 TCP窗口，默认 tcp_app_win 设置(31)下则会更小一些。</p>
+</li>
+<li>
+<p>max，默认值在 87380B 到 6MB 之前，视内存而定。是系统自动调整接收缓冲的最大值，这个参数<strong>不会</strong>覆盖 <code>net.core.rmem_max</code>。如果使用 <code>setsockopt()</code> 设置了
+<code>SO_RCVBUF</code>，则会关闭自动调整接收缓冲大小的功能，因此该值不生效。另：具体的默认值公式：</p>
+<p><code>max(87380, min(4 MB, tcp_mem[1]*PAGE_SIZE/128))</code></p>
+</li>
+</ul>
+<p>注：接收缓冲划分的逻辑在 <a href="#tcp-adv-win-scale-integer">tcp_adv_win_scale</a> 和
+<a href="#tcp-app-win-integer">tcp_app_win</a> 有更详细的描述。</p>
+<p>注意上面的描述说会得到 65535B 的窗口，是按 tcp_adv_win_scale = 2 来计算的，此时 TCP 窗口的大小为 bytes - overhead = 87380 - 87380/2^2 = 87380 - 21845 =
+65535。但是 <code>tcp_adv_win_scale</code> 最新的默认值已经是 <code>1</code> 了，所以实际的窗口只有
+43690B。</p>
+<h3 id="tcp-sack-boolean"><a class="header-anchor" href="#tcp-sack-boolean"></a>tcp_sack - BOOLEAN</h3>
+<p>开启 SACK（select acknowledgments）。</p>
+<p>注：这个机制应该是比较常用的，接收方在返回 ACK 时，除了返回目前最大的累积 ACK
+序号，还可以在 TCP 选项中填写提前收到的“乱序”报文。这样发送方在接收到 SACK 时，就可以有针对性地重传缺失的包，提高传输效率。</p>
+<h3 id="tcp-comp-sack-delay-ns-long-integer"><a class="header-anchor" href="#tcp-comp-sack-delay-ns-long-integer"></a>tcp_comp_sack_delay_ns - LONG INTEGER</h3>
+<p>TCP 会尽量减少发送 SACK 的数量，默认会等待 5% SRTT 的时间，时间的下限是该选项的值，纳秒为单位。默认值为 1ms，与 TSO 自动调整大小的间隔相同。</p>
+<p>注<sup class="footnote-ref"><a href="#fn22" id="fnref22">[22]</a></sup>：这个参数的大背景是要对 SACK 做压缩，因为 TCP 会在收到失序报文时立即发送SACK 报文，在诸如 wifi 环境或拥塞的网络情况下这并不是好的选择。</p>
+<h3 id="tcp-comp-sack-nr-integer"><a class="header-anchor" href="#tcp-comp-sack-nr-integer"></a>tcp_comp_sack_nr - INTEGER</h3>
+<p>允许被压缩的最大 SACK 报文数，设置为 0 代表关闭 SACK 压缩</p>
+<ul>
+<li>默认值：44</li>
+</ul>
+<h3 id="tcp-slow-start-after-idle-boolean"><a class="header-anchor" href="#tcp-slow-start-after-idle-boolean"></a>tcp_slow_start_after_idle - BOOLEAN</h3>
+<p>如果开启了，则会实现 <a href="https://tools.ietf.org/html/rfc2861" target="_blank" rel="noopener">RFC2861</a> 的行为：在空闲超过一段时间之后，将拥塞窗口置为过期（重新慢启动过程）。“一段时间”定义为当前的 RTO。如果关闭选项，则拥塞窗口不会随着空闲时间过期。</p>
+<ul>
+<li>默认值：开启</li>
+</ul>
+<h3 id="tcp-stdurg-boolean"><a class="header-anchor" href="#tcp-stdurg-boolean"></a>tcp_stdurg - BOOLEAN</h3>
+<p>对于 TCP 的 URG(Urgent pointer) 字段，是否使用 Host requirements 中的解释。多数主机使用的是更老的 BSD 解释，如果开启该选项，Linux 和这些 BSD 风格的主机可能就没法正常通信了。</p>
+<p>注：<a href="https://tools.ietf.org/html/rfc1122" target="_blank" rel="noopener">Host Requirement</a> 对主机实现 TCP 规范有许多细节上的要求。</p>
+<h3 id="tcp-synack-retries-integer"><a class="header-anchor" href="#tcp-synack-retries-integer"></a>tcp_synack_retries - INTEGER</h3>
+<p>对于被动连接(passive connection)，允许重传 SYNACK 的最大次数。不能高于 255. 默认值为 5, 在当前初始 RTO 为 1s 的情况下，到最后一次重传共用时 31s。这样该连接最后一次超时发生在自尝试建立连接的 63s 之后。</p>
+<p>注：TCP 的重传时间是每次翻倍，所以如果初始 RTO = 1s，则第 5 次重传发生在 <code>1＋2 ＋4＋8＋16=31</code>，最后一次超时为 32s，因此共为 63s。</p>
+<h3 id="tcp-syncookies-integer"><a class="header-anchor" href="#tcp-syncookies-integer"></a>tcp_syncookies - INTEGER</h3>
+<p>只在内核编译时加了 <code>CONFIG_SYN_COOKIES</code> 时生效。作用是当 SYN 队列(syn backlog
+queue)溢出时，新连接不再存入 SYN 队列，而是直接发送 syncookies，作用是防止常见的 SYN 泛洪攻击（SYN flood attack）。</p>
+<p>注意 syncookies 是一个 fallback 的机制，<strong>不应该</strong>被高负载主机用来作用承接合法连接流量的工具。如果在日志中收到 SYN 泛洪的警告，但是调研后发现这些连接都是佥的，只是流量太大了，那么此时应该考虑的是调整其它的参数直到日志中的警告消失：
+<a href="#tcp-max-syn-backlog-integer">tcp_max_syn_backlog</a>、
+<a href="#tcp-synack-retries-integer">tcp_synack_retries</a>、
+<a href="#tcp-abort-on-overflow-boolean">tcp_abort_on_overflow</a></p>
+<p>syncookies 机制严重违背了 TCP 协议，它不允许使用 TCP 扩展，会导致一些其它服务的退化（如 SMTP 中继），这些影响都不是服务端可见的，而是由客户端、中继方发现并通知你的。你只能看到日志里的 SYN 泛洪警告，尽管你发现它们不是真正的泛洪，但你的服务器配置其实是有问题的。</p>
+<p>如是你想测试 syncookies 对服务的影响，可以将选项设置成 2, 这样会无条件开启
+syncookies。</p>
+<ul>
+<li>0: 关闭</li>
+<li>1: 仅当 syn backlog queue 溢出时发送 syncookies，默认值</li>
+<li>2: 无条件发送 syncookies（从 Linux 3.12 开始支持）</li>
+</ul>
+<p>注：SYN 泛洪攻击指的是攻击者发送大量的 SYN 报文请求建立连接，服务端响应 SYNACK
+，但是攻击者并不处理，不真正建立连接，于是大量 SYN_RECV 状态的连接将服务端的
+SYN 队列占满，导致正常的请求无法被响应。</p>
+<p>SYN 泛洪攻击的重点是服务端需要为 SYN_RECV 连接保存信息，syncookies 的思路是将连接的信息编码到 SYNACK 报文中，最后一个 ACK 时再由客户端将信息带回给服务端，这样服务就不需要为它保存任何信息，因此能正常接受连接且不需要保存任何信息。</p>
+<p>有两个缺点<sup class="footnote-ref"><a href="#fn23" id="fnref23">[23]</a></sup>：一是服务器只能编码 8 种 MSS 值，因为有些位被占用了，另一方面服务器必须拒绝所有 TCP 选项，例如大窗口和时间戳。</p>
+<h3 id="tcp-fastopen-integer"><a class="header-anchor" href="#tcp-fastopen-integer"></a>tcp_fastopen - INTEGER</h3>
+<p>开启 TCP Fast Open (<a href="https://tools.ietf.org/html/rfc7413" target="_blank" rel="noopener">RFC7413</a>) 功能，在
+SYN 包中也能传输数据。需要客户端和服务器两端都开启支持。</p>
+<p>客户端支持通过设置为 <code>0x1</code> 开启（默认打开）。要想在 SYN 时发送数据，客户端需要用加上 <code>MSG_FASTOPEN</code> 选项的 <code>sendmsg()</code> 或<code>sendto()</code> 方法建立连接，而不是用
+<code>connect()</code>。</p>
+<p>服务端支持通过设置为 <code>0x2</code> 开启（默认关闭），之后要么通过另一个标志（<code>0x400</code>）来为所有的 listeners 开启该功能，要么通过为每个 listener 单独开启
+<code>TCP_FASTOPEN</code> 选项来支持。这个选项要带一个参数，代表 syn-data backlog 的长度。</p>
+<p>这个选项的值是 bitmap，描述如下：</p>
+<ul>
+<li><code>0x1</code>：客户端，允许客户端在 SYN 中携带数据</li>
+<li><code>0x2</code>: 服务端，开启服务端支持，允许在三次握手结束前接收数据并传递给应用程序</li>
+<li><code>0x4</code>: 客户端，不管 FTO cookie 是否存在，都在 SYN 中发送数据，且不带 cookie
+选项</li>
+<li><code>0x200</code>: 服务端，没有 cookie 选项时依旧接收 SYN 报文中的数据</li>
+<li><code>0x400</code>: 服务端，为所有监听端口开启 FTO，不用为端口单独设置 TCP_FASTOPEN 选项</li>
+<li>默认值为：<code>0x1</code></li>
+</ul>
+<p>注意后续的增强选项只有在开启了客户端或服务端支持（<code>0x1</code> 及 <code>0x2</code>）后才会生效。</p>
+<p>注：TFO 通过在握手时传递数据，来减少三次握手对数据传输的延时影响，在诸如 HTTP
+这类协议，会不断创建新的 TCP 连接，因此影响会更大。</p>
+<p>TFO 有个概念是 TFO cookie，客户端在创建连接时可以带上 cookie 选项，服务端认证通过时，就可以接收第一个 SYN 包中携带的数据，而不是等第三次握手的 ACK 后再接收数据<sup class="footnote-ref"><a href="#fn24" id="fnref24">[24]</a></sup>。</p>
+<h3 id="tcp-fastopen-blackhole-timeout-sec-integer"><a class="header-anchor" href="#tcp-fastopen-blackhole-timeout-sec-integer"></a>tcp_fastopen_blackhole_timeout_sec - INTEGER</h3>
+<p>发生 TFO 防火墙黑洞（TFO firewall blackhole）情况时，关闭活跃端口快速打开功能的持续时间（单位秒）初始值。如果快速打开功能重新启用后又遇到了黑洞问题，则关闭时间会指数级增长，如果黑洞问题消失，关闭时间会重新被设置为初始值。</p>
+<ul>
+<li>0: 关闭黑洞问题检测机制</li>
+<li>默认为 1 小时</li>
+</ul>
+<p>注：TFO 防火墙黑洞会导致 client 端长时间连不上 server 端，其中的一些情形：</p>
+<ul>
+<li>防火墙可能会丢掉带数据的 SYN 包</li>
+<li>防火墙可能会丢掉带数据的 SYNACK 包</li>
+</ul>
+<h3 id="tcp-fastopen-key-list-of-comma-separated-32-digit-hexadecimal-integers"><a class="header-anchor" href="#tcp-fastopen-key-list-of-comma-separated-32-digit-hexadecimal-integers"></a>tcp_fastopen_key - list of comma separated 32-digit hexadecimal INTEGERs</h3>
+<p>该选项的值包含了一个列表，列表中包含了一个主 Key 和一个可选的备用 Key。主 Key
+被用于签发新 cookie 及验证已有 cookie，而备用 key 只会被用来验证 cookie。备用
+Key 是用来滚动更新 key 时轮换用的。</p>
+<p>如果 <a href="#tcp-fastopen-integer">tcp_fastopen</a> 选项设置成了 <code>0x400</code>，或者端口设置了 <code>TCP_FASTOPEN</code> 选项，而之前并没有配置过 Key，则内核会随机生成一个 Key。如果端口事先使用了 <code>setsockopt</code> 配置了 <code>TCP_FASTOPEN_KEY</code> 选项，则该端口会选用配置的 Key 而不是 sysctl 设置的 Key。</p>
+<p>Key 由 4 组数字构成，由字符 <code>-</code> 分隔，每组由 8 个 16 进制数字组成，如
+<code>xxxxxxxx-xxxxxxxx-xxxxxxxx-xxxxxxxx</code>，前导的 0 可以省略。主 Key 和备用 Key 之间用逗号分隔。如果只设置了一个 Key，则该 Key 被认为是主 Key，之前配置的备用
+Key 会被移除。</p>
+<h3 id="tcp-syn-retries-integer"><a class="header-anchor" href="#tcp-syn-retries-integer"></a>tcp_syn_retries - INTEGER</h3>
+<p>重传主动连接 SYN 报文的次数。不能高于 127。 默认值是 6, 在 RTO 为 1s 的情况下，从开始到最后一次重传之间的时间为 63s。从开始到最终的超时之间，过了 127s。</p>
+<h3 id="tcp-timestamps-integer"><a class="header-anchor" href="#tcp-timestamps-integer"></a>tcp_timestamps - INTEGER</h3>
+<p>开启 <a href="https://tools.ietf.org/html/rfc1323" target="_blank" rel="noopener">RFC1323</a> 中定义的时间戳功能</p>
+<ul>
+<li>0: 关闭</li>
+<li>1: （默认）开启功能并为每个连接使用随机的 offset，而不仅是使用当前时间</li>
+<li>2: 开启功能并仅使用当前时间（Linux 4.10 后生效）</li>
+</ul>
+<p>注：时间戳机制指的是在发送 TCP 报文时，加上时间戳选项，记录服务端的时间，接收方在 ACK 时需要将时间戳选项原封不动返回。这样服务端一方面可以用来精确计算 RTT
+，一方面可以用来防止序列号回绕（PAWS，传输大量数据时，ACK 序列溢出回绕，可能会和之前发送的报文有重合）。</p>
+<p>出于安全上的考虑，时间戳并不是真正记录时间，而是会使用一些随机的内容，一般还是保证递增的。</p>
+<h3 id="tcp-min-tso-segs-integer"><a class="header-anchor" href="#tcp-min-tso-segs-integer"></a>tcp_min_tso_segs - INTEGER</h3>
+<p>每个 TSO 帧包含的报文段数量最小值。从 Linux-3.12 开始，TCP 就不再是填充一个
+64KB 的大 TSO 包，而是会根据当前的流量自动决定 TSO 帧的大小。如果有一些特殊的需求，还是可以强迫 TCP 构造大的 TSO 帧的。当然如果可用窗口太小，TCP 层还是有可能对大的 TSO 帧做拆分。</p>
+<ul>
+<li>默认值 2</li>
+</ul>
+<p>注：TSO(TCP segmentation offload) 机制的动机是 TCP 用户层的数据需要根据 MTU 进行分段，这个过程很固定但是消耗 CPU，于是改进的思路是将数据整体发往网络设备，由网络设备进行分段。这个机制能释放 CPU，但需要网络设备支持。</p>
+<p>注<sup class="footnote-ref"><a href="#fn25" id="fnref25">[25]</a></sup>：TSO 机制有个问题是 TCP 经常会向下传递一个大包，网卡拆分后一次性注入网络，容易造成流量峰值。TSO autosizing 的目的是根据流量自动调整帧大小，进而将流量平稳地注入网络，“尽量每毫秒都发一个包，而不是每 100 毫秒发一个大包”。<code>tcp_min_tso_segs</code> 指定的是这个包的最小值。</p>
+<h3 id="tcp-pacing-ss-ratio-integer"><a class="header-anchor" href="#tcp-pacing-ss-ratio-integer"></a>tcp_pacing_ss_ratio - INTEGER</h3>
+<p>TCP 会根据当前速率乘于一个比例来设置 <code>sk-&gt;sk_pacing_rate</code> 值（当前速率
+<code>current_rate = cwnd * mss / srtt</code>）。如果 TCP 处于<strong>慢启动</strong>阶段，则会使用
+<code>tcp_pacing_ss_ratio</code> 这个比例来让 TCP 以更快的速度进行探测，这里会假设每个RTT
+时间里 cwnd 都可以翻倍。</p>
+<ul>
+<li>默认值：200</li>
+</ul>
+<p>注：和在 <a href="#tcp-min-tso-segs-integer">tcp_min_tso_segs</a> 中的注提到的类似，
+Pacing 机制的目标也是在某个 RTT 下能让窗口的包尽量“均匀”地发送，而不是在某一时刻扎堆发送。</p>
+<h3 id="tcp-pacing-ca-ratio-integer"><a class="header-anchor" href="#tcp-pacing-ca-ratio-integer"></a>tcp_pacing_ca_ratio - INTEGER</h3>
+<p>TCP 会根据当前速率乘于一个比例来设置 <code>sk-&gt;sk_pacing_rate</code> 值（当前速率
+<code>current_rate = cwnd * mss / srtt</code>）。如果 TCP 处于<strong>拥塞避免</strong>阶段，则会使用
+<code>tcp_pacing_ca_ratio</code> 这个比例来让 TCP 以保守的速度进行探测。</p>
+<ul>
+<li>默认值：120</li>
+</ul>
+<h3 id="tcp-tso-win-divisor-integer"><a class="header-anchor" href="#tcp-tso-win-divisor-integer"></a>tcp_tso_win_divisor - INTEGER</h3>
+<p>该选项控制一个 TSO 帧的大小能占拥塞窗口的百分比。这个参数用来在减少峰值和构建大 TSO 帧之间做选择。</p>
+<ul>
+<li>默认值：3</li>
+</ul>
+<h3 id="tcp-tw-reuse-integer"><a class="header-anchor" href="#tcp-tw-reuse-integer"></a>tcp_tw_reuse - INTEGER</h3>
+<p>允许新连接复用处于 TIME_WAIT 状态的端口。需要应用层协议自己判断这样做是否安全。</p>
+<ul>
+<li>0: 关闭</li>
+<li>1: 全局开启</li>
+<li>2: 只对环回的流量开启（默认值）</li>
+</ul>
+<p>除非有专家要求或建议，否则不建议修改。</p>
+<p>注：实践中遇到 TIME_WAIT 端口太多导致端口不够用的问题，通常是因为开启了反向代理且没有开启 keepalive 长连接。在绝大多数情况下都不需要修改内核参数，并且修改了以后会造成很多偶发的预料之外的问题。</p>
+<h3 id="tcp-window-scaling-boolean"><a class="header-anchor" href="#tcp-window-scaling-boolean"></a>tcp_window_scaling - BOOLEAN</h3>
+<p>开启由<a href="https://tools.ietf.org/html/rfc1323" target="_blank" rel="noopener">RFC1323</a>中定义的窗口缩放（window
+scaling）功能</p>
+<ul>
+<li>默认值：开启</li>
+</ul>
+<p>注：TCP 头中窗口大小字段是 16位的，所以最多表示 64K 大小的窗口，为了使用更大的窗口，“窗口缩放”会使用新增的 TCP 选项，指定窗口放大多少倍（实际上指定的是左移多少位）。这个选项需要连接双方都支持。</p>
+<h3 id="tcp-wmem-vector-of-3-integers-min-default-max"><a class="header-anchor" href="#tcp-wmem-vector-of-3-integers-min-default-max"></a>tcp_wmem - vector of 3 INTEGERs: min, default, max</h3>
+<p>这个选项包含 3 个值：</p>
+<ul>
+<li>
+<p>min: 默认 4K。代表 TCP 发送缓存的预留大小。</p>
+</li>
+<li>
+<p>default: 默认 16K。TCP 发送缓存的初始大小，该先期覆盖其它协议设置的
+<code>net.core.wmem_default</code>，并且通常比 <code>wmem_default</code> 的值小。</p>
+</li>
+<li>
+<p>max，默认值在 4K 到 6MB 之前，视内存而定。是系统自动调整发送缓冲的最大值，这个参数<strong>不会</strong>覆盖 <code>net.core.wmem_max</code>。如果使用 <code>setsockopt()</code> 设置了
+<code>SO_SNDBUF</code>，则会禁用自动调整发送缓冲大小的功能，因此该值不生效。另：具体的默认值公式：</p>
+<p><code>max(65536, min(4 MB, tcp_mem[1]*PAGE_SIZE/128))</code></p>
+</li>
+</ul>
+<h3 id="tcp-notsent-lowat-unsigned-integer"><a class="header-anchor" href="#tcp-notsent-lowat-unsigned-integer"></a>tcp_notsent_lowat - UNSIGNED INTEGER</h3>
+<p>TCP socket 通过 <code>TCP_NOTSENT_LOWAT</code> 选项可以控制它的写队列中未发送的字节数。如果队列未满且其中的未发送数据小于每个 socket 各自设置的下限值，则
+<code>poll()/select()/epoll()</code> 方法会返回 <code>POLLOUT</code> 事件。如果这个数据没有超过这个限制，<code>sendmsg()</code> 也不会新增缓存。</p>
+<p>这个选项是一个全局的选项，给那些没有设置 <code>TCP_NOTSENT_LOWAT</code> 选项的 socket 使用。对这些端口来说，全局选项值的变化会即时生效。</p>
+<ul>
+<li>默认值：UINT_MAX (0xFFFFFFFF)</li>
+</ul>
+<p>注：原文的翻译可能比较怪，这个参数大意是用来控制内存使用的，当缓存队列中的未发送数据量小于该值时，内核认为发送缓存为空，因此可以发送，大于该值时停止发送
+<sup class="footnote-ref"><a href="#fn26" id="fnref26">[26]</a></sup>。</p>
+<p>另：这是对应选项的 <a href="https://lwn.net/Articles/560082/" target="_blank" rel="noopener">commit</a>。</p>
+<h3 id="tcp-workaround-signed-windows-boolean"><a class="header-anchor" href="#tcp-workaround-signed-windows-boolean"></a>tcp_workaround_signed_windows - BOOLEAN</h3>
+<p>如果开启，则在没有接收到窗口缩放参数的情况下，假设对方的 TCP 实现有问题，本机需要把对方的窗口大小字段当作是“有符号”的 16 位整数。如果关闭，则在没有接收到窗口缩放参数时，认为对方的 TCP 实现也是正确的，把窗口大小解释成 16 位无符号整数。</p>
+<ul>
+<li>默认值：0</li>
+</ul>
+<h3 id="tcp-thin-linear-timeouts-boolean"><a class="header-anchor" href="#tcp-thin-linear-timeouts-boolean"></a>tcp_thin_linear_timeouts - BOOLEAN</h3>
+<p>是否为 thin stream 开启线性超时重传。</p>
+<p>如果开启了，则内核会动态检测数据流是不是 thin stream（在传的包数量小于 4），如果发现数据流的确是 thin stream，则在使用指数回退的超时重传时，至少会先尝试 6次线性超时重传。对于一些对依赖低延时的小流量数据流（如游戏）来说，可以减小重传的延时。关于 thin stream，可以参数
+<a href="https://www.kernel.org/doc/Documentation/networking/tcp-thin.txt" target="_blank" rel="noopener">Documentation/networking/tcp-thin.txt</a></p>
+<ul>
+<li>默认值：0（关闭）</li>
+</ul>
+<p>注：tcp-thin.txt 里基本说得比较详细了</p>
+<h3 id="tcp-limit-output-bytes-integer"><a class="header-anchor" href="#tcp-limit-output-bytes-integer"></a>tcp_limit_output_bytes - INTEGER</h3>
+<p>对每个 socket 控制 TCP 的 Small Queue 大小。TCP 批量发送数据时，倾向于不断发送直到收到 TCP 丢包的通知，加上自动调整 SNDBUF 的功能，会导致在本地有大量的包在排队（在 qdisc, CPU backlog 或设备中），会损害其它连接(flow)的性能，起码对于典型的 pfifo_fast qdiscs 来说是这样。<code>tcp_limit_output_bytes</code> 用来限制允许存储在
+qdisc 或设备中的字节数来减少 RTT/cwnd 差异导致的不公平，减少 bufferbloat。</p>
+<ul>
+<li>默认值：1048576 (16 * 65536)</li>
+</ul>
+<p>注：可以参考 <a href="https://lwn.net/Articles/507065/" target="_blank" rel="noopener">TCP small queues</a> 中的说明</p>
+<p>注：bufferbloat 译为“缓冲膨胀”，指的是由于缓冲了太多数据导致延迟增高的现象。</p>
+<h3 id="tcp-challenge-ack-limit-integer"><a class="header-anchor" href="#tcp-challenge-ack-limit-integer"></a>tcp_challenge_ack_limit - INTEGER</h3>
+<p>限制每秒钟送送的 Challenge ACK 的数量，这是 RFC 5961(Improving TCP’s
+Robustness to Blind In-Window Attacks) 中推荐的。</p>
+<ul>
+<li>默认值：1000</li>
+</ul>
+<p>注<sup class="footnote-ref"><a href="#fn27" id="fnref27">[27]</a></sup>：Challenge ACK 指的是，当接接收到 RST 报文时，如果序列号不符合预期，但是在合理的窗口区间里 <code>RCV.NXT &lt; SEG.SEQ &lt; RCV.NXT+RCV.WND</code>
+，则 TCP 需要返回一个 ACK，即为 Challenge ACK。</p>
+<p>注：“Blind” 应该指的是第三方，因为它对真实的连接信息一无所知，“In-Window” 指的是攻击者去猜测序列号，伪造的报文在合法的窗口内。这类攻击可能伪造 SYN、RST、或其它报文来进行攻击。</p>
+<h3 id="tcp-rx-skb-cache-boolean"><a class="header-anchor" href="#tcp-rx-skb-cache-boolean"></a>tcp_rx_skb_cache - BOOLEAN</h3>
+<p>开启时，会为每 SKB 维护一个 TCP socket 级别的缓存，在某些情况下会提高性能。要注意在有很多 TCP socket 的机器上开启这个选项是非常危险的，因为它会消耗很多内存。</p>
+<ul>
+<li>默认值：0（关闭）</li>
+</ul>
+<h2 id="后记"><a class="header-anchor" href="#后记"></a>后记</h2>
+<p>最近在学习《TCP/IP 详解卷一》，好不容易把 TCP/IP 的部分看完了，合起书来几乎是什么也不记得，因此才想从 Linux 相关参数入手，去联系书里的知识。实际翻译和注释后，发现很多内容并不是书里得来的，而是网上搜索，文章、博客、RFC、邮件等。</p>
+<p>网卡有许多讲 Linux 参数调整的，经常是只列出参数，对我这种外行来说，不知道参数影响什么机制，因此也不知道为什么要这么设置，这篇文章里我对几乎每个参数的机制都做了调查，并以自己的理解写了简单的注解，希望对读者有用。</p>
+<p>最后感慨 TCP/IP 是非常复杂的，很多机制都有漏洞，对漏洞又有很多算法来修补，修补后又有边缘的 case，可谓是无穷无尽；另一方面有许多不同算法解决不同问题，而算法之间有可能相互影响，很难有全局的掌握；具体实现上还会需要在性能上做一些妥协。因此虽然对 sysctl 中的选项有些了解，还是觉得自己对 TCP 一窍不通，还需要不断学习。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://flylib.com/books/en/2.783.1.50/1/" target="_blank" rel="noopener">https://flylib.com/books/en/2.783.1.50/1/</a> 介绍了基于 TOS 和 fwmark 的路由方案</li>
+<li><a href="https://blog.csdn.net/sinat_20184565/article/details/112253946" target="_blank" rel="noopener">https://blog.csdn.net/sinat_20184565/article/details/112253946</a> 代码层面描述了 fib_multipath_use_neigh 的作用</li>
+<li><a href="https://www.ruijie.com.cn/fa/xw-hlw/82104/" target="_blank" rel="noopener">https://www.ruijie.com.cn/fa/xw-hlw/82104/</a> ECMP 选下一跳的算法</li>
+<li><a href="https://www.cnblogs.com/danxi/p/6709373.html" target="_blank" rel="noopener">Linux TCP协议使用的变量</a> 跟本文类似，对 TCP 变量做了翻译</li>
+<li><a href="https://netdevconf.info/1.2/papers/ahern-what-is-l3mdev-paper.pdf" target="_blank" rel="noopener">What is an L3 Master Device</a>
+介绍了 L3 master device 的机制</li>
+<li><a href="https://www.kernel.org/doc/Documentation/networking/vrf.txt" target="_blank" rel="noopener">Virtual Routing and Forwarding (VRF)</a>
+内核文档，介绍 VRF 机制</li>
+<li><a href="https://blog.csdn.net/dog250/article/details/78069964" target="_blank" rel="noopener">Linux VRF(Virtual Routing Forwarding)的原理和实现</a>
+对 VRF 的使用场景、实现原理有很好的讲解</li>
+</ul>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p><a href="https://packetlife.net/blog/2008/aug/18/path-mtu-discovery/" target="_blank" rel="noopener">https://packetlife.net/blog/2008/aug/18/path-mtu-discovery/</a> 介绍了路径 MTU 的发现方法 <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p><a href="https://blog.csdn.net/dog250/article/details/78301259" target="_blank" rel="noopener">https://blog.csdn.net/dog250/article/details/78301259</a> 详细介绍了 fwmark_reflect 解决的问题 <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn3" class="footnote-item"><p><a href="http://arthurchiao.art/blog/intro-to-modern-lb-and-proxy-zh/" target="_blank" rel="noopener">[译] 现代网络负载均衡与代理导论（2017）</a> <a href="#fnref3" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn4" class="footnote-item"><p><a href="https://www.cs.unh.edu/cnrg/people/gherrin/linux-net.html#tth_sEc8.2.1" target="_blank" rel="noopener">https://www.cs.unh.edu/cnrg/people/gherrin/linux-net.html#tth_sEc8.2.1</a> 邻居表结构 <a href="#fnref4" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn5" class="footnote-item"><p><a href="https://lwz322.github.io/2019/11/03/ECMP.html" target="_blank" rel="noopener">https://lwz322.github.io/2019/11/03/ECMP.html</a> 简单描述了 ECMP 的哈希方式 <a href="#fnref5" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn6" class="footnote-item"><p><a href="https://www.kernel.org/doc/Documentation/RCU/whatisRCU.txt" target="_blank" rel="noopener">https://www.kernel.org/doc/Documentation/RCU/whatisRCU.txt</a> 介绍了内核 RCU 的概念 <a href="#fnref6" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn7" class="footnote-item"><p><a href="https://en.wikipedia.org/wiki/Type_of_service" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/Type_of_service</a> <a href="#fnref7" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn8" class="footnote-item"><p>参考书 Understading Linux Network Internal 第 23 章 <a href="#fnref8" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn9" class="footnote-item"><p><a href="http://veithen.io/2014/01/01/how-tcp-backlog-works-in-linux.html" target="_blank" rel="noopener">How TCP backlog works in
+Linux</a> 详细描述了 Linux backlog 的机制 <a href="#fnref9" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn10" class="footnote-item"><p><a href="https://zhuanlan.zhihu.com/p/299513070" target="_blank" rel="noopener">关于Linux TCP接收缓存以及接收窗口的一个细节解析</a> 有对 tcp_adv_win_scale 机制的详细描述，强推 <a href="#fnref10" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn11" class="footnote-item"><p><a href="http://cxd2014.github.io/2016/08/16/linux-network-stack/" target="_blank" rel="noopener">Linux网络栈中的队列</a> <a href="#fnref11" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn12" class="footnote-item"><p><a href="https://blog.cloudflare.com/ip-fragmentation-is-broken/" target="_blank" rel="noopener">Broken packets: IP fragmentation is flawed</a> 介绍了四种 PMTU 失效的情形 <a href="#fnref12" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn13" class="footnote-item"><p><a href="http://perthcharles.github.io/2015/10/31/wiki-network-tcp-tlp/" target="_blank" rel="noopener">TCP Tail Loss
+Probe(TLP)</a>
+文章对 TLP RFC 有详细解读 <a href="#fnref13" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn14" class="footnote-item"><p><a href="https://zh.wikipedia.org/wiki/%E6%98%BE%E5%BC%8F%E6%8B%A5%E5%A1%9E%E9%80%9A%E7%9F%A5" target="_blank" rel="noopener">Wiki: 显式拥塞通知</a> <a href="#fnref14" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn15" class="footnote-item"><p><a href="http://conferences.sigcomm.org/sigcomm/1996/papers/mathis.pdf" target="_blank" rel="noopener">http://conferences.sigcomm.org/sigcomm/1996/papers/mathis.pdf</a>
+FACK 论文 <a href="#fnref15" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn16" class="footnote-item"><p><a href="https://kernelnewbies.org/Linux_4.15" target="_blank" rel="noopener">https://kernelnewbies.org/Linux_4.15</a> <a href="#fnref16" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn17" class="footnote-item"><p><a href="https://www.cnblogs.com/lshs/p/6038603.html" target="_blank" rel="noopener">TCP系列24—重传—14、F-RTO虚假重传探测
+</a> 大佬的博客有很多 TCP 相关的内容，值得深挖，这篇讲的是 F-RTO <a href="#fnref17" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn18" class="footnote-item"><p>参考《TCP/IP 详解卷一》的第 17 章 <a href="#fnref18" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn19" class="footnote-item"><p>RFC: <a href="https://tools.ietf.org/html/draft-tcpm-rack-00" target="_blank" rel="noopener">https://tools.ietf.org/html/draft-tcpm-rack-00</a> <a href="#fnref19" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn20" class="footnote-item"><p><a href="https://www.frozentux.net/ipsysctl-tutorial/chunkyhtml/tcpvariables.html" target="_blank" rel="noopener">TCP
+Variables</a>
+中对 tcp_reordering 的含义做了更详细的解释 <a href="#fnref20" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn21" class="footnote-item"><p>参考《TCP/IP 详解卷一》的第 14.2 章 <a href="#fnref21" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn22" class="footnote-item"><p><a href="https://www.spinics.net/lists/netdev/msg503106.html" target="_blank" rel="noopener">tcp: implement SACK
+compression</a> SACK 压缩的 patch，其中有解释动机 <a href="#fnref22" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn23" class="footnote-item"><p><a href="https://zh.wikipedia.org/wiki/SYN_cookie" target="_blank" rel="noopener">https://zh.wikipedia.org/wiki/SYN_cookie</a> <a href="#fnref23" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn24" class="footnote-item"><p><a href="https://zh.wikipedia.org/wiki/TCP%E5%BF%AB%E9%80%9F%E6%89%93%E5%BC%80" target="_blank" rel="noopener">https://zh.wikipedia.org/wiki/TCP快速打开</a> <a href="#fnref24" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn25" class="footnote-item"><p><a href="https://lwn.net/Articles/564978/" target="_blank" rel="noopener">TSO sizing and the FQ scheduler</a> 讲解了 TSO
+和 FQ 机制的一些小细节 <a href="#fnref25" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn26" class="footnote-item"><p><a href="https://redwingz.blog.csdn.net/article/details/89104763" target="_blank" rel="noopener">TCP发送缓存控制tcp_notsent_lowat </a> <a href="#fnref26" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn27" class="footnote-item"><p><a href="https://tools.ietf.org/html/rfc5961" target="_blank" rel="noopener">https://tools.ietf.org/html/rfc5961</a> <a href="#fnref27" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2021/Linux-TCP-Options/';
+var disqus_title = 'Linux sysctl 网络相关参数';
+var disqus_url = 'https://lotabout.me/2021/Linux-TCP-Options/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

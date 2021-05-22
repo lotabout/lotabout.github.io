@@ -1,0 +1,99 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="编程中，我们常常需要为“数据”指定 ID，那什么样的类型才“够大”呢？&lt;code&gt;int&lt;/code&gt;? &lt;code&gt;long&lt;/code&gt;?
+&lt;code&gt;UUID&lt;/code&gt;? 这篇文章里，咱们从直觉的角度聊一聊“数字”有多大。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>2^128 有多大 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-time">2018-06-27</div></div></div><div class="container post-header"><h1>2^128 有多大</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#32-位"><span class="toc-number">1.</span> <span class="toc-text">32 位</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#64-位"><span class="toc-number">2.</span> <span class="toc-text">64 位</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#128-位"><span class="toc-number">3.</span> <span class="toc-text">128 位</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">4.</span> <span class="toc-text">小结</span></a></li></ol></details></div><div class="container post-content"><p>编程中，我们常常需要为“数据”指定 ID，那什么样的类型才“够大”呢？<code>int</code>? <code>long</code>?
+<code>UUID</code>? 这篇文章里，咱们从直觉的角度聊一聊“数字”有多大。</p>
+<p>首先为了简便计算，我们需要一个将 $2^a$ 转成 $10^b$ 的方法： $b \approx 0.3
+\times a$。如 $ 2^{10} \approx 10^3 $ 就是我们熟悉的 $ 1024 \approx 1000 $。证明的方法也就是简单地算算对数，这里不展开了。</p>
+<h2 id="32-位"><a class="header-anchor" href="#32-位"></a>32 位</h2>
+<p>Java 中的 <code>int</code> 类型默认 32 位；C/C++ 中的类型具体长度与机器相关，但一般认为
+<code>int</code> 占 4 个字节，即 32 位；SQL 中的 <code>INT</code> 型也是 32 位。可以说 32 位是现代计算机系统中最常见的数据类型了。问题是，用它当 ID，“够大” 吗？</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">2^32 &#x3D; 4,294,967,296 (42亿) ~&#x3D; 10^9</span><br></pre></td></tr></table></figure>
+<p>那么用 <code>int</code> 来给全世界每人发一个 ID 肯定是不够用了，给中国每人发一个 ID 还是够用的，但考虑到每年的死亡和新增人口，恐怕不久 ID 也会用完。</p>
+<p>另外地球的年龄是 45.43 亿年，因此用 <code>int</code> 也是没法满足的。</p>
+<p>32 位还很容易换算成 <code>4G</code>，也因此 32 位计算机最多只能使用 4G 的内存（不完全正确，有一些其它的手段能超过 4G）。后来计算机推广到 64 位也与此有关。</p>
+<p>尽管 32 位二进制看起来“不够大”，它也“不小”。假如记录心跳，假设一分钟 60 下，那么 32 位二进制可以用 <code>2^32/(60*60*24*365) = 136</code> 年。</p>
+<p>因此 32 位适用于一些直觉上“不大”的数据。一般来说，如果数据不会随时间持续增加，就想想有没有中国人口多；随时间不断新增的数据，想想有没有心跳快。如果不会，都可以用 32 位来标识。</p>
+<h2 id="64-位"><a class="header-anchor" href="#64-位"></a>64 位</h2>
+<p>Java 中的 <code>long</code>，C/C++ 中的 <code>long long</code>，SQL 中的 <code>BIGINT</code> 都指的是 64 位。那么它有多大呢？</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">2^64 &#x3D; 18,446,744,073,709,551,616 (1千亿亿) ~&#x3D; 10^19</span><br></pre></td></tr></table></figure>
+<p>这是多大呢？例如 2014 年双十一期间，支付宝的交易<a href="https://www.zhihu.com/question/26573474" target="_blank" rel="noopener">峰值是 285 万笔/分钟，
+</a> 假设用64位的 ID 来标记每一笔交易，可以用 <code>2^64/(2850000 * 60 * 24 * 365) = 12,314,577</code> 约一千万年。</p>
+<p>另外，你知道宇宙中有多少星星吗？当然目前并没有权威的说明，但大概在 $10^{20}$ ~
+$10^{24}$ <a href="https://scienceline.ucsb.edu/getkey.php?key=3775" target="_blank" rel="noopener">左右</a>。显然用 64 位二进制并不足以标注宇宙中的每一颗星星，但它们基本是在一个量级上的。</p>
+<p>因此这里的建议是，只要不是想数星星，用 64 位二进制来标识数据都是足够的。</p>
+<h2 id="128-位"><a class="header-anchor" href="#128-位"></a>128 位</h2>
+<p>既然 64 位已经足够标识几乎所有的数据类型，128 位有用武之地吗？首先，64 位用来数星星还是不够的，其次是，我们还会有随机生成 ID 的需求，这也是 UUID/GUID 的用处。</p>
+<p>新建数据时，我们常常需要为它们赋上 ID，且需要全局唯一。java 的 Hibernate 允许我们在数据生成时先暂时将 ID 置为 0，待存入数据库时再由数据库生成全局唯一的ID。但如果新生成的数据的 ID 需要被立即引用时（如生成一个图，每个节点都需要全局唯一
+ID，且新生成的节点会被其它节点引用），这个方法就行不通。当然可以专门提供一个ID
+生成器的服务来获取 ID，但它的复杂性就极大地上升了。</p>
+<p>这时，使用 UUID 就是一个极佳的选择。它允许我们随机生成一个 UUID，且保证随机生成的 ID 是全局唯一的。当然，严格来说生成的 ID 还是会重复的，但概率极低，低到在实际使用时可以忽略。</p>
+<p>参考<a href="https://zh.wikipedia.org/wiki/%E9%80%9A%E7%94%A8%E5%94%AF%E4%B8%80%E8%AF%86%E5%88%AB%E7%A0%81" target="_blank" rel="noopener">维基百科
+</a>
+，利用生日导论，可以计算两个随机生成的 UUID 重复的概率（真正有效的是 122 位，其它位被用来标识 UUID 的版本）是：</p>
+<p>$$p(n) \approx 1-e^{- n^2/2x}$$</p>
+<p>取 $x = 2^{122}$ 有下表：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:right">随机生成个数</th>
+<th>重复概率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right">$68,719,476,736 = 2^{36}$</td>
+<td>$0.0000000000000004 (4 \times 10^{-16})$</td>
+</tr>
+<tr>
+<td style="text-align:right">$2,199,023,255,552 = 2^{41}$</td>
+<td>$0.0000000000004 (4 \times 10^{-13})$</td>
+</tr>
+<tr>
+<td style="text-align:right">$70,368,744,177,664 = 2^{46}$</td>
+<td>$0.0000000004 (4 \times 10^{-10})$</td>
+</tr>
+</tbody>
+</table>
+<p>而如果要达到生成的 UUID 相同的概率超过 50% 则需要生成 $2.71 \times 10^{18}
+\approx 10^{60}$ 个 UUID。</p>
+<p>因此，UUID 适用于需要随机生成全局唯一 ID 的情形。当然如果是密码学相关的数会需要更多的位数，这里就不讨论了。</p>
+<p>顺代一提，IPv6 地址是 128 位的，号称能给整个地球的每一粒沙子都赋一个地址，其实
+128 位（$2^{128} \approx 10^{38}$）是远远超过<a href="https://www.zhihu.com/question/26825663" target="_blank" rel="noopener">地球的沙子数
+</a>（约 $10^{23}$）的，当然地址有一定规则，所以可用地址会少于 $2^{128}$ 个，这里也不讨论了。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>如果数据量在直觉上不太，32 位的 ID 就足够；如果 32 位不够，则 64 位（几乎）一定够用；如果需要随机生成全局唯一 ID，使用 128 位的 UUID。</p>
+<p>希望上面的讨论能指导大家选择 ID 的位数，同时增加一些选择时的信心。</p></div></div><script type="text/x-mathjax-config">
+   MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    }); 
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/how-big-is-2-power-128/';
+var disqus_title = '2^128 有多大';
+var disqus_url = 'https://lotabout.me/2018/how-big-is-2-power-128/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

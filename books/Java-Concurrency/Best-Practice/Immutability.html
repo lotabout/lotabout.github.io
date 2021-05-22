@@ -1,0 +1,358 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>不可变 - Java 并发知识</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+        <link rel="stylesheet" href="../css/lotabout.css">
+        
+
+        
+        <!-- MathJax -->
+        <script async type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Java 并发知识</a></li><li class="chapter-item expanded affix "><li class="part-title">理解线程安全</li><li class="chapter-item expanded "><a href="../Ideal-World/index.html"><strong aria-hidden="true">1.</strong> 理想的并发世界</a></li><li class="chapter-item expanded "><a href="../Cruel-World/index.html"><strong aria-hidden="true">2.</strong> 残酷的现实</a></li><li class="chapter-item expanded "><a href="../Happens-Before/index.html"><strong aria-hidden="true">3.</strong> Happens Before</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/index.html"><strong aria-hidden="true">4.</strong> 常见线程安全问题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/TOCTOU.html"><strong aria-hidden="true">4.1.</strong> TOCTOU</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Double-Checked-Locking.html"><strong aria-hidden="true">4.2.</strong> Double Checked Locking</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Compound-Actions.html"><strong aria-hidden="true">4.3.</strong> 复合操作</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Summary.html"><strong aria-hidden="true">4.4.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Best-Practice/index.html"><strong aria-hidden="true">5.</strong> 良好的并发编程习惯</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Best-Practice/Confinement.html"><strong aria-hidden="true">5.1.</strong> 封闭</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Immutability.html" class="active"><strong aria-hidden="true">5.2.</strong> 不可变</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Threadsafe-Data-Types.html"><strong aria-hidden="true">5.3.</strong> 利用线程安全类</a></li></ol></li><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/index.html"><strong aria-hidden="true">6.</strong> 思考题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/Spring-Bean-Initialization.html"><strong aria-hidden="true">6.1.</strong> Spring Bean 初始化如何线程安全</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">线程与线程池</li><li class="chapter-item expanded "><a href="../Amdahl-Law/index.html"><strong aria-hidden="true">7.</strong> Amdahl 定律</a></li><li class="chapter-item expanded "><a href="../Cost-of-Thread/index.html"><strong aria-hidden="true">8.</strong> 线程的代价</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/index.html"><strong aria-hidden="true">9.</strong> 线程池</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Pool/Concepts.html"><strong aria-hidden="true">9.1.</strong> 线程池相关概念</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Predefined.html"><strong aria-hidden="true">9.2.</strong> 预定义的线程池</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Usage.html"><strong aria-hidden="true">9.3.</strong> 线程池使用</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Interrupt.html"><strong aria-hidden="true">9.4.</strong> 线程的中断</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Shutdown.html"><strong aria-hidden="true">9.5.</strong> 如何优雅退出</a></li></ol></li><li class="chapter-item expanded "><strong aria-hidden="true">10.</strong> 线程调度</li><li class="chapter-item expanded affix "><li class="part-title">源码分析</li><li class="chapter-item expanded "><a href="../Source-Unsafe/index.html"><strong aria-hidden="true">11.</strong> Unsafe</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/index.html"><strong aria-hidden="true">12.</strong> Atomic</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicInteger.html"><strong aria-hidden="true">12.1.</strong> AtomicInteger</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicIntegerArray.html"><strong aria-hidden="true">12.2.</strong> AtomicIntegerArray</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Striped64.html"><strong aria-hidden="true">12.3.</strong> Striped64</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Adder.html"><strong aria-hidden="true">12.4.</strong> Adder</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/FieldUpdater.html"><strong aria-hidden="true">12.5.</strong> FieldUpdater</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/StampedReference.html"><strong aria-hidden="true">12.6.</strong> StampedReference</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-AQS/AQS.html"><strong aria-hidden="true">13.</strong> AbstractQueuedSynchronizer</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-AQS/blocking-exclusive.html"><strong aria-hidden="true">13.1.</strong> 互斥锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/blocking-shared.html"><strong aria-hidden="true">13.2.</strong> 共享锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/timeout.html"><strong aria-hidden="true">13.3.</strong> 超时</a></li><li class="chapter-item expanded "><a href="../Source-AQS/interrupt.html"><strong aria-hidden="true">13.4.</strong> 中断</a></li><li class="chapter-item expanded "><a href="../Source-AQS/cancellation.html"><strong aria-hidden="true">13.5.</strong> 取消</a></li><li class="chapter-item expanded "><a href="../Source-AQS/condition.html"><strong aria-hidden="true">13.6.</strong> 条件变量</a></li><li class="chapter-item expanded "><a href="../Source-AQS/Summary.html"><strong aria-hidden="true">13.7.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-Lock/Lock.html"><strong aria-hidden="true">14.</strong> Lock</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantLock.html"><strong aria-hidden="true">14.1.</strong> ReentrantLock</a></li><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantReadWriteLock.html"><strong aria-hidden="true">14.2.</strong> ReentrantReadWriteLock</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Java 并发知识</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#不可变immutability" id="不可变immutability">不可变（Immutability）</a></h1>
+<p>如果说“封闭”是通过“不共享”来解决线程问题，顾名思义“不可变”就是从可变性入手解决线程安全问题：</p>
+<blockquote>
+<p>不可变对象一定是线程安全的</p>
+</blockquote>
+<p>不可变对象的状态在构造函数中就唯一确定了，之后不接受任何的更改，因此编译器能对它做更可靠的优化，更容易保证它的线程安全性。</p>
+<h2><a class="header" href="#不可变对象的门槛" id="不可变对象的门槛">不可变对象的门槛</a></h2>
+<p>我们很容易认为，如果创建一个对象后，没有任何代码修改它，它就是“不可变”的。很可惜这种观点是错误的，在 Java 中，不可变对象有着明确的要求<sup class="footnote-reference"><a href="#ref-book">1</a></sup>：</p>
+<ul>
+<li>对象创建后其状态不能修改</li>
+<li>对象所有的成员变量都是 <code>final</code> 修饰的</li>
+<li>对象是正确创建的（在对象的创建期间，this 引用没有逸出）</li>
+</ul>
+<p>创建后状态不能修改，例如类中有一个字段是 <code>private final Set&lt;String&gt; names</code>，虽然 <code>names</code> 引用本身不能修改（有 <code>final</code> 修饰），但技术上我们却可以向 <code>Set</code> 里增减元素。而不可变要求我们不能做这样的修改。实际上 Java 并不会做这些检测，只是如果不遵守这个规则，则不能保证对象就是线程安全的。</p>
+<p>成员变量都是 <code>final</code> 修饰，实际上这是 Java 真正能检测到的内容。Java 会保证
+<sup class="footnote-reference"><a href="#JSL-chap17">2</a></sup> 只有当一个对象的所有 <code>final</code> 成员变量都正确初始化后，该对象才对其它线程可见。</p>
+<p>对象是正确创建的，反例是在构造函数内，将 <code>this</code> 指针传递给其它对象使用。例如在构造函数中启动新的线程，这个新的线程中使用了 <code>this</code> 指针。为什么要求对象是“正确创建”的呢？是因为 Java 需要保证不可变对象的可见性，但是无法在构造函数执行过程中，做到可见性保证，因此其它对象在构造函数中通过 <code>this</code> 访问某个成员变量，得到的值可能是有问题的。</p>
+<h2><a class="header" href="#基于可变对象构造不可变对象" id="基于可变对象构造不可变对象">基于可变对象构造不可变对象</a></h2>
+<p>虽然说要求“创建后状态不能修改”，但在“创建时”却可以修改，考虑如下示例<sup class="footnote-reference"><a href="#ref-book">1</a></sup>：</p>
+<pre><code class="language-java">public final class ThreeStooges {
+  private final Set&lt;String&gt; stooges = new HashSet&lt;&gt;();
+
+  public ThreeStooges() {
+    stooges.add(&quot;Moe&quot;);
+    stooges.add(&quot;Larry&quot;);
+    stooges.add(&quot;Curly&quot;);
+  }
+
+  public boolean isStooge(String name) {
+    return stooges.contains(name);
+  }
+}
+</code></pre>
+<p>这里 <code>stooges</code> 变量显然是可变的，并且在构建函数中做了修改，但是类
+<code>ThreeStooges</code> 依旧是不可变的，因为对（<code>final</code>变量的）状态修改发生在构造函数内。依旧符合不可变对象的定义。</p>
+<p>往底层了说，是因为 JMM 规定，在构造函数内对 <code>final</code> 成员变量引用的对象的修改，不能重排序到构造函数之外<sup class="footnote-reference"><a href="#ref-infoq">3</a></sup>，这意味着当某个线程在访问某个对象的
+<code>final</code> 变量时，构造函数里对 <code>final</code> 变量的修改都一定是完成并可见的。</p>
+<h2><a class="header" href="#使用-volatile-发布不可变对象" id="使用-volatile-发布不可变对象">使用 volatile 发布不可变对象</a></h2>
+<p>“发布”（publish）这个概念之前我们一直没有提，“发布对象”指的是使对象在当前作用域之外可访问，例如保存对象的引用；在非私有的方法里返回对象；或将引用传递到其它类的方法中。这个概念的核心是“共享”，“发布”是一个共享的操作。当一个对象被发布后，我们无法控制其它线程会如何使用它，因此如果对象本身不是线程安全的，那么使用方如果不注意，就很容易出错。</p>
+<p>如果发布的是不可变对象，由于它本身是线程安全的，我们就不用担心使用方误用。例如《Java 并发编程实战》中的 <code>OneValueCache</code> 示例：</p>
+<pre><code class="language-java">class OneValueCache {
+  private final BigInteger lastNumber;
+  private final BigInteger[] lastFactors;
+
+  public OneValueCache(BigInteger i, BigInteger[] factors) {
+    lastNumber = i;
+    lastFactors = Arrays.copyOf(factors, factors.length);    // ①
+  }
+
+  public BigInteger[] getFactors(BigInteger i) {
+    if (lastNumber == null || !lastNumber.equals(i))
+      return null;
+    else
+      return Arrays.copyOf(lastFactors, lastFactors.length); // ②
+  }
+}
+</code></pre>
+<p><code>OneValueCache</code> 是一个不可变类，代码中 ① ② 处分别用了 <code>Arrays.copyOf</code> 来复制输入的 <code>factors</code> 数组和输出的 <code>factors</code>。如果这两处不复制，<code>OneValueCache</code> 就不再是严格意义上的不可变了，因为我们无法控制 <code>OneValueCache</code> 类之外对构造函数输入的 <code>factors</code> 引用做什么修改，也无法控制对 <code>getFactors</code> 返回的 <code>lastFactors</code>
+引用做修改。</p>
+<p>当然，如果你说你不需要那么强的要求，直接在文档写了“不要修改 factors”并假设没有人会修改，这样不用 <code>copyOf</code> 行吗？当然没问题，这就是“约定” vs “机制”的问题了，约定技术上是可能被打破的，机制不会但代价高。</p>
+<p>有了 <code>OneValueCache</code> 我们就可以发布它：</p>
+<pre><code class="language-java">public class VolatileCachedFactorizer implements Servlet {
+  private volatile OneValueCache cache = new OneValueCache(null, null);
+
+  public void service(ServletRequest req, ServletResponse resp) {
+    BigInteger i = extractFromRequest(req);
+    BigInteger[] factors = cache.getFactors(i);
+    if (factors == null) {
+      factors = factor(i);
+      cache = new OneValueCache(i, factors);
+    }
+    encodeIntoResponse(resp, factors);
+  }
+}
+</code></pre>
+<p>在“复合操作”一节中我们说过这个例子，说的是即使 <code>lastNumber</code> 与 <code>lastFactors</code>
+本身都是原子的，整体操作也不是原子的。</p>
+<p>现在我们通过不可变类 <code>OneValueCache</code> 将两个状态合二为一，这样从“可见性”的角度上，它就是原子的了，即如果我看到 <code>lastNumber</code> 的值，那么 <code>lastFactors</code> 一定是和它对应的结果。</p>
+<p>当然，这个例子依旧会有 TOCTOU 的问题，可能有两个线程同时进入 <code>factor(i)</code> 的计算，但由于这个例子的业务上是用 <code>cache</code> 来做缓存，所以最终无论谁的值进缓存都不会影响正确性。</p>
+<p>最后，成员变量标为 <code>final</code> 的不可变类 <code>OneValueCache</code> 起到什么作用？</p>
+<p>这个问题书里没有回答，通过看一些文章和逻辑上的分析，我得出的结论是这样的：</p>
+<ol>
+<li>这个例子里要解决两个问题：
+<ol>
+<li>对 cache 的读写操作需要是原子的，因为只涉及一个引用的读写，已经满足</li>
+<li>要保证可见性和有序性，保证其它线程看到 cache 时，<code>OneValueCache</code> 已经是正确初始化了</li>
+</ol>
+</li>
+<li>本例中使用了 <code>final</code> 和 <code>volatile</code>，二者都可以满足 1.ii 的需求</li>
+<li>因此本例中其实 <code>final</code> 和 <code>volatile</code> 只需要一个就可以了</li>
+<li>不过如果不加 <code>final</code> 只用 <code>volatile</code>，则拿到 <code>cache</code> 引用的线程还可能做修改，只能做到“约定”上的线程安全。</li>
+</ol>
+<h2><a class="header" href="#小结" id="小结">小结</a></h2>
+<p>“不可变对象”解决了“共享可变状态”中的“可变”问题。</p>
+<p>我把“不可变”分成了“约定上”的和“机制上”的不可变。不可变对象在 Java 中主要需要解决的是“可见性”和“有序性”的问题，要保证线程看到对象时，对象已经是正确初始化的，而约定上的不可变并没有这个保证。</p>
+<p>在 Java 中，机制上的不可变最核心的是要给类的成员变量加上 <code>final</code> 修饰，因为
+Java 会对 <code>final</code> 修饰的字段做可见性和顺序性的保证。但如果 <code>final</code> 字段本身引用了另一个对象，Java 并没有机制能保证这个对象的线程安全。</p>
+<p>细节上，如果只是在对象的构造函数中修改 <code>final</code> 成员变量引用的对象，Java 也会保证这些修改的可见性，我们给了一个例子说明如何基于可变对象构造不可变对象。</p>
+<p>理论上真正的不可变对象，还要求对象创建后其中的状态就不再修改，如果对象不提供任何修改内部状态的手段，我们就能百分百确定对象发布后是线程安全的。只是 Java 并没有提供相关的机制来强制这个行为。</p>
+<p>从编码的习惯上，不可变（Immutability）是很值得提倡的，不论对并发编程还是单线程编程，它能极大地减少程序可能的状态，更容易 Debug，更不容易出错。</p>
+<hr />
+<div class="footnote-definition" id="ref-book"><sup class="footnote-definition-label">1</sup>
+<p>摘抄自《Java 并发编程实战》</p>
+</div>
+<div class="footnote-definition" id="JSL-chap17"><sup class="footnote-definition-label">2</sup>
+<p><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-17.html#jls-17.5">JSL 第 17 章</a> 有关于 final 语义的详细介绍</p>
+</div>
+<div class="footnote-definition" id="ref-infoq"><sup class="footnote-definition-label">3</sup>
+<p><a href="https://www.infoq.cn/article/java-memory-model-6">深入理解 Java 内存模型（六）——final</a></p>
+</div>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../Best-Practice/Confinement.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../Best-Practice/Threadsafe-Data-Types.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../Best-Practice/Confinement.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="../Best-Practice/Threadsafe-Data-Types.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+        <!-- Google Analytics Tag -->
+        <script type="text/javascript">
+            var localAddrs = ["localhost", "127.0.0.1", ""];
+
+            // make sure we don't activate google analytics if the developer is
+            // inspecting the book locally...
+            if (localAddrs.indexOf(document.location.hostname) === -1) {
+                (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+                ga('create', 'UA-39956831-2', 'auto');
+                ga('send', 'pageview');
+            }
+        </script>
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

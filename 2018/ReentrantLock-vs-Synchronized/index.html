@@ -1,0 +1,57 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="记一次并发相关的性能测试。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>性能对比：ReentrantLock vs Synchronized | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/CAS/" rel="tag">CAS</a><a class="post-tag-link" href="/tags/ReentrantLock/" rel="tag">ReentrantLock</a><a class="post-tag-link" href="/tags/benchmark/" rel="tag">benchmark</a><a class="post-tag-link" href="/tags/java/" rel="tag">java</a><a class="post-tag-link" href="/tags/synchronized/" rel="tag">synchronized</a></div><div class="post-time">2018-08-22</div></div></div><div class="container post-header"><h1>性能对比：ReentrantLock vs Synchronized</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#起因"><span class="toc-number">1.</span> <span class="toc-text">起因</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试与结果"><span class="toc-number">2.</span> <span class="toc-text">测试与结果</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#自增操作"><span class="toc-number">2.1.</span> <span class="toc-text">自增操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#链表操作"><span class="toc-number">2.2.</span> <span class="toc-text">链表操作</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#结果分析"><span class="toc-number">3.</span> <span class="toc-text">结果分析</span></a></li></ol></details></div><div class="container post-content"><p>记一次并发相关的性能测试。</p>
+<h2 id="起因"><a class="header-anchor" href="#起因"></a>起因</h2>
+<p>最近遇到高并发引起的性能问题，最终定位到的问题是 <code>LinkedBlockingQueue</code> 的性能不行，最终通过创建了多个 Queue 来减少每个 Queue 的竞争压力。人生中第一次遇到 JDK
+自带数据结构无法满足需求的情形，决心好好研究一下为什么。</p>
+<p>压测在一个 40 个核的机器上，tomcat 默认 200 个线程，发送方以 500 并发约 1w QPS
+发送请求，要求999 分位的响应在 50ms 左右。代码中有一个异步写入数据库的任务，实际测试时有超过 60% 的延时都在写入队列中（实际上是往 ThreadPool 提交任务）。于是开始调研 <code>LinkedBlockingQueue</code> 的实现。</p>
+<p>LinkedBlockingQueue 相当于是普通 LinkedList 加上 <code>ReentrantLock</code> 在操作时加锁。而 ReentrantLock （以及其它 Java 中的锁）内部都是靠 CAS 来实现原子性。而 CAS
+在高并发时因为线程会不停重试，所以理论上性能会比原生的锁更差。</p>
+<h2 id="测试与结果"><a class="header-anchor" href="#测试与结果"></a>测试与结果</h2>
+<p>实际上想对比 CAS 和原生锁是很困难的。Java 中没有原生的锁，而 <code>synchronized</code> 有
+JDK 的各种优化，在一些低并发的情况下也用到了 CAS。对比过 <code>synchronized</code> 和
+<code>Unsafe.compareAndSwapInt</code> 发现 CAS 被吊打。所以最后还是退而求其次对比
+<code>ReentrantLock</code> 和 <code>Synchronized</code> 的性能。</p>
+<p>一个线程竞争 <code>ReentrantLock</code> 失败时，会被放到等待对列中，不会参与后续的竞争，因此 ReentrantLock 不能代表 CAS 在高并发下的表现。不过一般我们也不会直接使用
+CAS，所以测试结果也凑合着看了。</p>
+<p>测试使用的是 <a href="">JMH</a> 框架，号称能测到毫秒级。运行的机器是 40 核的，因此至少能保证同时竞争的线程是 40 个（如果 CPU 核数不足，尽管线程数多，真正同时并发的量可能并不多）。JDK 1.8 下测试。</p>
+<h3 id="自增操作"><a class="header-anchor" href="#自增操作"></a>自增操作</h3>
+<p>首先测试用 <code>synchronized</code> 与 <code>ReentrantLock</code> 同步自增操作，测试代码如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Benchmark</span></span><br><span class="line"><span class="meta">@Group</span>(<span class="string">"lock"</span>)</span><br><span class="line"><span class="meta">@GroupThreads</span>(<span class="number">4</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">lockedOp</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        lock.lock();</span><br><span class="line">        lockCounter ++;</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        lock.unlock();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Benchmark</span></span><br><span class="line"><span class="meta">@Group</span>(<span class="string">"synchronized"</span>)</span><br><span class="line"><span class="meta">@GroupThreads</span>(<span class="number">4</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">synchronizedOp</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">        rawCounter ++;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>结果如下：</p>
+<img src="/2018/ReentrantLock-vs-Synchronized/counter.png" class="" title="ReentrantLock vs Synchronized (counter)">
+<h3 id="链表操作"><a class="header-anchor" href="#链表操作"></a>链表操作</h3>
+<p>自增操作 CPU 时间太短，适当增加每个操作的时间，改为往 linkedList 插入一个数据。代码如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Benchmark</span></span><br><span class="line"><span class="meta">@Group</span>(<span class="string">"lock"</span>)</span><br><span class="line"><span class="meta">@GroupThreads</span>(<span class="number">2</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">lockedOp</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        lock.lock();</span><br><span class="line">        lockQueue.add(<span class="string">"event"</span>);</span><br><span class="line">        <span class="keyword">if</span> (lockQueue.size() &gt;= CLEAR_COUNT) &#123;</span><br><span class="line">            lockQueue.clear();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        lock.unlock();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Benchmark</span></span><br><span class="line"><span class="meta">@Group</span>(<span class="string">"synchronized"</span>)</span><br><span class="line"><span class="meta">@GroupThreads</span>(<span class="number">2</span>)</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">synchronizedOp</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">        rawQueue.add(<span class="string">"event"</span>);</span><br><span class="line">        <span class="keyword">if</span> (rawQueue.size() &gt;= CLEAR_COUNT) &#123;</span><br><span class="line">            rawQueue.clear();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>结果如下：</p>
+<img src="/2018/ReentrantLock-vs-Synchronized/linkedlist.png" class="" title="ReentrantLock vs Synchronized (LinkedList)">
+<h2 id="结果分析"><a class="header-anchor" href="#结果分析"></a>结果分析</h2>
+<ol>
+<li>可以看到 ReentrantLock 的性能还是要高于 Synchronized 的。</li>
+<li>在 2 个线程时吞吐量达到最低，而 3 个线程反而提高了，推测是因为两个线程竞争时一定会发生线程调度，而多个线程（不公平）竞争时有一些线程是可以直接从当前线程手中接过锁的。</li>
+<li>随着线程数的增加，吞吐量只有少量的下降。首先推测因为同步代码最多只有一个线程在执行，所以线程数虽然增多，吞吐量是不会增加多少的。其次是大部分线程变成等待后就不太会被唤醒，因此不太会参与后续的竞争。</li>
+<li>(linkedlist 测试中)持有锁的时间增加后，ReentrantLock 与 Synchronized 的吞吐量差距减小了，应该是能佐证 CAS 线程重试的开销在增长的。</li>
+</ol>
+<p>这个测试让我对 ReentrantLock 有了更多的信心，不过一般开发时还是建议用
+synchronized, 毕竟大佬们还在不断优化中（看到有文章说 JDK 9 中的 Lock 和
+synchronized 已经基本持平了）。</p>
+<p>如果有人知道怎么更好地对比 CAS 和锁的性能，欢迎留言～</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/ReentrantLock-vs-Synchronized/';
+var disqus_title = '性能对比：ReentrantLock vs Synchronized';
+var disqus_url = 'https://lotabout.me/2018/ReentrantLock-vs-Synchronized/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="在 HTML 5 之前，想要实现 Drag and Drop（拖拽/拖放）一般需要求助于 JQuery，所幸
+HTML 5 已经把 DnD 标准化，现在我们能“轻易”地为几乎任意元素实现拖放功能。只是它的难度取决于你对 API 的理解程度，而&lt;a href=&quot;https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;官方文档&lt;/a&gt;并不好懂。这篇文章会一步步带你了解它的 API。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>HTML 5 Drag and Drop 入门教程 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/DnD/" rel="tag">DnD</a><a class="post-tag-link" href="/tags/HTML5/" rel="tag">HTML5</a></div><div class="post-time">2018-07-21</div></div></div><div class="container post-header"><h1>HTML 5 Drag and Drop 入门教程</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#拖动事件"><span class="toc-number">1.</span> <span class="toc-text">拖动事件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#让元素可拖放"><span class="toc-number">2.</span> <span class="toc-text">让元素可拖放</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#添加拖动特效"><span class="toc-number">3.</span> <span class="toc-text">添加拖动特效</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#数据传输-datatransfer"><span class="toc-number">4.</span> <span class="toc-text">数据传输 DataTransfer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#其它用法"><span class="toc-number">5.</span> <span class="toc-text">其它用法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#一些坑"><span class="toc-number">6.</span> <span class="toc-text">一些坑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">7.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>在 HTML 5 之前，想要实现 Drag and Drop（拖拽/拖放）一般需要求助于 JQuery，所幸
+HTML 5 已经把 DnD 标准化，现在我们能“轻易”地为几乎任意元素实现拖放功能。只是它的难度取决于你对 API 的理解程度，而<a href="https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API" target="_blank" rel="noopener">官方文档</a>并不好懂。这篇文章会一步步带你了解它的 API。</p>
+<p>最终效果如下：</p>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/xhwsp1u6/13//embedded/result,js,html,css/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<h2 id="拖动事件"><a class="header-anchor" href="#拖动事件"></a>拖动事件</h2>
+<p>继续之前，有必要先了解拖动时会触发哪些事件。考虑拖动 Source Element，途中经过
+Intermediate Element，最终进入 Target Element 并松开鼠标，则路径上会触发的事件如下图所示：</p>
+<img src="/2018/HTML-5-Drag-and-Drop/drag-and-drop-events.svg" class="" title="Drag and Drop Events">
+<p>这些事件的具体内容下面会讲到，你可以先跳过之后再回来查看，简单来说：</p>
+<ol>
+<li><code>dragstart</code>：当我们“拖”起元素时会触发。</li>
+<li><code>dragenter</code>：当拖动元素 A 进入另一个元素 B 时，会触发 B 的 <code>dragenter</code> 事件。</li>
+<li><code>dragleave</code>：与 <code>dragenter</code> 相对应，当拖动元素 A 离开元素 B 时，触发 B 的
+<code>dragleave</code> 事件。</li>
+<li><code>dragover</code>：当拖动元素 A 在另一个元素 B 中移动/停止时触发 B 的 <code>dragover</code>
+事件。文档说是每几百毫秒触发一次，Chrome 实测 1ms 左右触发；Firefox 大概是
+300ms</li>
+<li><code>drop</code>：当在拖动元素 A 到元素 B 上，释放鼠标时触发 B 的 <code>drop</code> 事件，相当于元素 B 接收了元素 A 。</li>
+<li><code>dragend</code>：在 <code>drop</code> 事件之后，还会触发元素 A 的 <code>dragend</code> 事件，这里可以对元素 A 作一些清理工作。</li>
+</ol>
+<p>除了上面的事件外，还有两个一般用不到的事件：</p>
+<ol>
+<li><code>drag</code>：和 <code>dragover</code> 类似，当元素 A 被拖动时，每隔一段时间就会触发这个事件。与 <code>dragover</code> 不同，<code>drag</code> 事件是触发在源元素 A 上，而 <code>dragover</code> 是触发上潜在目标元素 B 上的。</li>
+<li><code>dragexit</code>：这个事件只有 Firefox 支持，和 <code>dragleave</code> 作用几乎相同，发生在
+<code>dragleave</code> 之前。</li>
+</ol>
+<p>如果想实际验证一下这些事件是何时触发的，可以看看<a href="https://jsfiddle.net/lotabout/gq52cn3w/" target="_blank" rel="noopener">这个
+jsfiddle</a>，console 里会输出拖放的元素及对应的事件。下面我们开始一起实现咱们的拖放示例吧。</p>
+<h2 id="让元素可拖放"><a class="header-anchor" href="#让元素可拖放"></a>让元素可拖放</h2>
+<p>一般在 HTML 里，元素默认是不可以作为源元素的（除了 <code>&lt;a&gt;</code>，<code>&lt;img&gt;</code>），例如一个<code>div</code>
+，我们是“拖不动”它的。这时只需要为它加上 <code>draggable=&quot;true&quot;</code> 属性它就能“拖”了。下面是我们的 DOM 结构：</p>
+<figure class="highlight html"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"drag-container"</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"dropzone"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">"draggable"</span> <span class="attr">draggable</span>=<span class="string">"true"</span>&gt;</span></span><br><span class="line">      Drag Me</span><br><span class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"dropzone"</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"dropzone"</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p><code>draggable</code> 元素上加了 <code>draggable=&quot;true&quot;</code>，这样我们就能拖动它了，起码在 Chrome
+里可以，在 Firefox 里我们还需要在 <code>dragstart</code> 里为 <code>dataTransfer</code> 设置一些数据，因此需要加上下面的代码。具体的作用我们之后会说。</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> draggable = <span class="built_in">document</span>.getElementById(<span class="string">'draggable'</span>);</span><br><span class="line">draggable.addEventListener(<span class="string">'dragstart'</span>, (ev) =&gt; &#123;</span><br><span class="line">  ev.dataTransfer.setData(<span class="string">'text/plain'</span>, <span class="literal">null</span>);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>于是效果如下（CSS 没有贴出）：</p>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/xhwsp1u6/2//embedded/result,js,html,css/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>这样红色的 <code>Drag Me</code> 元素就可以拖动了。下面我们增加一些拖动时的反馈，让交互更真实。</p>
+<h2 id="添加拖动特效"><a class="header-anchor" href="#添加拖动特效"></a>添加拖动特效</h2>
+<p>首先，我们想在拖起元素让原始的元素变成半透明，这样当我们拖动时就会知道它是“真的可以拖动的”，而不是浏览器的什么奇怪行为。为此，我们可以监听 <code>dragstart</code> 事件：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">draggable.addEventListener(<span class="string">"dragstart"</span>, (ev) =&gt; &#123;</span><br><span class="line"> ev.target.style.opacity = <span class="string">".5"</span>;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/xhwsp1u6/5//embedded/result,js,html,css/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>这样一来我们开始拖动元素，它就变得透明了，然而我们松开鼠标，它依旧保持透明！这可不是我们想要的结果，因此我们需要监听 <code>dragend</code> 在拖动结束后还原透明度：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">draggable.addEventListener(<span class="string">"dragend"</span>, (ev) =&gt; &#123;</span><br><span class="line">  ev.target.style.opacity = <span class="string">""</span>;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/xhwsp1u6/6//embedded/result,js,html,css/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>下面，我们希望拖着元素 A 进入目标 B 时让 B 的边框变成虚线，以示意我们可以放入元素。</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line"><span class="keyword">let</span> dropzones = <span class="built_in">document</span>.querySelectorAll(<span class="string">'.dropzone'</span>);</span><br><span class="line">dropzones.forEach(<span class="function">(<span class="params">dropzone</span>) =&gt;</span> &#123;</span><br><span class="line"></span><br><span class="line">  dropzone.addEventListener(<span class="string">'dragenter'</span>, (ev) =&gt; &#123;</span><br><span class="line">    ev.preventDefault();</span><br><span class="line">    dropzone.style.borderStyle = <span class="string">'dashed'</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  dropzone.addEventListener(<span class="string">'dragover'</span>, (ev) =&gt; &#123;</span><br><span class="line">    ev.preventDefault();</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  dropzone.addEventListener(<span class="string">'dragleave'</span>, (ev) =&gt; &#123;</span><br><span class="line">    dropzone.style.borderStyle = <span class="string">'solid'</span>;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p>我们为所有的 <code>dropzone</code> 都监听了 <code>dragenter</code> 及 <code>dragleave</code> 事件，当拖动元素进入它们时，边框会变成虚线，离开时变回实线。这里有几个注意点：</p>
+<ul>
+<li>在 <code>dragenter</code> 与 <code>dragover</code> 里我们调用了 <code>ev.preventDefault()</code>，事实上几乎所有元素默认都是不允许 drop 发生的，这里调用<code>ev.preventDefault()</code> 可以阻止默认行为。</li>
+<li>在 <code>dragenter</code> 中我们通过 <code>dropzone</code> 变量来修改样式而不是 <code>ev.target</code>，你可能觉得 <code>ev.target</code> 指向的是目标 B 元素，然而它指向的是源元素 A。</li>
+<li>我们在 <code>dragenter</code> 而不是 <code>dragover</code> 中修改样式，是因为 <code>dragover</code> 会触发太频繁了。</li>
+</ul>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/xhwsp1u6/12//embedded/result,js,html,css/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>我们完成了“拖”的操作，最后需要完成“放”的操作了。</p>
+<h2 id="数据传输-datatransfer"><a class="header-anchor" href="#数据传输-datatransfer"></a>数据传输 DataTransfer</h2>
+<p>拖动是最终目的是为了对源和目标元素做一些操作。为了完成操作，需要在源和目标传输数据，我们可以通过设置/读取全局变量来完成，这并不是一个好习惯。在 HTML 5 中，我们通过
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/DataTransfer" target="_blank" rel="noopener">DataTransfer</a>
+完成。</p>
+<p>我们在 <code>dragstart</code> 时设置需要传输的数据，在 drop 中获取需要的数据。
+<code>event.dataTransfer</code> 提供了两个主要函数：</p>
+<ul>
+<li><code>setData(format, data)</code>：用于添加数据，一般 format 对应于 MIME 类型字符串，常见的有 <code>text/plain</code>、<code>text/html</code> 及 <code>text/uri-list</code>等，但同时也可以是任意自定义的类型；不幸的是 data 只能是 <code>string</code> 或 <code>file</code>。</li>
+<li><code>getData(format)</code>：用于获取数据。</li>
+</ul>
+<p>我们要实现将 <code>Drag Me</code> 放到其它蓝色元素中，需要传输它的 ID ，通过下面的代码实现：</p>
+<figure class="highlight javascript"><table><tr><td class="code"><pre><span class="line">draggable.addEventListener(<span class="string">'dragstart'</span>, (ev) =&gt; &#123;</span><br><span class="line">  ev.target.style.opacity = <span class="string">".5"</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 设置 ID</span></span><br><span class="line">  ev.dataTransfer.setData(<span class="string">'text/plain'</span>, ev.target.id);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">dropzones.forEach(<span class="function">(<span class="params">dropzone</span>) =&gt;</span> &#123;</span><br><span class="line">  dropzone.addEventListener(<span class="string">'drop'</span>, (ev) =&gt; &#123;</span><br><span class="line">    ev.preventDefault()</span><br><span class="line">    ev.target.style.borderStyle = <span class="string">'solid'</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取 ID</span></span><br><span class="line">    <span class="keyword">const</span> sourceId = ev.dataTransfer.getData(<span class="string">'text/plain'</span>)</span><br><span class="line">    ev.target.appendChild(<span class="built_in">document</span>.getElementById(sourceId))</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<ul>
+<li>在 <code>dragstart</code> 时通过 <code>setData</code> 将 ID 放入 <code>DataTransfer</code> 中</li>
+<li>在 <code>drop</code> 事件中，通过 <code>getData</code> 获取元素 ID 并通过 <code>appendChild</code> 加入到蓝色元素中。</li>
+</ul>
+<iframe scrolling="no" width="100%" height="300" src="https://jsfiddle.net/lotabout/xhwsp1u6/13//embedded/result,js,html,css/light" frameborder="0" loading="lazy" allowfullscreen></iframe>
+<p>至此我们的简单示例就结束了，为了实现这么一个简单的示例，我们用到了全部的 6 个事件。因此从入门的角度来说 DnD API 并不容易，但换句话说这也就是它的几乎全部内容了，而你现在已经掌握了！恭喜！</p>
+<h2 id="其它用法"><a class="header-anchor" href="#其它用法"></a>其它用法</h2>
+<p>定制拖放的行为时，还会有一些其它的需求，如拖放时的图标，到目标元素时鼠标的指针样式等，这里简单介绍一些。</p>
+<p>当我们拖动元素时，浏览器默认生成了元素的缩略图，你可能需要自己设置，这时可以使用 <code>DataTransfer</code> 的 <code>setDragImage(image, xOffset, yOffset);</code> 函数。参考
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/Drag_operations#dragfeedback" target="_blank" rel="noopener">MDN 上的例子</a>。</p>
+<p><code>event.dataTransfer.dropEffect</code> 和 <code>event.effectAllowed</code> 共同决定了浏览器在执行拖动时的鼠标指针的行为，还有一些其它的用途。只是我实际测试时发现并不起作用，
+<a href="https://stackoverflow.com/questions/20471273/html5-drag-and-drop-effectallowed-and-dropeffect" target="_blank" rel="noopener">StackOverflow 的这个问题
+</a>
+说了一些自己的理解。</p>
+<p>HTML5 还支持从操作系统中拖拽文件到浏览器中，或者从浏览器到操作系统中。如果从操作系统中获取文件，则可以访问 <code>event.dataTransfer.files</code> 字段，包含了操作系统中的文件内容。反之，在 <code>dragstart</code> 时正确设置 <code>event.dataTransfer.files</code> 则允许从浏览器中拖拽文件到操作系统中。</p>
+<h2 id="一些坑"><a class="header-anchor" href="#一些坑"></a>一些坑</h2>
+<ul>
+<li><code>dataTransfer</code> 的内容只在 <code>drop</code> 里可读，所以如果你想在 <code>dragEnter</code> 或
+<code>dragOver</code> 中通过 <code>dataTransfer.getData()</code> 返回的内容来决定一个目标元素是否允许放置是不可行的。其它的事件里只能通过一个个检查 <code>dataTransfer.items</code>
+里的 type 来获取已经设置的 <code>format</code> 而无法获取 <code>data</code>。</li>
+<li><code>drop</code> 与 <code>dragend</code> 事件是顺序触发的，但在 <code>dragend</code> 里没有办法知道 <code>drop</code>
+事件是否已经触发。</li>
+</ul>
+<p>如果你遇到过其它的坑，也请在评论区留言～</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://www.html5rocks.com/en/tutorials/dnd/basics/" target="_blank" rel="noopener">Native HTML5 Drag and Drop</a> 经典的入门教程，一步步带你入门</li>
+<li><a href="http://apress.jensimmons.com/v5/pro-html5-programming/ch9.html" target="_blank" rel="noopener">Working with HTML5 Drag-and-Drop</a> 相对更完整的介绍</li>
+<li><a href="https://www.w3.org/TR/2011/WD-html5-20110113/dnd.html" target="_blank" rel="noopener">Drag and drop</a> W3C
+DnD 标准</li>
+<li><a href="http://mereskin.github.io/dnd/" target="_blank" rel="noopener">HTML 5 drag and drop API</a> DnD 一些常见的坑</li>
+</ul></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2018/HTML-5-Drag-and-Drop/';
+var disqus_title = 'HTML 5 Drag and Drop 入门教程';
+var disqus_url = 'https://lotabout.me/2018/HTML-5-Drag-and-Drop/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

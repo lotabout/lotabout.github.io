@@ -1,0 +1,54 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="在 Java 中，我们常用 &lt;code&gt;UUID.randomUUID()&lt;/code&gt; 来随机生成一个 UUID。但在某些极端的情况下，它的性能可能满足不了你的要求（虽然几乎不可能出现）。这里我们测试了 4 种
+UUID 生成器的性能。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>UUID 生成器有多快？ | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/UUID/" rel="tag">UUID</a><a class="post-tag-link" href="/tags/benchmark/" rel="tag">benchmark</a><a class="post-tag-link" href="/tags/java/" rel="tag">java</a></div><div class="post-time">2019-05-26</div></div></div><div class="container post-header"><h1>UUID 生成器有多快？</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#测试结果"><span class="toc-number">1.</span> <span class="toc-text">测试结果</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试设置"><span class="toc-number">2.</span> <span class="toc-text">测试设置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#写在后面"><span class="toc-number">3.</span> <span class="toc-text">写在后面</span></a></li></ol></details></div><div class="container post-content"><p>在 Java 中，我们常用 <code>UUID.randomUUID()</code> 来随机生成一个 UUID。但在某些极端的情况下，它的性能可能满足不了你的要求（虽然几乎不可能出现）。这里我们测试了 4 种
+UUID 生成器的性能。</p>
+<h2 id="测试结果"><a class="header-anchor" href="#测试结果"></a>测试结果</h2>
+<p>最终测试的结果如下（虽然只看到 3 根线，但其实有 4 根，其中蓝线 UUID.randomUUID
+与绿线 jugWithSecureRandom 几乎重合）：</p>
+<img src="/2019/UUID-Generator-Benchmark/uuid-bench.svg" class="" title="UUID Bench Result">
+<p>可以看到：</p>
+<ul>
+<li>在单线程时，jugWithRandom 远远超过其它的生成器，而 jugTime 次之。</li>
+<li>随着线程的增加，各生成器的吞吐均有所下降。
+<ul>
+<li>randomUUID 中使用 SecureRandom 来获取随机数，而它是通过获取操作系统的一些随机噪声来生成随机数的，所以是安全的，但性能却不是很好（相对）。</li>
+<li>所有这些生成器都是线程安全的，换句话说内部会做线程同步，因此线程增加，吞吐会下降。</li>
+<li>其中 Random 是用 CAS 来完成同步，其余均使用 <code>synchronized</code>，理论上高并发下，线程数越多，Random 的性能越差，而其它则几乎不变。</li>
+</ul>
+</li>
+<li>注意 jugTime 在单线程时吞吐接近 1w/ms，这也是基于时间的 UUID 每毫秒能拥有的最大数值（参考<a href="https://www.famkruithof.net/guid-uuid-timebased.html" target="_blank" rel="noopener">uuid-timebased 说明</a>）。</li>
+<li>jugTime 的生成器的性能几乎总是优于 <code>randomUUID</code>。</li>
+<li>不过现实中，不太能遇到有场景需要有 1k/ms 这样的吞吐需求。</li>
+</ul>
+<h2 id="测试设置"><a class="header-anchor" href="#测试设置"></a>测试设置</h2>
+<p>这里我们测试了 java 内置的 <code>UUID.randomUUID()</code>，
+<a href="https://github.com/cowtowncoder/java-uuid-generator" target="_blank" rel="noopener">java-uuid-generator</a> 的
+<code>TimeBasedGenerator</code> 和 <code>RandomBasedGenerator</code>，而其中随机数发生器分别选用
+<code>Random</code> 和 <code>SecureRandom</code>。<a href="https://gist.github.com/lotabout/da61c34208b7c11f856afce480560b0d" target="_blank" rel="noopener">测试代码</a> 如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@BenchmarkMode</span>(&#123;Mode.Throughput&#125;)</span><br><span class="line"><span class="meta">@OutputTimeUnit</span>(TimeUnit.MILLISECONDS)</span><br><span class="line"><span class="meta">@State</span>(Scope.Benchmark)</span><br><span class="line"><span class="meta">@Warmup</span>(iterations = <span class="number">5</span>)</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MyBenchmark</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> RandomBasedGenerator randomBasedGenerator;</span><br><span class="line">    <span class="keyword">private</span> RandomBasedGenerator jugRandomGenerator;</span><br><span class="line">    <span class="keyword">private</span> TimeBasedGenerator timeBasedGenerator;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Setup</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">init</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        randomBasedGenerator = Generators.randomBasedGenerator();</span><br><span class="line">        timeBasedGenerator = Generators.timeBasedGenerator();</span><br><span class="line">        jugRandomGenerator = Generators.randomBasedGenerator(<span class="keyword">new</span> Random());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Benchmark</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">UUIDRandomUUID</span><span class="params">(Blackhole bh)</span> </span>&#123;</span><br><span class="line">        bh.consume(UUID.randomUUID());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Benchmark</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">jugWithRandom</span><span class="params">(Blackhole bh)</span> </span>&#123;</span><br><span class="line">        bh.consume(jugRandomGenerator.generate());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Benchmark</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">jugWithSecureRandom</span><span class="params">(Blackhole bh)</span> </span>&#123;</span><br><span class="line">        bh.consume(randomBasedGenerator.generate());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Benchmark</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">jugTime</span><span class="params">(Blackhole bh)</span> </span>&#123;</span><br><span class="line">        bh.consume(timeBasedGenerator.generate());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>测试框架使用 Jmh。测试使用 jdk 1.8 在 8C MacBook Pro 下完成，分别测试了
+<code>1,2,4,8</code> 个线程下的吞吐。</p>
+<h2 id="写在后面"><a class="header-anchor" href="#写在后面"></a>写在后面</h2>
+<p>这个测试的起因是产品在压测的时候发现 UUID 生成占 Running 线程较大的部分，且
+JProfiler 的线程图中有许多线程是 Blocking 的状态，因此猜测是 UUID.randomUUID中的synchronized 导致线程同步慢，所以想找一些替代的生成器。最后发现
+UUID.randomUUID 的吞吐并不是什么大的问题，但也很庆幸做了这个测试，了解了 UUID
+生成器的能力，还有 Time-Based UUID 也是一个不错的选择。</p></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2019/UUID-Generator-Benchmark/';
+var disqus_title = 'UUID 生成器有多快？';
+var disqus_url = 'https://lotabout.me/2019/UUID-Generator-Benchmark/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

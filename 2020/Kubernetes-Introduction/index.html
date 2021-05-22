@@ -1,0 +1,166 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="Kubernetes(简称 k8s&lt;sup class=&quot;footnote-ref&quot;&gt;&lt;a href=&quot;#fn1&quot; id=&quot;fnref1&quot;&gt;[1]&lt;/a&gt;&lt;/sup&gt;) 是一个容器编排系统，本文会实用的角度，讲解一些基本概念，基本操作。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Kubernetes 快速入门 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 4.2.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/Kubernetes/" rel="tag">Kubernetes</a><a class="post-tag-link" href="/tags/introduction/" rel="tag">introduction</a><a class="post-tag-link" href="/tags/k8s/" rel="tag">k8s</a></div><div class="post-time">2020-05-07</div></div></div><div class="container post-header"><h1>Kubernetes 快速入门</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#概述"><span class="toc-number">1.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#容器-container"><span class="toc-number">2.</span> <span class="toc-text">容器(Container)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#pod"><span class="toc-number">3.</span> <span class="toc-text">Pod</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#replicaset"><span class="toc-number">4.</span> <span class="toc-text">ReplicaSet</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#deployment"><span class="toc-number">5.</span> <span class="toc-text">Deployment</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#service"><span class="toc-number">6.</span> <span class="toc-text">Service</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#内部访问"><span class="toc-number">6.1.</span> <span class="toc-text">内部访问</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#外部访问"><span class="toc-number">6.2.</span> <span class="toc-text">外部访问</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#常用命令"><span class="toc-number">6.3.</span> <span class="toc-text">常用命令</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#configmap"><span class="toc-number">7.</span> <span class="toc-text">ConfigMap</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#namespace"><span class="toc-number">8.</span> <span class="toc-text">Namespace</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#小结"><span class="toc-number">9.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考"><span class="toc-number">10.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>Kubernetes(简称 k8s<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>) 是一个容器编排系统，本文会实用的角度，讲解一些基本概念，基本操作。</p>
+<h2 id="概述"><a class="header-anchor" href="#概述"></a>概述</h2>
+<p>Kubernetes 是希腊语，含义是“舵手”，容器 (container) 也有“集装箱”的含义，k8s 是容器编排系统，就像舵手在开着一艘货轮，轮船上叠满了集装箱，可以说十分贴切。</p>
+<p>k8s 在概念上主要分为资源对象和控制对象。资源对象包括容器、应用、配置、网络、存储等；控制对象则是方便管理这些资源而抽象的控制层，如 ReplicaSet 管理多副本，
+Deployment 管理版本的升级等。</p>
+<h2 id="容器-container"><a class="header-anchor" href="#容器-container"></a>容器(Container)</h2>
+<p>容器是最小的隔离单位，可以理解成一台虚拟机，一般上面只跑着一个(核心的)程序。也可以直接理解成一个容器就是一个 docker 实例。</p>
+<p>实际上 k8s 定义了容器需要实现的接口
+(<a href="https://github.com/kubernetes/community/blob/master/contributors/devel/sig-node/container-runtime-interface.md" target="_blank" rel="noopener">CRI</a>)
+，理论上可以有多种实现，如 docker, containerd, CRI-O 等<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>，但上手使用并不需要知道这些。</p>
+<h2 id="pod"><a class="header-anchor" href="#pod"></a>Pod</h2>
+<p><a href="https://kubernetes.io/docs/concepts/workloads/pods/pod-overview/" target="_blank" rel="noopener">Pod</a> 在 k8s
+的语境下一般不翻译。它的英文含义是“豆荚”，想像一个 container 是一个豆子，一个豆荚里有一到多个豆子，并组装成一个“豆角”。对应地，一个 pod 可以包含一个或多个
+container（实际中我还没见多对应多个container 的情形）。</p>
+<p>对于我们使用来说，对 pod 最需要了解的有两点：</p>
+<ol>
+<li>它是 k8s 最小的调度单位</li>
+<li>每个 pod 都有自己的 IP，且 k8s 要保证 pod 间通过这个 IP 可以互相访问</li>
+</ol>
+<img src="/2020/Kubernetes-Introduction/k8s-pod.svg" class="" title="Kubernetes Pod Network">
+<p>如上图，k8s 需要保证能在 Pod 1 里直接 ping 通 <code>10.1.20.2</code> 这个 IP(Pod 3)，尽管它们属于不同物理机。至于如何实现，与容器类似，也有<a href="https://kubernetes.io/docs/concepts/cluster-administration/networking/" target="_blank" rel="noopener">多种实现方式
+</a>，普通用户不需要了解。</p>
+<p>跟 pod 相关的指令是平时用得最多的，例如：</p>
+<ul>
+<li><code>kubectl get pods</code> 列出当前 namespace 下的所有 pod (namespace 后面讨论)</li>
+<li><code>kubectl get pod my-pod -o yaml</code> 列出 <code>my-pod</code> 的配置</li>
+<li><code>kubectl log my-pod</code> 列出 <code>my-pod</code> 的所有日志</li>
+<li><code>kubectl log -f --since=10m my-pod</code> 列出 <code>my-pod</code> 近 10 分钟的日志并持续监控</li>
+<li><code>kubectl describe pods my-pod</code> 查看 <code>my-pod</code> 的状态（如重启，上次失败原因等）</li>
+<li><code>kubectl exec -it my-pod bash</code> “登录” my-pod 并执行 bash</li>
+</ul>
+<h2 id="replicaset"><a class="header-anchor" href="#replicaset"></a>ReplicaSet</h2>
+<p>一般在部署(微)服务时，我们会部署多个副本，一方面水平扩展，能承受更高的压力；另一方面可以防止单点故障影响服务整体的高可用。</p>
+<p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/" target="_blank" rel="noopener">ReplicaSet</a>(RS)
+就是这种需求的一种抽象概念，一个 ReplicaSet 相当于是一个副本的集合，它是一个控制器(controller)。例如当一个目标为 3 副本的 ReplicaSet 管理的pod 挂了，则这个
+ReplicaSet 会启动新的/重启 pod 来满足副本数的需求。</p>
+<p>一般我们不会直接和 ReplicaSet 打交道，而是通过 deployment 来做控制。</p>
+<h2 id="deployment"><a class="header-anchor" href="#deployment"></a>Deployment</h2>
+<p>ReplicaSet 可以控制 pod 的副本数，在实际部署中我们还会有更新、回溯等的需求，例如要将pod 更新到新的版本，希望能滚动升级(rolling update)，希望先停止一个旧版本的 pod 并启动新版本的 pod，直到所有的 pod 都是新版本的。期间作为一个整体对外的服务(service)不中断。</p>
+<p><a href="https://kubernetes.io/docs/concepts/workloads/controllers/deployment/" target="_blank" rel="noopener">Deployment</a>
+也是一个 controller 概念，通过 yaml 文件的配置让我们很方便控制 pod：部署、更新、回滚、扩展、收缩等等。下面是示例配置文件：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span>           <span class="comment">#</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span>              <span class="comment">#</span></span><br><span class="line"><span class="attr">metadata:</span>                     <span class="comment">#</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nginx-deployment</span>      <span class="comment">#</span></span><br><span class="line">  <span class="attr">labels:</span>                     <span class="comment">#</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">nginx</span>                <span class="comment">#</span></span><br><span class="line"><span class="attr">spec:</span>                         <span class="comment">#</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">3</span>                 <span class="comment">#--. 相当于 ReplicaSet 的定义</span></span><br><span class="line">  <span class="attr">selector:</span>                   <span class="comment">#  |</span></span><br><span class="line">    <span class="attr">matchLabels:</span>              <span class="comment">#  |</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">nginx</span>              <span class="comment">#--'</span></span><br><span class="line">  <span class="attr">template:</span>                   <span class="comment">#--. 相当于单个 pod 的定义</span></span><br><span class="line">    <span class="attr">metadata:</span>                 <span class="comment">#  |</span></span><br><span class="line">      <span class="attr">labels:</span>                 <span class="comment">#  |</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">nginx</span>            <span class="comment">#  |</span></span><br><span class="line">    <span class="attr">spec:</span>                     <span class="comment">#  |</span></span><br><span class="line">      <span class="attr">containers:</span>             <span class="comment">#  |</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">nginx</span>           <span class="comment">#  |</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">nginx:1.14.2</span>   <span class="comment">#  |</span></span><br><span class="line">        <span class="attr">ports:</span>                <span class="comment">#  |</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">containerPort:</span> <span class="number">80</span>   <span class="comment">#--'</span></span><br></pre></td></tr></table></figure>
+<p>通过 <code>kubectl apply -f deployment.yml</code> 可以应用这个配置，k8s 会为我们创建一个
+Deployment，一个 ReplicaSet，同时会为我们启动 3 个 pod。可以通过如下命令查看相关状态：</p>
+<ul>
+<li><code>kubectl get deploy</code> 获取当前 namespace 下所有 deployments</li>
+<li><code>kubectl get deploy my-deployment -o yaml</code> 获取 my-deployment 的配置 yaml</li>
+<li><code>kubectl describe deploy my-describe</code> 获取 my-deployment 的一些详细状态</li>
+<li><code>kubectl get rs</code> 获取当前 namespace 下的所有 ReplicaSet，一般用不着</li>
+</ul>
+<p>如果要更新 pod 版本，或是改变副本的数量，直接修改之前的 yaml 配置文件，再重新执行 <code>kubectl apply -f deployment.yml</code> 即可。k8s 会自动做出调整，滚动升级或回退。</p>
+<h2 id="service"><a class="header-anchor" href="#service"></a>Service</h2>
+<p>我们知道每个 pod 有自己的 IP，在更新版本或增减副本数时，一些 pod 可能被杀死，新的 pod 会被启动，那么其它服务如何决定连接到哪个 pod 呢？</p>
+<p><a href="https://kubernetes.io/docs/concepts/services-networking/service/" target="_blank" rel="noopener">Service</a> 就是针对这种需求创建的抽象，对使用方屏蔽内部 pod 变化。使用方将流量发到 Service，而 Service 需要将流量转发到底层的 pod，于是衍生出下面几个问题：</p>
+<ol>
+<li>使用方如何定位到 Service？</li>
+<li>Service 如何找到目标的 Pod?</li>
+<li>流量如何转发？</li>
+</ol>
+<p>下面是一个 Service 配置的示例：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">my-service</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">MyApp</span>            <span class="comment"># 通过标签选择目标 Pod</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">      <span class="attr">port:</span> <span class="number">80</span>            <span class="comment"># Service 暴露的端口</span></span><br><span class="line">      <span class="attr">targetPort:</span> <span class="number">9376</span>    <span class="comment"># 转发到 pod 对应的端口</span></span><br></pre></td></tr></table></figure>
+<p>对着配置先回答第二个问题：Service 是通过 <code>selector</code> 配置项指定标签，如果
+Deployment 里的 pod 的 <code>labels</code> 字段包含了 Service 中 <code>selector</code> 的标签，则会被选中。</p>
+<p>流量转发方式比较多比较复杂，这里不做介绍。剩下的就是 Service 如何定位了。</p>
+<h3 id="内部访问"><a class="header-anchor" href="#内部访问"></a>内部访问</h3>
+<p>首先，我们注意到配置文件里有 <code>name</code> 字段，这是 Service 的名字。其次，在部署
+Service 后 k8s 会为 Service 分配一个虚拟 IP<sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup>，称作
+<code>Cluster IP</code>。</p>
+<p>在集群的 pod 里可以尝试 <code>telnet &lt;service name&gt; &lt;port&gt;</code> 或 <code>telnet &lt;cluster ip&gt; &lt;port&gt;</code> 来访问对应的 Service。注意的是这个虚拟 IP 是 ping 不通的，因为它是 ip
+tables 实现的（也有其它实现方式）。</p>
+<p>这里附上一个原理图（当然还有其它实现方式可选择），对细节没兴趣的话可直接跳过：</p>
+<img src="/2020/Kubernetes-Introduction/k8s-service-clusterIP.svg" class="" title="Kubernetes ClusterIP">
+<p>当 Pod A 发起的网络请求会被 iptables 重定向到 kube-proxy，而它会监控集群内 Pod
+的变化，并将流量转发到对应的 Pod 里，默认转发的方式是 round-robin。</p>
+<h3 id="外部访问"><a class="header-anchor" href="#外部访问"></a>外部访问</h3>
+<p>很明显 ClusterIP 只在集群内部有办法访问，那集群外要如何访问 Service？</p>
+<p>对外暴露 Service 有多种方式，这里只说 NodePort 的方式：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">my-service</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">NodePort</span> <span class="comment"># 类型为 NodePort</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">MyApp</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">      <span class="attr">port:</span> <span class="number">80</span></span><br><span class="line">      <span class="attr">targetPort:</span> <span class="number">9376</span></span><br><span class="line">      <span class="attr">nodePort:</span> <span class="number">30336</span> <span class="comment"># 指定 NodePort 端口号</span></span><br></pre></td></tr></table></figure>
+<p>当指定 NodePort 时，k8s 会在集群所有节点(物理机)上开相应的端口，集群外的流量通过这个端口转发到 kube-proxy，再由 kube-proxy 转发到后台的 pod 中，如下图：</p>
+<img src="/2020/Kubernetes-Introduction/k8s-service-node-port.svg" class="" title="Kubernetes Service NodePort">
+<p>因此在 NodePort 模式下，集群外可以通过 <code>&lt;node_ip&gt;:&lt;node_port&gt;</code> 访问服务。</p>
+<h3 id="常用命令"><a class="header-anchor" href="#常用命令"></a>常用命令</h3>
+<p>Service 一般我们只关心它的 NodePort，用下面的命令查询：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ kubectl get svc</span><br><span class="line">NAME              TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)         AGE</span><br><span class="line">my-svc            ClusterIP   10.42.51.51   &lt;none&gt;        80&#x2F;TCP,81&#x2F;TCP   10m</span><br><span class="line">my-svc-external   NodePort    10.42.51.52   &lt;none&gt;        80:30336&#x2F;TCP    10m</span><br></pre></td></tr></table></figure>
+<p>上面的 <code>30336</code> 就是 NodePort。</p>
+<h2 id="configmap"><a class="header-anchor" href="#configmap"></a>ConfigMap</h2>
+<p>有了 Deployment 和 Service，部署服务已经不在话下，那么如何管理服务的配置信息呢？</p>
+<p><a href="https://kubernetes.io/docs/concepts/configuration/configmap/" target="_blank" rel="noopener">ConfigMap</a> 就是对配置文件的抽象，也是使用 yaml 配置，也可以类似 pod 一样部署/更新，不过
+ConfigMap更新后需要重启 pod 才能应用新的配置。下面是配置示例（取自官方文档）：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">game-demo</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="comment"># property-like keys; each key maps to a simple value</span></span><br><span class="line">  <span class="attr">player_initial_lives:</span> <span class="number">3</span></span><br><span class="line">  <span class="attr">ui_properties_file_name:</span> <span class="string">"user-interface.properties"</span></span><br><span class="line">  <span class="comment"># file-like keys</span></span><br><span class="line">  <span class="attr">game.properties:</span> <span class="string">|</span></span><br><span class="line">    <span class="string">enemy.types=aliens,monsters</span></span><br><span class="line">    <span class="string">player.maximum-lives=5</span></span><br><span class="line">  <span class="attr">user-interface.properties:</span> <span class="string">|</span></span><br><span class="line">    <span class="string">color.good=purple</span></span><br><span class="line">    <span class="string">color.bad=yellow</span></span><br><span class="line">    <span class="string">allow.textmode=true</span></span><br></pre></td></tr></table></figure>
+<p>注意：配置里的 “file-like” 的配置项其实只是用 yaml 的多行语法写了配置的内容，
+ConfigMap 本身不区分 “property-like” 还是 “file-like”，是由使用方决定的。</p>
+<p>通过 <code>kubectl apply -f configmap.yaml</code> 部署，部署后可通过 <code>kubectl get cm -o yaml</code> 查看详情。</p>
+<p>那么部署后的 ConfigMap 要如何在 Pod 里引用呢？</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">configmap-demo-pod</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">demo</span></span><br><span class="line">      <span class="attr">image:</span> <span class="string">game.example/demo-game</span></span><br><span class="line">      <span class="attr">env:</span></span><br><span class="line">        <span class="comment"># Define the environment variable</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">PLAYER_INITIAL_LIVES</span> <span class="comment"># Notice that the case is different here from the key name in the ConfigMap.</span></span><br><span class="line">          <span class="attr">valueFrom:</span></span><br><span class="line">            <span class="attr">configMapKeyRef:</span></span><br><span class="line">              <span class="attr">name:</span> <span class="string">game-demo</span>           <span class="comment"># The ConfigMap this value comes from.</span></span><br><span class="line">              <span class="attr">key:</span> <span class="string">player_initial_lives</span> <span class="comment"># The key to fetch.</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">UI_PROPERTIES_FILE_NAME</span></span><br><span class="line">          <span class="attr">valueFrom:</span></span><br><span class="line">            <span class="attr">configMapKeyRef:</span></span><br><span class="line">              <span class="attr">name:</span> <span class="string">game-demo</span></span><br><span class="line">              <span class="attr">key:</span> <span class="string">ui_properties_file_name</span></span><br><span class="line">      <span class="attr">volumeMounts:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config</span></span><br><span class="line">        <span class="attr">mountPath:</span> <span class="string">"/config"</span></span><br><span class="line">        <span class="attr">readOnly:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">volumes:</span></span><br><span class="line">    <span class="comment"># You set volumes at the Pod level, then mount them into containers inside that Pod</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config</span></span><br><span class="line">      <span class="attr">configMap:</span></span><br><span class="line">        <span class="comment"># Provide the name of the ConfigMap you want to mount.</span></span><br><span class="line">        <span class="attr">name:</span> <span class="string">game-demo</span></span><br></pre></td></tr></table></figure>
+<p>可以看到，有几种引用方式：</p>
+<ul>
+<li>通过 <code>valueFrom</code> 和 <code>configMapKeyRef</code> 引用单个配置项</li>
+<li>通过 Pod 层的 <code>volumes</code> 和 container 层的 <code>volumeMounts</code> 将每个配置项挂载成
+Pod 里一个单独的文件。</li>
+</ul>
+<h2 id="namespace"><a class="header-anchor" href="#namespace"></a>Namespace</h2>
+<p>命名空间
+(<a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/" target="_blank" rel="noopener">Namespace</a>)
+的作用是将隔离各种资源，像虚拟机一样虚拟一个集群。一般情况下不同 namespace 间的资源是不共享的，如 Pod 只能引用同一个 namespace 下的 ConfigMap。</p>
+<p>在配置 Deployment、Service 及 ConfigMap 等资源时，可以通过 <code>namespace</code> 字段指定命名空间(需要提前创建)，如下例：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">nginx-deployment</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">load-balance</span>  <span class="comment">#&lt;-- load-balance 为提前创建好的 namespace</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">nginx</span></span><br><span class="line"><span class="comment">#...</span></span><br></pre></td></tr></table></figure>
+<p>常用的命令：</p>
+<ul>
+<li><code>kubectl get ns</code> 列出所有的 namespace</li>
+<li><code>kubectl -n &lt;my-ns&gt; ...</code> 在执行其它命令时通过 <code>-n</code> 指定作用于某个 namespace</li>
+<li><code>kubectl --all-namespaces ...</code> 在执行其它命令时指定作用于所有 namespace</li>
+</ul>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>文章对 k8s 的一些基本概念做了简单的讲解：</p>
+<ul>
+<li>container 可以理解成一个 docker 实例，里面跑着一个程序/服务</li>
+<li>pod 是 container 的抽象，有自己的 IP，不同 pod 网络互通，与 container 可以是一对一，也可以一对多</li>
+<li>ReplicaSet 是对多副本 Pod 的抽象，会自动启动、停止 Pod 来达到目标副本数，一般不直接使用</li>
+<li>Deployment 是一个控制概念，会创建、更新 ReplicaSet 从而实现 Pod 的部署、升级、回退、扩缩容等</li>
+<li>Service 屏蔽 Pod 细节，提供了统一的、稳定的接口，有自己的虚拟 IP(ClusterIP)
+和端口，外部访问需要单独暴露接口（如 NodePort）</li>
+<li>ConfigMap 是对配置文件的管理，实现配置项和 Pod 的解耦，配置更新后需要重启
+Pod</li>
+<li>namespace 是对 k8s 集群的资源做一个隔离</li>
+</ul>
+<p>K8s 的概念很多、功能也很丰富，本文是从基础使用的角度做一个介绍，尽量达到“不了解细节，但工作够用”的程度。一些其它的概念(如 volumn)因为博主接触不多，这里也不介绍了。</p>
+<p>最后：本人非 k8s 专业人士，文中如果有错误，请在评论里指出，我会进行修正。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://kubernetes.io/docs/concepts/" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/</a> 官方教程</li>
+<li><a href="https://medium.com/google-cloud/kubernetes-nodeport-vs-loadbalancer-vs-ingress-when-should-i-use-what-922f010849e0" target="_blank" rel="noopener">Kubernetes NodePort vs LoadBalancer vs Ingress? When should I use what?</a> Service 对外暴露的方法区别</li>
+<li><a href="https://jiayi.space/post/kubernetescong-ru-men-dao-fang-qi-3-wang-luo-yuan-li" target="_blank" rel="noopener">kubernetes从入门到放弃3–(网络原理)</a> 相对底层的网络原理</li>
+<li><a href="http://omerio.com/2015/12/18/learn-the-kubernetes-key-concepts-in-10-minutes/" target="_blank" rel="noopener">Learn the Kubernetes Key Concepts in 10 Minutes</a> 图文并茂，推荐</li>
+</ul>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>首尾字母之间有 8 个字母，所以称为 k8s，类似的还有 i18n(internationalization)。 <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p><a href="https://kubernetes.io/docs/concepts/overview/components/" target="_blank" rel="noopener">https://kubernetes.io/docs/concepts/overview/components/</a> <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn3" class="footnote-item"><p>严格来说，ExternalName 类型下不会分配 <a href="#fnref3" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section></div></div><div class="post-main post-comment"><div id="disqus_thread"></div><script type="text/javascript">
+var disqus_shortname = 'lotaboutlife';
+var disqus_identifier = '2020/Kubernetes-Introduction/';
+var disqus_title = 'Kubernetes 快速入门';
+var disqus_url = 'https://lotabout.me/2020/Kubernetes-Introduction/';
+(function() {
+   var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+   dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+   (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript" target="_blank" rel="noopener">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" target="_blank" rel="noopener" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a></div></article><link rel="stylesheet" type="text/css" href="/css/font.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script>(function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
+function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
+e=o.createElement(i);r=o.getElementsByTagName(i)[0];
+e.src='//www.google-analytics.com/analytics.js';
+r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
+ga('create','UA-39956831-2');ga('send','pageview');</script></body></html>

@@ -1,0 +1,476 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Striped64 - Java 并发知识</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="icon" href="../favicon.svg">
+        <link rel="shortcut icon" href="../favicon.png">
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        <link rel="stylesheet" href="../css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+        <link rel="stylesheet" href="../css/lotabout.css">
+        
+
+        
+        <!-- MathJax -->
+        <script async type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">Java 并发知识</a></li><li class="chapter-item expanded affix "><li class="part-title">理解线程安全</li><li class="chapter-item expanded "><a href="../Ideal-World/index.html"><strong aria-hidden="true">1.</strong> 理想的并发世界</a></li><li class="chapter-item expanded "><a href="../Cruel-World/index.html"><strong aria-hidden="true">2.</strong> 残酷的现实</a></li><li class="chapter-item expanded "><a href="../Happens-Before/index.html"><strong aria-hidden="true">3.</strong> Happens Before</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/index.html"><strong aria-hidden="true">4.</strong> 常见线程安全问题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/TOCTOU.html"><strong aria-hidden="true">4.1.</strong> TOCTOU</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Double-Checked-Locking.html"><strong aria-hidden="true">4.2.</strong> Double Checked Locking</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Compound-Actions.html"><strong aria-hidden="true">4.3.</strong> 复合操作</a></li><li class="chapter-item expanded "><a href="../Thread-Safety-Examples/Summary.html"><strong aria-hidden="true">4.4.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Best-Practice/index.html"><strong aria-hidden="true">5.</strong> 良好的并发编程习惯</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Best-Practice/Confinement.html"><strong aria-hidden="true">5.1.</strong> 封闭</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Immutability.html"><strong aria-hidden="true">5.2.</strong> 不可变</a></li><li class="chapter-item expanded "><a href="../Best-Practice/Threadsafe-Data-Types.html"><strong aria-hidden="true">5.3.</strong> 利用线程安全类</a></li></ol></li><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/index.html"><strong aria-hidden="true">6.</strong> 思考题</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Safety-Home-Work/Spring-Bean-Initialization.html"><strong aria-hidden="true">6.1.</strong> Spring Bean 初始化如何线程安全</a></li></ol></li><li class="chapter-item expanded "><li class="part-title">线程与线程池</li><li class="chapter-item expanded "><a href="../Amdahl-Law/index.html"><strong aria-hidden="true">7.</strong> Amdahl 定律</a></li><li class="chapter-item expanded "><a href="../Cost-of-Thread/index.html"><strong aria-hidden="true">8.</strong> 线程的代价</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/index.html"><strong aria-hidden="true">9.</strong> 线程池</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Thread-Pool/Concepts.html"><strong aria-hidden="true">9.1.</strong> 线程池相关概念</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Predefined.html"><strong aria-hidden="true">9.2.</strong> 预定义的线程池</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Usage.html"><strong aria-hidden="true">9.3.</strong> 线程池使用</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Interrupt.html"><strong aria-hidden="true">9.4.</strong> 线程的中断</a></li><li class="chapter-item expanded "><a href="../Thread-Pool/Shutdown.html"><strong aria-hidden="true">9.5.</strong> 如何优雅退出</a></li></ol></li><li class="chapter-item expanded "><strong aria-hidden="true">10.</strong> 线程调度</li><li class="chapter-item expanded affix "><li class="part-title">源码分析</li><li class="chapter-item expanded "><a href="../Source-Unsafe/index.html"><strong aria-hidden="true">11.</strong> Unsafe</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/index.html"><strong aria-hidden="true">12.</strong> Atomic</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicInteger.html"><strong aria-hidden="true">12.1.</strong> AtomicInteger</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/AtomicIntegerArray.html"><strong aria-hidden="true">12.2.</strong> AtomicIntegerArray</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Striped64.html" class="active"><strong aria-hidden="true">12.3.</strong> Striped64</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/Adder.html"><strong aria-hidden="true">12.4.</strong> Adder</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/FieldUpdater.html"><strong aria-hidden="true">12.5.</strong> FieldUpdater</a></li><li class="chapter-item expanded "><a href="../Source-Atomic/StampedReference.html"><strong aria-hidden="true">12.6.</strong> StampedReference</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-AQS/AQS.html"><strong aria-hidden="true">13.</strong> AbstractQueuedSynchronizer</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-AQS/blocking-exclusive.html"><strong aria-hidden="true">13.1.</strong> 互斥锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/blocking-shared.html"><strong aria-hidden="true">13.2.</strong> 共享锁</a></li><li class="chapter-item expanded "><a href="../Source-AQS/timeout.html"><strong aria-hidden="true">13.3.</strong> 超时</a></li><li class="chapter-item expanded "><a href="../Source-AQS/interrupt.html"><strong aria-hidden="true">13.4.</strong> 中断</a></li><li class="chapter-item expanded "><a href="../Source-AQS/cancellation.html"><strong aria-hidden="true">13.5.</strong> 取消</a></li><li class="chapter-item expanded "><a href="../Source-AQS/condition.html"><strong aria-hidden="true">13.6.</strong> 条件变量</a></li><li class="chapter-item expanded "><a href="../Source-AQS/Summary.html"><strong aria-hidden="true">13.7.</strong> 小结</a></li></ol></li><li class="chapter-item expanded "><a href="../Source-Lock/Lock.html"><strong aria-hidden="true">14.</strong> Lock</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantLock.html"><strong aria-hidden="true">14.1.</strong> ReentrantLock</a></li><li class="chapter-item expanded "><a href="../Source-Lock/ReentrantReadWriteLock.html"><strong aria-hidden="true">14.2.</strong> ReentrantReadWriteLock</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Java 并发知识</h1>
+
+                    <div class="right-buttons">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#striped64" id="striped64">Striped64</a></h1>
+<p><code>Striped64</code> 是一个内部的类，用于实现 Adder 和 Accumulator。<code>LongAdder</code> 在高并发下性能要优于 <code>AtomicLong</code>，原因是 <code>Striped64</code> 使用了类似分段锁的技术，减少了高并发下的竞争。</p>
+<p><code>Striped64</code> 对外的语义是一个数字，在内部维护了一个 <code>base</code> 变量和一个 <code>cells</code>数组，当线程尝试增减数字时，会先尝试对 <code>base</code> 进行修改，如果成功则退出，如果失败则说明当前存在竞争，会根据线程的哈希值，对 <code>cells</code> 中的某个元素进行修改。外部需要获取数值时，需要累加 <code>base</code> 和 <code>cells</code> 中的所有元素。</p>
+<p>相比于 Atomic 变量中所有线程竞争同一个变量，<code>Striped64</code> 通过将线程分散，让多个线程分别竞争数组中的某个元素，从而降低了竞争，减少了自旋的时间，最终提高了性能。分段是十分重要的减少竞争的手段，例如在 ForkJoinPool 中也有类似思想。</p>
+<h2><a class="header" href="#成员变量" id="成员变量">成员变量</a></h2>
+<p><code>Striped64</code> 有如下成员变量：</p>
+<pre><code class="language-java">abstract class Striped64 extends Number {
+    /** Number of CPUS, to place bound on table size */
+    static final int NCPU = Runtime.getRuntime().availableProcessors();
+
+    /** Table of cells. When non-null, size is a power of 2.  */
+    transient volatile Cell[] cells;
+
+    /**
+     * Base value, used mainly when there is no contention, but also as
+     * a fallback during table initialization races. Updated via CAS.
+     */
+    transient volatile long base;
+
+    /** Spinlock (locked via CAS) used when resizing and/or creating Cells. */
+    transient volatile int cellsBusy;
+
+    // ...
+}
+</code></pre>
+<p>说明如下：</p>
+<ul>
+<li><code>NCPU</code> 记录了系统 CPU 的核数，因为真正的并发数最多只能是 CPU 核数，因此
+<code>cells</code> 数组一般要大于这个数。</li>
+<li><code>cells</code> 数组，大小是 2 的次方，这样将线程映射到 <code>cells</code> 元素时方便计算。</li>
+<li><code>base</code>，基本数值，一般在无竞争能用上，同时在 <code>cells</code> 初始化时也会用到。</li>
+<li><code>cellsBusy</code>，自旋锁，在创建或扩充 <code>cells</code> 时使用</li>
+</ul>
+<p>从需求出发 <code>Cell</code> 类需要类似 <code>AtomicLong</code>，能通过 CAS 更新。实际定义如下：</p>
+<pre><code class="language-java">@sun.misc.Contended static final class Cell {
+    volatile long value;
+    Cell(long x) { value = x; }
+    final boolean cas(long cmp, long val) {
+        return UNSAFE.compareAndSwapLong(this, valueOffset, cmp, val);
+    }
+
+    // Unsafe mechanics
+    private static final sun.misc.Unsafe UNSAFE;
+    private static final long valueOffset;
+    static {
+        try {
+            UNSAFE = sun.misc.Unsafe.getUnsafe();
+            Class&lt;?&gt; ak = Cell.class;
+            valueOffset = UNSAFE.objectFieldOffset
+                (ak.getDeclaredField(&quot;value&quot;));
+        } catch (Exception e) {
+            throw new Error(e);
+        }
+    }
+}
+</code></pre>
+<p>熟悉了 <code>AtomicLong</code> 会发现，几乎就是一样的设计：volatile 变量、Unsafe 加上字段的偏移量，再用 CAS 提供修改能力。</p>
+<p>这里比较特殊的是 <code>@sun.misc.Contended</code> 注解，它是 Java 8 中新增的注解，用来避免缓存的<a href="https://mechanical-sympathy.blogspot.com/2011/07/false-sharing.html">伪共享</a>，减少
+CPU 缓存级别的竞争。有兴趣的可以搜索相关资料。</p>
+<h2><a class="header" href="#longaccumulate" id="longaccumulate">longAccumulate</a></h2>
+<p><code>Striped64</code> 主要提供了 <code>longAccumulate</code> 和 <code>doubleAccumulate</code>，方法比较长，我们先从 <code>long</code> 的这版看起。</p>
+<h3><a class="header" href="#计算哈希" id="计算哈希">计算哈希</a></h3>
+<p>在 <code>Striped64</code> 中，哈希值的作用是用来分发线程到某个 <code>cells</code> 元素，<code>Striped64</code>中利用了 <code>Thread</code> 类中用来做伪随机数 <code>threadLocalRandomProbe</code>：</p>
+<pre><code class="language-java">public class Thread implements Runnable {
+  /** Probe hash value; nonzero if threadLocalRandomSeed initialized */
+  @sun.misc.Contended(&quot;tlr&quot;)
+  int threadLocalRandomProbe;
+}
+</code></pre>
+<p>在 <code>Striped64</code> 中复制了 <code>ThreadLocalRandom</code> 的一些方法，用 <code>Unsafe</code> 来获取和修改字段值。</p>
+<pre><code class="language-java">/**
+ * Returns the probe value for the current thread.
+ * Duplicated from ThreadLocalRandom because of packaging restrictions.
+ */
+static final int getProbe() {
+    return UNSAFE.getInt(Thread.currentThread(), PROBE);
+}
+
+/**
+ * Pseudo-randomly advances and records the given probe value for the
+ * given thread.
+ * Duplicated from ThreadLocalRandom because of packaging restrictions.
+ */
+static final int advanceProbe(int probe) {
+    probe ^= probe &lt;&lt; 13;   // xorshift
+    probe ^= probe &gt;&gt;&gt; 17;
+    probe ^= probe &lt;&lt; 5;
+    UNSAFE.putInt(Thread.currentThread(), PROBE, probe);
+    return probe;
+}
+</code></pre>
+<p>可以理解为 <code>getProbe</code> 用来获取哈希值，<code>advanceProbe</code> 用来更新哈希值。</p>
+<h3><a class="header" href="#加锁" id="加锁">加锁</a></h3>
+<p>因为 <code>Cells</code> 类占用比较多的空间，所以它的初始化按需进行的，开始为空，需要时先创建两个元素，不够用时再扩展成两倍大小。在个性 <code>cells</code> 数组（如扩展）时需要加锁，加锁方式如下：</p>
+<pre><code class="language-java">(cellsBusy == 0 &amp;&amp; casCellsBusy())
+
+final boolean casCellsBusy() {
+   return UNSAFE.compareAndSwapInt(this, CELLSBUSY, 0, 1);
+}
+</code></pre>
+<p>既然有 CAS 来将 <code>cellsBusy</code> 设成 <code>1</code>，那么 <code>cellsBusy == 0</code> 这个判断还有意义吗？从逻辑上没有区别，猜测应该是为了提高性能，变量的读取比 CAS 的代价小，因此如果 <code>cellsBusy</code> 已经是 <code>1</code> 则 CAS 大概率 失败，提前判断能提高性能。</p>
+<p>而释放锁则直接将 <code>cellsBusy</code> 设置为 <code>0</code> 即可：</p>
+<pre><code class="language-java">cellsBusy = 0;
+</code></pre>
+<p>另外为了保证逻辑正确，需要使用类似 Double Checked Locking 的技术，代码里多次用到了如下模式：</p>
+<pre><code>if (condition_met) {       // 只在必要时进入
+  lock();                  // 加锁
+  done = false;            // 因为外层有轮询，需要记录任务是否需要继续
+  try {
+    if (condition_met) {   // 前面的 if 到加锁间状态可能变化，需要重新判断
+      // ...
+
+      done = true;         // 任务完成
+    }
+  } finally {
+    unlock();              // 确保锁释放
+  }
+
+  if (done)                // 任务完成，可以退出轮询
+    break;
+}
+</code></pre>
+<h3><a class="header" href="#accumulate-完整代码" id="accumulate-完整代码">Accumulate 完整代码</a></h3>
+<p>完整代码比较长，注释如下：</p>
+<pre><code class="language-java">final void longAccumulate(long x, LongBinaryOperator fn,
+                          boolean wasUncontended) {
+    // 获取线程的哈希值
+    int h;
+    if ((h = getProbe()) == 0) {
+        ThreadLocalRandom.current(); // force initialization
+        h = getProbe();
+        wasUncontended = true;
+    }
+    boolean collide = false;                // True if last slot nonempty
+    for (;;) {
+        Cell[] as; Cell a; int n; long v;
+        if ((as = cells) != null &amp;&amp; (n = as.length) &gt; 0) { // cells 已经初始化了
+            if ((a = as[(n - 1) &amp; h]) == null) { // 对应的 cell 不存在，需要新建
+                if (cellsBusy == 0) {       // 只有在 cells 没上锁时才尝试新建
+                    Cell r = new Cell(x);
+                    if (cellsBusy == 0 &amp;&amp; casCellsBusy()) { // 上锁
+                        boolean created = false;
+                        try {               // 上锁后判断 cells 对应元素是否被占用
+                            Cell[] rs; int m, j;
+                            if ((rs = cells) != null &amp;&amp;
+                                (m = rs.length) &gt; 0 &amp;&amp;
+                                rs[j = (m - 1) &amp; h] == null) {
+                                rs[j] = r;
+                                created = true;
+                            }
+                        } finally {
+                            cellsBusy = 0;
+                        }
+                        if (created)        // cell 创建完毕，可以退出
+                            break;
+                        continue;           // 加锁后发现 cell 元素已经不再为空，轮询重试
+                    }
+                }
+                collide = false;
+            }
+
+            // 下面这些 else 在尝试检测当前竞争度大不大，如果大则尝试扩容，如
+            // 果扩容已经没用了，则尝试 rehash 来分散并发到不同的 cell 中
+
+            else if (!wasUncontended)       // 已知 CAS 失败，说明并发度大
+                wasUncontended = true;      // rehash 后重试
+            else if (a.cas(v = a.value, ((fn == null) ? v + x :   // 尝试 CAS 将值更新到 cell 中
+                                         fn.applyAsLong(v, x))))
+                break;
+            else if (n &gt;= NCPU || cells != as) // cells 数组已经够大，rehash
+                collide = false;               // At max size or stale
+            else if (!collide)                 // 到此说明其它竞争已经很大，rehash
+                collide = true;
+            else if (cellsBusy == 0 &amp;&amp; casCellsBusy()) { // rehash 都没用，尝试扩容
+                try {
+                    if (cells == as) {      // 加锁过程中可能有其它线程在扩容，需要排除该情形
+                        Cell[] rs = new Cell[n &lt;&lt; 1];
+                        for (int i = 0; i &lt; n; ++i)
+                            rs[i] = as[i];
+                        cells = rs;
+                    }
+                } finally {
+                    cellsBusy = 0;
+                }
+                collide = false;
+                continue;                   // Retry with expanded table
+            }
+            h = advanceProbe(h);            // rehash
+        }
+        else if (cellsBusy == 0 &amp;&amp; cells == as &amp;&amp; casCellsBusy()) { // cells 未初始化
+            boolean init = false;
+            try {                           // Initialize table
+                if (cells == as) {
+                    Cell[] rs = new Cell[2];
+                    rs[h &amp; 1] = new Cell(x);
+                    cells = rs;
+                    init = true;
+                }
+            } finally {
+                cellsBusy = 0;
+            }
+            if (init)
+                break;
+        }
+        else if (casBase(v = base, ((fn == null) ? v + x :
+                                    fn.applyAsLong(v, x))))
+            break; // 其它线程在初始化 cells 或在扩容，尝试更新 base
+    }
+}
+</code></pre>
+<p>还有一个小细节，我们发现在判断 cells 是否为 null 及长度大于 0 时，先将 <code>cells</code>
+赋值给临时变量，这是因为两个判断不是原子的，中间可能 <code>cells</code> 的值发生了变化，如再次变成了 null。</p>
+<pre><code class="language-java">if ((as = cells) != null &amp;&amp; (n = as.length) &gt; 0) {
+</code></pre>
+<h2><a class="header" href="#doubleaccumulate" id="doubleaccumulate">doubleAccumulate</a></h2>
+<p><code>doubleAccumulate</code> 的整体逻辑与 <code>longAccumulate</code> 几乎一样，区别在于将 <code>double</code>
+存储成 <code>long</code> 时需要转换。例如在创建 <code>cell</code> 时：</p>
+<pre><code class="language-java">Cell r = new Cell(Double.doubleToRawLongBits(x));
+</code></pre>
+<p><code>doubleToRawLongBits</code> 是一个 native 方法，将 <code>double</code> 转成 <code>long</code>。在累加时需要再转来回：</p>
+<pre><code class="language-java">else if (a.cas(v = a.value,
+               ((fn == null) ?
+                Double.doubleToRawLongBits
+                (Double.longBitsToDouble(v) + x) : // 转回 double 做累加
+                Double.doubleToRawLongBits
+                (fn.applyAsDouble
+                 (Double.longBitsToDouble(v), x)))))
+</code></pre>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../Source-Atomic/AtomicIntegerArray.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../Source-Atomic/Adder.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../Source-Atomic/AtomicIntegerArray.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="../Source-Atomic/Adder.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+        <!-- Google Analytics Tag -->
+        <script type="text/javascript">
+            var localAddrs = ["localhost", "127.0.0.1", ""];
+
+            // make sure we don't activate google analytics if the developer is
+            // inspecting the book locally...
+            if (localAddrs.indexOf(document.location.hostname) === -1) {
+                (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+                ga('create', 'UA-39956831-2', 'auto');
+                ga('send', 'pageview');
+            }
+        </script>
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>
