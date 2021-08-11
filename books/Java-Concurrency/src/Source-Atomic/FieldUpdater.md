@@ -3,7 +3,7 @@
 FieldUpdater 可以对其它类的 `volatile` 变量的包装，实现 CAS 的相关操作，相比于
 直接使用 `AtomicInteger`，它的主要优势是能节省内存。
 
-我们先看一个使用示例：
+## 使用示例
 
 ```java
 class MyStruct {

@@ -1,17 +1,18 @@
 # Striped64
 
-`Striped64` 是一个内部的类，用于实现 Adder 和 Accumulator。`LongAdder` 在高并
-发下性能要优于 `AtomicLong`，原因是 `Striped64` 使用了类似分段锁的技术，减少了
-高并发下的竞争。
+`Striped64` 是一个内部类，用于实现 Adder 和 Accumulator。`LongAdder` 在高并发
+下性能要优于 `AtomicLong`，原因是 `Striped64` 使用了分段的技术，减少了高并发下
+的竞争。
 
-`Striped64` 对外的语义是一个数字，在内部维护了一个 `base` 变量和一个 `cells`数
-组，当线程尝试增减数字时，会先尝试对 `base` 进行修改，如果成功则退出，如果失败
-则说明当前存在竞争，会根据线程的哈希值，对 `cells` 中的某个元素进行修改。外部
-需要获取数值时，需要累加 `base` 和 `cells` 中的所有元素。
+`Striped64` 对外的语义是一个数字，在内部将数字的“值”拆成了好几部分：一个`base`
+变量和一个 `cells` 数组，当线程尝试修改数字（增减）时，会先尝试对 `base` 进行
+修改，如果成功则退出，如果失败则说明当前存在竞争，会根据线程的哈希值，对
+`cells` 中的某个元素进行修改。外部需要获取数值时，需要累加 `base` 和 `cells`
+中的所有元素。
 
 相比于 Atomic 变量中所有线程竞争同一个变量，`Striped64` 通过将线程分散，让多个
 线程分别竞争数组中的某个元素，从而降低了竞争，减少了自旋的时间，最终提高了性能
-。分段是十分重要的减少竞争的手段，例如在 ForkJoinPool 中也有类似思想。
+。分段是十分重要的减少竞争的手段，在 ForkJoinPool 中也有体现。
 
 ## 成员变量
 
@@ -72,8 +73,8 @@ abstract class Striped64 extends Number {
 }
 ```
 
-熟悉了 `AtomicLong` 会发现，几乎就是一样的设计：volatile 变量、Unsafe 加上字段
-的偏移量，再用 CAS 提供修改能力。
+熟悉了 `AtomicLong` 会发现，`Cell` 的设计几乎一模一样：volatile 变量、Unsafe
+加上字段的偏移量，再用 CAS 提供修改能力。
 
 这里比较特殊的是 `@sun.misc.Contended` 注解，它是 Java 8 中新增的注解，用来避
 免缓存的[伪共享
@@ -88,7 +89,7 @@ CPU 缓存级别的竞争。有兴趣的可以搜索相关资料。
 ### 计算哈希
 
 在 `Striped64` 中，哈希值的作用是用来分发线程到某个 `cells` 元素，`Striped64`
-中利用了 `Thread` 类中用来做伪随机数 `threadLocalRandomProbe`：
+中利用了 `Thread` 类中用来做伪随机数的 `threadLocalRandomProbe`：
 
 ```java
 public class Thread implements Runnable {
@@ -129,9 +130,9 @@ static final int advanceProbe(int probe) {
 
 ### 加锁
 
-因为 `Cells` 类占用比较多的空间，所以它的初始化按需进行的，开始为空，需要时先
-创建两个元素，不够用时再扩展成两倍大小。在个性 `cells` 数组（如扩展）时需要加
-锁，加锁方式如下：
+因为 `Cells` 类占用比较多的空间，所以它的初始化按需进行的，开始时为空，需要时
+先创建两个元素，不够用时再扩展成两倍大小。在修改 `cells` 数组（如扩展）时需要
+加锁，加锁方式如下：
 
 ```java
 (cellsBusy == 0 && casCellsBusy())

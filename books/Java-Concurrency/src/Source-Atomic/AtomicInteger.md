@@ -3,7 +3,7 @@
 `AtomicInteger`、`AtomicLong`、及 `AtomicReference` 的实现类似，这里以
 `AtomicInteger` 为例。
 
-## 整体结构
+## 成员变量
 
 `AtomicInteger` 类的整体结构如下：
 

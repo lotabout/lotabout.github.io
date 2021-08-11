@@ -32,7 +32,7 @@ ABA 问题的核心是：CAS 操作在 compare 阶段，只会比较目标的部
 `A` 即可。常见的手段是增加一个额外的字段，记录修改的版本号，也是
 `AtomicStampedReference` 的实现方式。
 
-## AtomicStampedReference 成员
+## AtomicStampedReference 成员变量
 
 代码如下：可以看到定义了 `Pair` 类将原本的 `reference` 和新增的 `stamp` 包装起
 来。后面会看到在 CAS 时会用 `Pair` 作为整体用于判断。

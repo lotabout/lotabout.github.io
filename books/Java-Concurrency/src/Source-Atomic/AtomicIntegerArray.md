@@ -53,5 +53,5 @@ Space losses: 0 bytes internal + 0 bytes external = 0 bytes total
 代码中的 `scale & (scale - 1)` 是很趣的 Hack，用来判断一个数是否为 2 的次方。
 
 另一个细节是代码中将 `scale` 转换成了 `shift`，并用 `i << shift` 计算偏移量，
-一般来说位移操作会比乘法快很多。
+一般来说位移操作会比乘法快。
 

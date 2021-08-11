@@ -3,8 +3,7 @@
 > Just because you can break the rules, doesn’t mean you should break the
 > rules—unless you have a good reason. -- Ben Evans
 
-在查阅 JUC 包的相关源码时，最终常常会用到 `Unsafe` 类中的一些方法，本章我们先
-来看看 `Unsafe` 中的一些常见方法。
+## 上层需求
 
 `sun.misc.Unsafe` 是一个底层包，它的方法几乎都是 native 方法，提供了利用底层特
 性的能力，如使用 CPU 及其它硬件的特性的能力，绕过 JVM 对内存做特殊操作的能力等
