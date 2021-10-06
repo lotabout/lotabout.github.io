@@ -21,7 +21,7 @@
     "hexo-html-minifier": "0.0.2",
     "hexo-renderer-less": "^0.2.0",
     "hexo-renderer-markdown-it": "^3.4.1",
-    "hexo-renderer-pug": "0.0.5",
+    "hexo-renderer-pug": "^1.0.0",
     "hexo-renderer-stylus": "^0.3.1",
     "hexo-server": "^0.2.0",
     "hexo-tag-asset-svg": "^1.0.1",
