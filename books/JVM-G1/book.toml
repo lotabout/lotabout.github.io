@@ -1,0 +1,14 @@
+[book]
+authors = ["Jinzhou Zhang"]
+language = "zh"
+multilingual = false
+src = "src"
+title = "理解 Java G1GC"
+
+[preprocessor.fix-cjk-spacing]
+command = "mdbook-fix-cjk-spacing"
+
+[output.html]
+mathjax-support = true
+google-analytics = "UA-39956831-2"
+additional-css = ["css/lotabout.css"]
