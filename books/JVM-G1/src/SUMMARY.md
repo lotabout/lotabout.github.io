@@ -4,4 +4,8 @@
 
 # 算法篇
 
-- [Java 里的 GC](algo/gcs.md)
+- [G1 简介](algo/gcs.md)
+- [并发标记](algo/concurrent-marking.md)
+- [Evacuation](algo/evacuation.md)
+- [软实时性](algo/soft-real-time.md)
+- [分代预测](algo/soft-real-time.md)
