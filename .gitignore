@@ -10,3 +10,4 @@ public/
 *.swo
 _book
 package-lock.json
+book
