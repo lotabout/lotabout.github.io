@@ -81,7 +81,7 @@ G1GC 使用的是标记位图，可以类比成为现实世界创建一张地图
 
 ## 并发标记整体步骤
 
-注意下文介绍的步骤和《深入 Java 虚拟机》一书里介绍的不一样，这里采用了 [官方教程](https://www.oracle.com/technetwork/tutorials/tutorials-1876574.html) 的说法。
+注意下文介绍的步骤和《深入 Java 虚拟机》一书里介绍的不一样，这里采用了 [Oracle 教程](https://www.oracle.com/technetwork/tutorials/tutorials-1876574.html) 的说法。
 
 1. 初始标记 (Initial Mark)。标记 GC Root 能直达的对象，STW
 2. 根区域扫描 (Root Region Scan)。标记所有从 root region 可达的对象，在 G1 里
