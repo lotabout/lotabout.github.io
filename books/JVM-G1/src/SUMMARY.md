@@ -8,4 +8,4 @@
 - [并发标记](algo/concurrent-marking.md)
 - [Evacuation](algo/evacuation.md)
 - [软实时性](algo/soft-real-time.md)
-- [分代预测](algo/generational.md)
+- [分代 G1 GC](algo/generational.md)
