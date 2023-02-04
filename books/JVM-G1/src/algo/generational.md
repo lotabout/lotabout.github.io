@@ -108,6 +108,15 @@ Old Gen 区域：
 - 大对象永远不会被移动，移动大对象本身也没意义（它不需要 compact 之类的操作）。
   潜在地，大对象区域卡在中间，可能会造成区域空间的碎片化
 
+## 小结
+
+分代是 GC 中的优化，分段假设在 GC 中的地位应该十分重要（没有找相关资源），JDK
+后续的一些低延时算法如 Shenandoah GC、ZGC，开始的实现都不包含分代，但后续的版
+本都在尝试实现（如[JEP 404](https://openjdk.org/jeps/404) 提出为 Shenandoah 加
+上分代，[JDK-8272979](https://bugs.openjdk.org/browse/JDK-8272979) 在 ZGC 中实
+现分代）。
+
+
 ---
 
 [^ref-code-write-barrier-short-path]: [G1BarrierSet::write_ref_field_post](https://github.com/openjdk/jdk11u-dev/blob/master/src/hotspot/share/gc/g1/g1BarrierSet.inline.hpp#L51) 中，如果引用方在 Young Gen 中，则直接退出写屏障

@@ -12,7 +12,7 @@
 首先有一部分对象我们会认为肯定还活着，一般称为 GC Roots，例如线程堆栈上的变量，
 如传入方法的参数，创建的临时变量等；例如系统加载的一些类等等[^ref-gc-roots]。
 
-已知 GC Roots 必不可能是垃圾，那么从 GC Roots 发出的引用，必不可能是垃圾。因此
+已知 GC Roots 必不可能是垃圾，那么从 GC Roots 引用的对象，必不可能是垃圾。因此
 并发标记中的“标记”，本质上就是从 GC Roots 出发，递归遍历所有引用的对象，把它们
 标记为“live（存活）”，这样没有标记到的就是垃圾，可以被清除。
 
@@ -30,12 +30,17 @@
 
 ![](concurrent-marking/Tri-color-example.svg)
 
+细节实现上，上图展示的是宽度搜索，但标记本身并不依赖具体的实现。G1 的实现有点
+像是宽搜和深搜的复合版本，以平衡效率和空间占用。实现的方式可以参考论文《A
+generational mostly-concurrent garbage collector》。
+
 ## 并发与 SATB
 
-上一章提过 GC 算法的其中一个目标是减少停顿，这里的停顿指的是应用程序的停顿。但
-像并发标记这些 GC 的工作，就算砸锅卖铁也需要那么长的时间，怎么减少停顿？其中一
-个想法是“并发”[^comment-parallel-vs-concurrency]，应用程序工作的同时，拿一些资
-源做 GC 的事，完美。
+上一章提过 GC 算法的其中一个目标是减少停顿[^comment-pause]，这里的停顿指的是应
+用程序的停顿。但像标记的工作，要扫描的存活对象客观上就有那么多，可能就算砸锅卖
+铁也需要那么长的时间，怎么减少停顿？其中一个想法是“并发”
+[^comment-parallel-vs-concurrency]，应用程序工作的同时，拿部分资源做 GC 的事，
+而不需要将应用程序暂停。
 
 那么代价呢？
 - GC 吞吐变差。如果完全停顿，GC 可以砸锅卖铁用所有资源，现在单位时间内只能用部
@@ -43,14 +48,11 @@
 - GC 实现更复杂。例如三色算法，考虑的是“静态”的引用树，但在并发模式下，标记到
    一半时，树的结构可能发生变化，于是算法得有相关的实现来处理这些情况。
 
-并发标记过程中，对象引用结构会发生变化，这个问题有多种解法，在 G1GC 中采用的是
-Snapshot At The Beginning(SATB) 的思路[^ref-incremental-update]。核心思想是：
-标记开始前做个快照，本次标记只对快照负责，对快照后变为垃圾的对象视而不见（这些
-垃圾也被称为浮动垃圾 floating garbage）。
-
-例如标记开始后新增一个对象 obj，标记结束前 obj 变成垃圾了，在 SATB 的做法中，
-本次标记不关心 obj，于是会认为 obj 还活着。这种做法肯定会影响回收的效率，但这
-是权衡下的方案。
+吞吐问题是效率问题，基本只能靠不断优化算法与实现细节。引用结构变化问题是正确性
+问题，目前有多种解法，G1GC 采用的是 Snapshot At The Beginning(SATB) 的解法
+[^ref-incremental-update]。核心思想是：标记开始前对当前的引用树做个快照，本次
+标记只对快照负责，对快照后变为垃圾的对象视而不见（这些垃圾也被称为浮动垃圾
+floating garbage，会在下次 GC 时被回收）。
 
 ## 标记位图
 
@@ -62,22 +64,26 @@ bit 来记录这个信息，但这种做法从各种角度都不太好，如需�
 的 Copy on Write 机制，容易浪费内存。
 
 G1GC 使用的是标记位图，可以类比成为现实世界创建一张地图，标记的时候只在地图上
-标记。例如每个对象大小是 8 字节，一个对象只需要 1 bit 标记，于是标记位图大小只
-需要内存的 1/64 即可。
+标记，可以解决上面说的相关问题。位图需要占用额外的内存，但大小有限，例如每个对
+象大小是 8 字节，一个对象只需要 1 bit 标记，于是标记位图大小只需要内存的1/64
+即可。
 
-另外，由于要实现上面提到的 SATB，实际上需要记录这么一些信息：
+另外，要实现上面提到的 SATB 快照也需要额外记录一些信息，因此 G1 实际上需要记录
+这么一些内容：
 
 ![](concurrent-marking/2023-01-jvm-g1-bitmap.svg)
 
 `bottom` 指针指向区域的开始，`top` 指向区域内空闲空间的开始。`prev` 和`next`
 代表的是标记位图。额外地还有 TAMS(Top at marking start) 指针，记录的是标记开始
-时 `top` 的值，也分 prevTAMS, nextTAMS 两个版本，是实现 SATB 使用的。
+时 `top` 的值，也分 prevTAMS, nextTAMS 两个版本，是实现 SATB 快照用的。
 
-为什么位图和 TAMS 都有 prev 和 next 两个版本？这里 prev 版本是上一次标记的结果，
-而 next 版本记录的是本次进行中的状态[^ref-single-bitmap]。`TAMS` 作用是对要处
-理的对象做快照，本次标记只处理 `[bottom, nextTAMS]` 之间的对象，同样地回收时只
-回收 `[bottom, prevTAMS)` 间的对象[^comment-prevTAMS]。由于 mutator 并发执行，标记过程中如果创建
-新对象，`top`指针会增加，而在 `[TAMS, top]` 之间的对象，都当作是存活的对象。
+注意到位图和 TAMS 都有 prev 和 next 两个版本，这里 prev 版本是上一次标记的结果，
+而 next 版本记录的是本次进行中的状态[^ref-single-bitmap]。`TAMS` 作用是做 SATB
+的快照，对引用树做快照肯定不能复制一份内存，G1 的做法是在标记开始时将 `top` 值
+记录为 `nextTAMS`，本次标记只处理 `[bottom, nextTAMS]` 之间的对象，同样地回收
+时只回收 `[bottom, prevTAMS)` 间的对象[^comment-prevTAMS]。由于 mutator 并发执
+行，标记过程中如果创建新对象，`top`指针会增加，而在 `[TAMS, top]` 之间的对象，
+都当作是存活的对象。
 
 ## 并发标记整体步骤
 
@@ -96,8 +102,9 @@ G1GC 使用的是标记位图，可以类比成为现实世界创建一张地图
    - 清理 Remembered Sets(RSet)。STW
    - 释放空区域。并发执行。
 
-本质上标记主要对应 #3 步骤里用三色算法做标记，但实际上步骤却这么多，主要还是因
-为希望减少 STW 停顿时间，只好把不得已需要 STW 的步骤都尽可能小地切出来了。
+可以看到步骤很复杂，包含了很多细节。对于初次了解来说可以简单理解成标记过程中有
+一些不得不 STW 的操作，于是把三色算法拆成了 “停顿 -> 并发 -> 停顿 -> ...” 这样
+的步骤，之后再理解为什么不得不停顿。
 
 ## ① 初始标记 (Initial Mark)
 
@@ -200,7 +207,8 @@ mutator 与标记并发执行，可能引发两种问题：
 ### SATB 专用写屏障
 
 所谓的“写屏障”，指的是应用程序的 Java 代码里，对象的域上发生了任何的修改，都额
-外执行一段代码，SATB 专用的写屏障执行的伪代码如下（G1 还有维护 RSet 的写屏障）：
+外执行一段代码，SATB 专用的写屏障执行的伪代码如下（后续会介绍 G1 还有维护 RSet
+用的写屏障）：
 
 ```
 1: def write(field, new_val):
@@ -273,10 +281,11 @@ NULL 就没有什么可标记的了。
 最终 `*field` 的值为 `obj2`，但我们发现 `t1` 中途写入的 `obj1` 并没有被加入到
 SATB 队列中，这会不会导致标记遗漏呢？
 
-实际上并不会，我们先逻辑视角来看，SATB 只负责处理快照前的引用关系，要保证快照
-前可达的对象，经过 mutator 修改也需要能被标记，这也是写屏障关心**修改前**对象
-的原因。那么对于 `field` 来说，之前可达的只有 `obj0` 这一个对象，因此只要保证
-`obj0` 进队列就可以了。而 `obj1` 是快照后新增的引用，原则上就是不需要处理的。
+实际上并不会，我们先逻辑视角来看，SATB 只负责处理快照前的引用关系，要保证**快
+照前**可达的对象，即使 mutator 修改了引用也能被正确标记，这也是写屏障关心**修
+改前**对象的原因。那么对于 `field` 来说，之前可达的只有 `obj0` 这一个对象，因
+此只要保证`obj0` 进队列就可以了。而 `obj1` 是快照后新增的引用，原则上就是不需
+要处理的。
 
 当然逻辑上的道理不一定能说服我们，我们考虑实际实现。我们要执行 `obj3.field =
 obj1`时，`obj1` 肯定也是被某个指针引用的，不管它是栈上的临时变量，还是另一个对
@@ -302,8 +311,9 @@ obj1`时，`obj1` 肯定也是被某个指针引用的，不管它是栈上的�
 
 Remark 阶段结束后，所有存活对象都被标记，不带标记的对象都认为是垃圾了。
 
-另外 Remark 阶段还会做一些额外的操作，如弱引用处理（reference processing）、类
-卸载（Class Unloading）、释放空的区域、重建 RSet[^ref-JDK-8180415] 等。
+另外实现上 Remark 阶段还会做一些额外的操作，如弱引用处理（reference
+processing）、类卸载（Class Unloading）、释放空的区域、重建
+RSet[^ref-JDK-8180415] 等，但这些都是实现细节，这里不展开。
 
 ## ⑤ 收尾工作 (Cleanup)
 
@@ -341,20 +351,24 @@ next，并重置 next，如下图：
 
 ## 总结
 
-标记是（只）为 Mixed GC 服务的，最终有两个主要的产出
+标记阶段最终有两个主要的产出
 
 1. `prev` 标记位图 + `prevTAMS`，用于有哪些对象是存活的
 2. `prev_marked_bytes` 用于每个区域有多少存活对象，后续 evacuation 选择区域使用
+
+而理解并发标记，最重要的是理解标记遗漏问题以及 SATB 机制，这些都在文章里介绍了。
 
 ## 推荐阅读
 
 - [GC Algorithms: Implementations](https://plumbr.io/handbook/garbage-collection-algorithms-implementations#concurrent-marking) plumbr.io 的 GC 教程，对 G1 算法有很详细的描述
 - [Getting Started with the G1 Garbage Collector](https://www.oracle.com/technetwork/tutorials/tutorials-1876574.html) Oracle 的官方教程
-- [Concurrent Marking in G1](https://tschatzl.github.io/2022/08/04/concurrent-marking.html) JDK 开发写的关于并发标记的文章
+- [Concurrent Marking in G1](https://tschatzl.github.io/2022/08/04/concurrent-marking.html) JDK 开发 Thomas Schatzl 写的关于并发标记的文章
 
 ---
 
 [^ref-gc-roots]: [Garbage Collection Roots](https://help.eclipse.org/latest/index.jsp?topic=%2Forg.eclipse.mat.ui.help%2Fconcepts%2Fgcroots.html) Eclipse Memory Analyzer 总结的
+
+[^comment-pause]: 在本书中，没有特别说明的情况下，“停顿”（Pause）都指的是 stop the world 停顿
 
 [^comment-parallel-vs-concurrency]: 注意并发与并行的区别，这里不多做讨论，请读
   者自行查阅相关概念
