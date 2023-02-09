@@ -180,7 +180,11 @@
                 <div id="content" class="content">
                     <main>
                         {{{ content }}}
+
+                        <hr />
+                        <div id="disqus_thread"></div>
                     </main>
+
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
@@ -198,6 +202,7 @@
 
                         <div style="clear: both"></div>
                     </nav>
+
                 </div>
             </div>
 
@@ -304,6 +309,29 @@
         </script>
         {{/if}}
         {{/if}}
+
+        <!-- Disqus -->
+        <script type="text/javascript">
+        var localAddrs = ["localhost", "127.0.0.1", ""];
+        var shortname = 'lotaboutlife';
+        // make sure we don't activate google analytics if the developer is
+        // inspecting the book locally...
+        if (localAddrs.indexOf(document.location.hostname) === -1) {
+            var disqus_config = function () {
+                this.page.url = document.URL;  
+                this.page.identifier = '{{ path }}'; 
+                this.page.title = '{{ title }}';
+            };
+            (function() {
+             var d = document, s = d.createElement('script');
+             s.src = '//' + shortname + '.disqus.com/embed.js';
+             s.setAttribute('data-timestamp', +new Date());
+             (d.head || d.body).appendChild(s);
+             })();
+        }
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">Blog comments powered by <span class="logo-disqus">Disqus</span></a>
 
     </div>
     </body>
