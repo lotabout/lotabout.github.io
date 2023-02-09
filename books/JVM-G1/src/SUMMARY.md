@@ -1,6 +1,6 @@
 # Summary
 
-[理解 JVM G1GC](README.md)
+[JVM G1GC 小册子](README.md)
 
 # 算法篇
 
