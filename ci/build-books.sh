@@ -43,7 +43,7 @@ done
 #==============================================================================
 # generating sitemap
 cd $PUBLIC_DIR
-BOOK_SITEMAP_NAME=sitemap-books.xml
+BOOK_SITEMAP_NAME=books-sitemap.xml
 BOOK_SITEMAP_FILE=$PUBLIC_DIR/$BOOK_SITEMAP_NAME
 
 # write sitemap header
@@ -53,7 +53,7 @@ cat << EOF > $BOOK_SITEMAP_FILE
 EOF
 
 # write sitemap entries
-for html in $(find . -name "*.html" | grep -v '404\|print'); do
+for html in $(find books -name "*.html" | grep -v '404\|print'); do
     cat <<  EOF >> $BOOK_SITEMAP_FILE
     <url>
         <loc>$BASE_URL/${html/\.\/}</loc>
