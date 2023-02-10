@@ -45,6 +45,7 @@ done
 cd $PUBLIC_DIR
 BOOK_SITEMAP_NAME=books-sitemap.xml
 BOOK_SITEMAP_FILE=$PUBLIC_DIR/$BOOK_SITEMAP_NAME
+NOW=$(date -Is)
 
 # write sitemap header
 cat << EOF > $BOOK_SITEMAP_FILE
@@ -57,7 +58,7 @@ for html in $(find books -name "*.html" | grep -v '404\|print'); do
     cat <<  EOF >> $BOOK_SITEMAP_FILE
     <url>
         <loc>$BASE_URL/${html/\.\/}</loc>
-        <lastmod>$(date +"%Y-%m-%dT%H:%M:%S%z")</lastmod>
+        <lastmod>$NOW</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.6</priority>
     </url>
@@ -74,7 +75,7 @@ SITE_MAP_FILE=$PUBLIC_DIR/sitemap.xml
 CONTENT=$(cat << EOF | sed ':a;N;$!ba;s/\n/\\n/g'
     <sitemap>
         <loc>$BASE_URL/$BOOK_SITEMAP_NAME</loc>
-        <lastmod>$(date +"%Y-%m-%dT%H:%M:%S%z")</lastmod>
+        <lastmod>$NOW</lastmod>
     </sitemap>
 EOF
 )
