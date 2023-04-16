@@ -10,6 +10,8 @@ math: true
 深度学习框架中广泛使用（如 Pytorh, Tensorflow）。最近想学习这些框架的实现，先
 从 AD 入手，框架的具体实现比较复杂，我们主要是理解 AD 的思想并做个简单的实现。
 
+本篇只介绍算法的基础知识，实现部分请参考{% post_link Auto-Differentiation-Part-2-Implementation 实现篇%}。
+
 ## AD 能干什么？
 
 AD 能用来求偏导**值**的。
@@ -29,10 +31,10 @@ $\frac{\partial l}{\partial b}\vert_{x=x_0,y=y_0,a=a_0,b=b_0}$。在对号入座
 
 ## 为什么用 AD？
 
-求偏导有很多做法，例如 [symbolic differentiation](https://en.wikipedia.org/wiki/Symbolic_differentiation) 
+求偏导有很多做法，例如 [symbolic differentiation](https://en.wikipedia.org/wiki/Symbolic_differentiation)
 使用“符号计算” 得到准确的偏导解析式，但对于复杂的函数，偏导解析式会特别复杂，
 占用大量内存且计算慢，并且通常应用也不需要解析式；再比如
-[numerical differentiation](https://en.wikipedia.org/wiki/Numerical_differentiation) 
+[numerical differentiation](https://en.wikipedia.org/wiki/Numerical_differentiation)
 通过引入很小的位移 $h$，计算 $\frac{f(x+h) - f(h)}{h}$ 得到偏导，这种方法编码
 容易，但受 float 误差影响大，且计算慢（有几个输入就要算几次 $f$）。
 
@@ -60,11 +62,14 @@ $$
 y = h(t)$，则有：
 
 $$
-\frac{\partial z}{\partial t} = \frac{\partial z}{\partial x}\frac{\partial x}{\partial t} + 
+\frac{\partial z}{\partial t} = \frac{\partial z}{\partial x}\frac{\partial x}{\partial t} +
 \frac{\partial z}{\partial y}\frac{\partial y}{\partial t}
 $$
 
-这里之所以成立，应该是因为 $x, y$ 是独立的（没有深究）。
+上面的式子叫 [multivariable case](https://en.wikipedia.org/wiki/Chain_rule#Multivariable_case)
+：多变量的链式法则。也可以认为是
+[Total Derivative](https://en.wikipedia.org/wiki/Total_derivative#The_chain_rule_for_total_derivatives)
+全微分的链式法则。
 
 ## AD 具体是怎么做的？
 
@@ -102,7 +107,16 @@ $\bar{v_1}, \bar{v_2}$ 就是我们要计算的结果。而需要先“前向”
 向计算时会用到前向的值，例如 $\bar{v_2} = \bar{v_4} v_1$ 就需要用到前向的$v_1$。
 
 注意图里 $\bar{v_1}$ 的计算依赖了链式法则中多变量的情况，等于它所
-有后继节点偏导（即图中的 $\bar{v_1^a}, \bar{v_1^b}$）的和。
+有后继节点偏导（即图中的 $\bar{v_1^a}, \bar{v_1^b}$）的和。当计算图中存在
+$v_i$ 指向 $v_j$ 的箭头时，我们记 $\overline{v_{i \to j}}$ 为 $f$ 从 $v_j$ 方
+向对 $v_i$ 的偏导，则公式可以扩充如下：
+
+$$
+\bar{v_i} = \frac{\partial f}{\partial v_i}
+= \sum_{j \in next(i)}{\overline{v_{i\to j}}}
+= \sum_{j \in next(i)}{\frac{\partial f}{\partial v_{j}} \frac{\partial v_{j}}{\partial v_i} 
+= \sum_{j \in next(i)}{\overline{v_j} \frac{\partial v_{j}}{\partial v_i}}}
+$$
 
 ## 多输出情形
 
