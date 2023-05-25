@@ -19,7 +19,7 @@ v_i}$，则最核心的计算公式为：
 $$
 \bar{v_i} = \frac{\partial f}{\partial v_i}
 = \sum_{j \in next(i)}{\overline{v_{i\to j}}}
-= \sum_{j \in next(i)}{\frac{\partial f}{\partial v_{j}} \frac{\partial v_{j}}{\partial v_i} 
+= \sum_{j \in next(i)}{\frac{\partial f}{\partial v_{j}} \frac{\partial v_{j}}{\partial v_i}
 = \sum_{j \in next(i)}{\overline{v_j} \frac{\partial v_{j}}{\partial v_i}}}
 $$
 
@@ -342,19 +342,19 @@ tensor([0.5])
 ```python
 #------------------- torch -------------------------|====================== Ours ========================
 >>> import torch
->>> x1 = torch.tensor([0.0140, 0.5773, 0.0469],      >>> x1 = Tensor(np.array([0.0140, 0.5773, 0.0469]), 
-        requires_grad=True)                                  requires_grad=True)                         
->>> x2 = torch.tensor([0.3232, 0.4903, 0.9395],      >>> x2 = Tensor(np.array([0.3232, 0.4903, 0.9395]), 
-        requires_grad=True)                                  requires_grad=True)                         
->>> v3 = torch.sin(x1)                               >>> v3 = sin(x1)                                    
->>> v4 = torch.mul(x1, x2)                           >>> v4 = mul(x1, x2)                                
->>> v5 = torch.add(v3, v4)                           >>> v5 = add(v3, v4)                                
->>> grad = torch.tensor([0.4948, 0.8746, 0.7076])    >>> grad = np.array([0.4948, 0.8746, 0.7076])       
->>> v5.backward(grad)                                >>> v5.backward(grad)                               
->>> print(x1.grad)                                   >>> print(x1.grad)                                  
-tensor([0.6547, 1.1617, 1.3716])                     tensor([0.65467087 1.16167806 1.37161212])          
->>> print(x2.grad)                                   >>> print(x2.grad)                                  
-tensor([0.0069, 0.5049, 0.0332])                     tensor([0.0069272  0.50490658 0.03318644])          
+>>> x1 = torch.tensor([0.0140, 0.5773, 0.0469],      >>> x1 = Tensor(np.array([0.0140, 0.5773, 0.0469]),
+        requires_grad=True)                                  requires_grad=True)
+>>> x2 = torch.tensor([0.3232, 0.4903, 0.9395],      >>> x2 = Tensor(np.array([0.3232, 0.4903, 0.9395]),
+        requires_grad=True)                                  requires_grad=True)
+>>> v3 = torch.sin(x1)                               >>> v3 = sin(x1)
+>>> v4 = torch.mul(x1, x2)                           >>> v4 = mul(x1, x2)
+>>> v5 = torch.add(v3, v4)                           >>> v5 = add(v3, v4)
+>>> grad = torch.tensor([0.4948, 0.8746, 0.7076])    >>> grad = np.array([0.4948, 0.8746, 0.7076])
+>>> v5.backward(grad)                                >>> v5.backward(grad)
+>>> print(x1.grad)                                   >>> print(x1.grad)
+tensor([0.6547, 1.1617, 1.3716])                     tensor([0.65467087 1.16167806 1.37161212])
+>>> print(x2.grad)                                   >>> print(x2.grad)
+tensor([0.0069, 0.5049, 0.0332])                     tensor([0.0069272  0.50490658 0.03318644])
 ```
 
 ## 小结
