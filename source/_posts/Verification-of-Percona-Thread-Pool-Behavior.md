@@ -48,7 +48,7 @@ categories: [Notes]
 实测发现并不总是符合预期，各种情况都有，比如会有两批次就跑完的(4 个SQL 2s 加上
 2 个 SQL 4s）：
 
-```
+```text fold:true
 16:05:08.765+08:00: thread 0 iteration 1 start
 16:05:08.765+08:00: thread 7 iteration 1 start
 16:05:08.765+08:00: thread 3 iteration 1 start
@@ -181,7 +181,7 @@ SELECT SLEEP(2)
 测试的结果如下，可以看到在第一个迭代中创建了 N 个 worker，第二个迭代中每个
 worker 都实际执行了任务，因此结果只有一个批次，都是 2s 左右。
 
-```
+```text fold:true
 11:47:36.251+08:00: thread 0 iteration 0 start
 11:47:36.251+08:00: thread 7 iteration 0 start
 11:47:36.251+08:00: thread 5 iteration 0 start
