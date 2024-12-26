@@ -1,4 +1,4 @@
-title: KMP 字符串匹配算法详解
+title: KMP 字符串匹配算法原理详解
 toc: true
 date: 2024-12-25 23:21:30
 tags: [Algorithm]
@@ -18,7 +18,7 @@ KMP 算法非常精妙，代码写出来没几行，但它的原理却不容易�
 次和 `p` 进行匹配 ①，如果匹配失败，从 `s` 的下一个字符开始，再次尝试匹配 ②，
 依此类推 ③。
 
-{% asset_img kmp-naive.svg Naive String Match %}
+![How to do String Match Naively](kmp-naive.svg)
 
 这种方法的问题是需要的匹配次数太多。它的时间复杂度是 `O(mn)`，`m` 和 `n`
 分别是 `s` 和 `p` 的长度。
@@ -28,7 +28,7 @@ KMP 算法非常精妙，代码写出来没几行，但它的原理却不容易�
 通常在匹配过程中，待查找/匹配的字符串 `p` 是固定的，而被查找的字符串 `s` 是未
 知的，这意味着我们可以充分对 `p` 进行分析，从而优化匹配过程。
 
-{% asset_img kmp-should-do.svg Should be skipped %}
+![Some matches could be skipped](kmp-should-do.svg)
 
 观察匹配过程，虽然我们并不知道 `s` 有哪些字符，但在 ① 的匹配过程中，前几个字符
 和 `p` 是匹配的，因此我们能确认 `s` 的前 5 个字符一定是 `s[0:5] = "ababa"`。
@@ -51,14 +51,14 @@ KMP 算法非常精妙，代码写出来没几行，但它的原理却不容易�
 可以呢？这是因为我们不断地向后移位，直到移了 `x` 位时，发现 `s[x:5]` 与`p[0:
 5-x]` 匹配。在上例中，`x = 2`。于是下一次就可以从 `p[5-x]` 开始匹配。
 
-{% asset_img kmp-shift.svg Shift and Match %}
+![KMP: Shift and Match process](kmp-shift.svg)
 
 - 这个分析其实完全不需要 `s`，因为所有 `s` 中要用到的信息（匹配的字符）都
   包含在 `p` 中了
 - 移位和跳过匹配的过程，可以看作是在 `p` 中找到一个最长的前缀，使得这个
     前缀同时也是 `p` 的后缀
 
-{% asset_img kmp-same-prefix-postfix.svg Searching for same prefix and postfix %}
+![KMP algorithm's key: Searching for same prefix and postfix](kmp-same-prefix-postfix.svg)
 
 因此我们实际上要求的是：对于一个字符串 `p[0:n]`，找到一个最长的前缀，使得这个
 前缀（长度为 `k`）同时也是 `p` 的后缀，即 `p[0:k] = p[n-k:n]`。（注意`k`与上面
@@ -73,23 +73,23 @@ KMP 算法非常精妙，代码写出来没几行，但它的原理却不容易�
 
 已知 `p[0:i]` 字符串最长前缀长度为 `T[i-1]`，前缀和后缀字符串分别记为 `X` 和 `Y`，有 `X=Y`: 
 
-{% asset_img kmp-step-1.svg %}
+![KMP longest prefix search: step 1](kmp-step-1.svg)
 
 ① 现在 `T[i]` 最好的情况是 `T[i-1] + 1`。此时需要满足 `p[i] = p[T[i-1]]`:
 
-{% asset_img kmp-step-2.svg %}
+![KMP longest prefix search: step 2](kmp-step-2.svg)
 
 ② 如果 `p[i] != p[T[i-1]]`，则我们可以假设已经找到了 `T[i]`，看看它满足什么条件。
 首先我们知道 `T[i]` 一定小于 `T[i-1]`，所以假设找到了 `T[i]` 并记前缀为 `A`，
 后缀为 `B`，则有下图：
 
-{% asset_img kmp-step-3.svg %}
+![KMP longest prefix search: step 3](kmp-step-3.svg)
 
 由于 `X = Y`，所以一定可以在 X 中找到后缀字符串 `C`，满足 `C = B = A`。于是我
 们发现，前缀 `A` 即是 `p[0:i]` 的前缀，也是 `p[0:T[i-1]]` 的前缀。因此我们可以得
 出结论：`T[i] <= T[T[i-1]]`。
 
-{% asset_img kmp-step-4.svg %}
+![KMP longest prefix search: step 4](kmp-step-4.svg)
 
 接着可以从最大值 `T[T[i-1]]` 开始，判断 `p[i]` 和 `p[T[T[i-1]]]` 是否相等，此
 时就递归加了情况 ①。
