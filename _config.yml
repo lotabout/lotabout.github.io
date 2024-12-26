@@ -7,7 +7,7 @@ title: 三点水
 subtitle: 不积小流，无以成江海
 description:
 author: Jinzhou Zhang
-language: cn
+language: zh-CN
 timezone:
 
 # URL
@@ -82,7 +82,7 @@ noise:
       github: lotabout
       rss: /atom.xml
   disqus: lotaboutlife
-  #google_analytics: UA-39956831-2
+  google_analytics: UA-39956831-2
 
 # Deployment
 ## Docs: http://hexo.io/docs/deployment.html
