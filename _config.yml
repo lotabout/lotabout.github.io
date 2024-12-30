@@ -81,7 +81,15 @@ noise:
       email: lotabout@gmail.com
       github: lotabout
       rss: /atom.xml
-  disqus: lotaboutlife
+  #disqus: lotaboutlife
+  giscus:
+    enabled: true
+    repo: "lotabout/lotabout.github.io"
+    repo_id: "MDEwOlJlcG9zaXRvcnkyMDU1NTQ0Nw=="
+    category: "Announcements"
+    category_id: "DIC_kwDOATmmt84ClmcD"
+    lang: "zh-CN" #Language
+    reactions: 0 #Enable reactions: 0 - disable, 1 - enable
   google_analytics: UA-39956831-2
 
 # Deployment
