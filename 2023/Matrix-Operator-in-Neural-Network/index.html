@@ -1,0 +1,566 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="作为数学学渣，最近复习深度学习中的一些矩阵运算，做一些推导并记录如下。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>深度学习中的矩阵运算 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 7.1.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-noise-link" href="/tags/Matrix/" rel="tag">Matrix</a><a class="post-tag-noise-link" href="/tags/Neural-Network/" rel="tag">Neural Network</a></div><div class="post-time">2023-04-15</div></div></div><div class="container post-header"><h1>深度学习中的矩阵运算</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%82%B9%E7%A7%AF-dot-product"><span class="toc-number">1.</span> <span class="toc-text">点积(dot product)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%91%E9%87%8F%E7%82%B9%E7%A7%AF"><span class="toc-number">1.1.</span> <span class="toc-text">向量点积</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%9F%A9%E9%98%B5%E4%B8%8E%E7%9F%A9%E9%98%B5%E7%82%B9%E7%A7%AF"><span class="toc-number">1.2.</span> <span class="toc-text">矩阵与矩阵点积</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%9F%A9%E9%98%B5%E4%B8%8E%E5%90%91%E9%87%8F%E7%82%B9%E7%A7%AF"><span class="toc-number">1.3.</span> <span class="toc-text">矩阵与向量点积</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95"><span class="toc-number">2.</span> <span class="toc-text">矩阵乘法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%9F%A9%E9%98%B5%E4%B8%8E%E5%90%91%E9%87%8F%E7%9B%B8%E4%B9%98"><span class="toc-number">2.1.</span> <span class="toc-text">矩阵与向量相乘</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%9F%A9%E9%98%B5%E4%B8%8E%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95"><span class="toc-number">2.2.</span> <span class="toc-text">矩阵与矩阵乘法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8C%89%E5%85%83%E7%B4%A0%E6%93%8D%E4%BD%9C"><span class="toc-number">3.</span> <span class="toc-text">按元素操作</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8C%89%E5%85%83%E7%B4%A0%E4%B9%98%E6%B3%95"><span class="toc-number">3.1.</span> <span class="toc-text">按元素乘法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B9%BF%E6%92%AD-broadcast"><span class="toc-number">3.2.</span> <span class="toc-text">广播 broadcast</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B1%82%E5%AF%BC"><span class="toc-number">4.</span> <span class="toc-text">求导</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%91%E9%87%8F%E7%82%B9%E7%A7%AF%E6%B1%82%E5%AF%BC"><span class="toc-number">4.1.</span> <span class="toc-text">向量点积求导</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#jacobian-matrix"><span class="toc-number">4.2.</span> <span class="toc-text">Jacobian Matrix</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%9F%A9%E9%98%B5%E4%B8%8E%E5%90%91%E9%87%8F%E7%82%B9%E7%A7%AF%E6%B1%82%E5%AF%BC"><span class="toc-number">4.3.</span> <span class="toc-text">矩阵与向量点积求导</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%9F%A9%E9%98%B5%E4%B8%8E%E5%90%91%E9%87%8F%E4%B9%98%E6%B3%95%E6%B1%82%E5%AF%BC"><span class="toc-number">4.4.</span> <span class="toc-text">矩阵与向量乘法求导</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%9F%A9%E9%98%B5%E4%B8%8E%E7%9F%A9%E9%98%B5%E4%B9%98%E6%B3%95%E6%B1%82%E5%AF%BC"><span class="toc-number">4.5.</span> <span class="toc-text">矩阵与矩阵乘法求导</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8C%89%E5%85%83%E7%B4%A0-element-wise-%E6%93%8D%E4%BD%9C"><span class="toc-number">4.6.</span> <span class="toc-text">按元素(element-wise)操作</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">5.</span> <span class="toc-text">小结</span></a></li></ol></details></div><div class="container post-content"><p>作为数学学渣，最近复习深度学习中的一些矩阵运算，做一些推导并记录如下。</p>
+<div style="display: none">
+$$
+\require{color}
+\require{unicode}
+\definecolor{blue}{rgb}{0.16, 0.32, 0.75}
+\definecolor{red}{rgb}{0.9, 0.17, 0.31}
+$$
+</div>
+<h2 id="点积-dot-product"><a class="header-anchor" href="#点积-dot-product"></a>点积(dot product)</h2>
+<h3 id="向量点积"><a class="header-anchor" href="#向量点积"></a>向量点积</h3>
+<p>Dot product 运算仅定义在两个向量上，输出一个标量，也称为 “scalar product”。</p>
+<p>坐标定义：假设有两个向量
+$\color {red}{\mathbf {a} =[a_{1},a_{2},\cdots ,a_{n}]}$ 和
+$\color {blue}{\mathbf {b} =[b_{1},b_{2},\cdots ,b_{n}]}$ <sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>，则 dot product 定义为：</p>
+<p>$$
+\mathbf {\color {red}{a}} \cdot \mathbf {\color {blue}{b}}
+= \sum_{i=1}^{n}{\color {red}{a}_{i} \color {blue}{b}_{i}}
+={\color {red} a_1}{\color {blue}b_1}+{\color {red}a_2}{\color {blue}b_2}+\cdots +{\color {red}a_n}{\color {blue}b_n}
+$$</p>
+<p>还可以把 dot product 理解成是矩阵的线性变换，写成矩阵乘法，此时
+$\color{red}{\mathbf{a}}$ 与 $\color{blue}{\mathbf{b}}$ 都是列向量，定义如下：</p>
+<p>$$
+\mathbf {\color {red}{a}} \cdot \mathbf {\color {blue}{b}}
+= \begin{bmatrix}{\color{red} a_1} \\\vdots \\ {\color{red}a_n} \end{bmatrix}
+\cdot
+\begin{bmatrix}{\color{blue}b_1} \\\vdots \\ {\color{blue}b_n} \end{bmatrix}
+= {\color {red} a_1}{\color {blue}b_1}+{\color {red}a_2}{\color {blue}b_2}+\cdots +{\color {red}a_n}{\color {blue}b_n}
+= \begin{bmatrix}{\color{red}a_1} &amp;\cdots &amp; {\color{red}a_n}\end{bmatrix}
+\begin{bmatrix}{\color{blue}b_1} \\\vdots \\ {\color{blue}b_n} \end{bmatrix}
+= \mathbf {\color {red}{a}} ^T \mathbf {\color {blue}{b}}
+$$</p>
+<h3 id="矩阵与矩阵点积"><a class="header-anchor" href="#矩阵与矩阵点积"></a>矩阵与矩阵点积</h3>
+<p>严格来说，点积的输入只能是两个向量，不存在矩阵和矩阵，矩阵和向量的点积，但矩阵计算方便，人们扩充了定义。先看矩阵和矩阵，可以认为矩阵就是列向量的集合，因此点积就是列向量分别做点积<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>。</p>
+<p>$$
+{\color{red}\mathbf {A}} \cdot {\color{blue}\mathbf {B}}
+= \begin{bmatrix}{\color{red}\mathbf{a}_1} &amp; \cdots &amp; {\color{red}\mathbf{a}_n}\end{bmatrix}
+\cdot
+\begin{bmatrix}{\color{blue}\mathbf{b}_1} &amp;\cdots &amp; {\color{blue}\mathbf{b}_n}\end{bmatrix}
+= \begin{bmatrix}{\color{red}\mathbf{a}_1} \cdot {\color{blue}\mathbf{b}_1}
+&amp; \cdots
+&amp; {\color{red}\mathbf{a}_n} \cdot {\color{blue}\mathbf{b}_n}\end{bmatrix}
+$$</p>
+<p>上式中的 $\mathbf{a}_i, \mathbf{b}_i$ 都是列向量。另外注意由于 $\mathbf{a}_i
+\cdot \mathbf{b}_i$ 的结果是标量，所以最终的结果是一个行向量。</p>
+<h3 id="矩阵与向量点积"><a class="header-anchor" href="#矩阵与向量点积"></a>矩阵与向量点积</h3>
+<p>矩阵和向量的点积本质上是将向量扩充再当成矩阵和矩阵的点积，定义如下：</p>
+<p>$$
+{\color{red}\mathbf {A}_{n \times m}} \cdot {\color{blue}\mathbf {v}}
+= \begin{bmatrix}{\color{red}\mathbf{a}_1} &amp; \cdots &amp; {\color{red}\mathbf{a}_m}\end{bmatrix}
+\cdot
+\begin{bmatrix}{\color{blue}\mathbf{v}} &amp;\cdots &amp; {\color{blue}\mathbf{v}}\end{bmatrix}
+= \begin{bmatrix}{\color{red}\mathbf{a}_1} \cdot {\color{blue}\mathbf{v}}
+&amp; \cdots
+&amp; {\color{red}\mathbf{a}_m} \cdot {\color{blue}\mathbf{v}}\end{bmatrix}
+$$</p>
+<p>此时结果为行向量。考虑到向量的点积也可以写成矩阵乘法的形式
+${\color{red}\mathbf{a}} \cdot {\color{blue}\mathbf{b}} = {\color{red}\mathbf{a}^T} {\color{blue}\mathbf{b}}$
+，因此有</p>
+<p>$$
+\begin{align}
+{\color{red}\mathbf {A}_{n \times m}} \cdot {\color{blue}\mathbf {v}}
+&amp;= \begin{bmatrix}{\color{red}\mathbf{a}_1} \cdot {\color{blue}\mathbf{v}}
+&amp; \cdots
+&amp; {\color{red}\mathbf{a}_m} \cdot {\color{blue}\mathbf{v}}\end{bmatrix}
+= \begin{bmatrix}{\color{red}\mathbf{a}_1^T} {\color{blue}\mathbf{v}}
+&amp; \cdots
+&amp; {\color{red}\mathbf{a}_m^T} {\color{blue}\mathbf{v}}\end{bmatrix}
+\\
+({\color{red}\mathbf {A}} \cdot {\color{blue}\mathbf {v}})^T
+&amp;= \begin{bmatrix}{\color{red}\mathbf{a}_1^T} {\color{blue}\mathbf{v}}
+\\ \cdots
+\\ {\color{red}\mathbf{a}_m^T} {\color{blue}\mathbf{v}}\end{bmatrix}
+=\begin{bmatrix}
+{\color{red}\mathbf{a}_1^T} \\ \vdots \\ {\color{red}\mathbf{a}_m^T}
+\end{bmatrix} {\color{blue}\mathbf{v}}
+= {\color{red}(\mathbf{A}^T)_{m \times n}}{\color{blue}\mathbf{v}_{n \times 1}}
+\\
+{\color{red}\mathbf {A}} \cdot {\color{blue}\mathbf {v}}
+&amp;= \big({\color{red}\mathbf{A}^T}{\color{blue}\mathbf{v}}\big)^T
+= {\color{blue}\mathbf{v}^T}{\color{red}\mathbf{A}}
+\end{align}
+$$</p>
+<p>当然，上述式子中，我们严格按数学上的定义：向量就是“列”向量。这个假设不太方便，因为输入 $\mathbf{x}$ 是列向量，但输出 $\mathbf{A} \cdot \mathbf{x}$ 却是行向量。但实际上为了方便，我们也可以按“列”来排列输出结果，例如在深度学习中，单个输出 $y_i = \mathbf{w_i} \cdot \mathbf{x} + b$，则结果列向量：</p>
+<p>$$
+\mathbf{y}_{m \times 1}
+= \begin{bmatrix} y_1 \\ y_2 \\ \vdots \\ y_m \end{bmatrix}
+= \begin{bmatrix}
+\mathbf{w_1} \cdot \mathbf{x} + b \\
+\mathbf{w_2} \cdot \mathbf{x} + b \\
+\vdots \\
+\mathbf{w_m} \cdot \mathbf{x} + b
+\end{bmatrix}
+= \begin{bmatrix}
+\mathbf{w_1}^T \mathbf{x} + b \\
+\mathbf{w_2}^T \mathbf{x} + b \\
+\vdots \\
+\mathbf{w_m}^T \mathbf{x} + b
+\end{bmatrix}
+= \begin{bmatrix}
+\mathbf{w_1}^T \\
+\mathbf{w_2}^T \\
+\vdots \\
+\mathbf{w_m}^T
+\end{bmatrix} \mathbf{x} + b
+= \mathbf{W}^T \mathbf{x} + b
+= (\mathbf{W}^T)_{m \times n} \mathbf{x}_{n \times 1} + b
+$$</p>
+<p>因此不管是按行还是按列切片，关键在于点积 dot product 可以转换成矩阵乘法的形式。</p>
+<h2 id="矩阵乘法"><a class="header-anchor" href="#矩阵乘法"></a>矩阵乘法</h2>
+<h3 id="矩阵与向量相乘"><a class="header-anchor" href="#矩阵与向量相乘"></a>矩阵与向量相乘</h3>
+<p>考虑一个矩阵 $\mathbf{A} \in \mathbb{R}^{m \times n}$ 和向量 $\mathbf{x} \in \mathbb{R}^n$，矩阵和向量的乘法定义为<sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup>：</p>
+<p>$$
+\mathbf{A}\mathbf{x} = x_1 \mathbf{a}_{*,1} + x_2 \mathbf{a}_{*,2} + \cdots + x_n \mathbf{a}_{*,n}
+$$</p>
+<p>其中 $\mathbf{a}_{*, i}$ 代表矩阵 $\mathbf{A}$ 的第 $i$ 个列向量。</p>
+<p>矩阵乘法有几种不同的理解方式，其中一种理解方式是“线性变换”<sup class="footnote-ref"><a href="#fn4" id="fnref4">[4]</a></sup>，即向量 $\mathbf{x}$ 所在空间的基坐标，分别经过变换后，$\mathbf{x}$ 所在的坐标。因此，跟上述的定义基本一致：</p>
+<p>$$
+\mathbf{A}{\color{brown}\mathbf{x}} =
+\begin{bmatrix}
+{\color {red} a_{11}} &amp; {\color {blue} a_{12}} &amp; \cdots &amp; {\color {green}a_{1n}} \\
+{\color {red} a_{21}} &amp; {\color {blue} a_{22}} &amp; \cdots &amp; {\color {green}a_{2n}} \\
+\vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+{\color {red} a_{m1}} &amp; {\color {blue} a_{m2}} &amp; \cdots &amp; {\color {green}a_{mn}}
+\end{bmatrix}
+\begin{bmatrix}
+{\color {brown} x_1} \\ {\color {brown} x_2} \\ \vdots \\ {\color {brown} x_n}
+\end{bmatrix}
+= {\color{brown} x_1} \begin{bmatrix}
+{\color {red} a_{11}} \\
+{\color {red} a_{21}} \\
+\vdots \\
+{\color {red} a_{m1}}
+\end{bmatrix} +
+{\color{brown} x_2} \begin{bmatrix}
+{\color {blue} a_{12}} \\
+{\color {blue} a_{22}} \\
+\vdots \\
+{\color {blue} a_{m2}}
+\end{bmatrix} + \cdots +
+{\color{brown} x_n} \begin{bmatrix}
+{\color {green} a_{1n}} \\
+{\color {green} a_{2n}} \\
+\vdots \\
+{\color {green} a_{mn}}
+\end{bmatrix}
+=
+\begin{bmatrix}
+{\color{brown}x_1}{\color {red} a_{11}} + {\color{brown}x_2}{\color {blue} a_{12}} + \cdots + {\color{brown}x_n}{\color {green}a_{1n}} \\
+{\color{brown}x_1}{\color {red} a_{21}} + {\color{brown}x_2}{\color {blue} a_{22}} + \cdots + {\color{brown}x_n}{\color {green}a_{2n}} \\
+\vdots \\
+{\color{brown}x_1}{\color {red} a_{m1}} + {\color{brown}x_2}{\color {blue} a_{m2}} + \cdots + {\color{brown}x_n}{\color {green}a_{mn}}
+\end{bmatrix}
+$$</p>
+<p>还有一种理解和上面的“点积”类似，把矩阵看作是 $m$ 个行向量，每个向量都和 $x$ 作点积。如下：</p>
+<p>$$
+\mathbf{A}{\color{brown}\mathbf{x}} =
+\begin{bmatrix}
+{\color {red} a_{11}} &amp; {\color {red} a_{12}} &amp; \cdots &amp; {\color {red}a_{1n}} \\
+{\color {blue} a_{21}} &amp; {\color {blue} a_{22}} &amp; \cdots &amp; {\color {blue}a_{2n}} \\
+\vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+{\color {green} a_{m1}} &amp; {\color {green} a_{m2}} &amp; \cdots &amp; {\color {green}a_{mn}}
+\end{bmatrix}
+\begin{bmatrix}
+{\color {brown} x_1} \\ {\color {brown} x_2} \\ \vdots \\ {\color {brown} x_n}
+\end{bmatrix}
+= \begin{bmatrix}
+{\color {red} \mathbf{a}_{1,*}} \cdot {\color{brown}\mathbf{x}} \\
+{\color {blue} \mathbf{a}_{2,*}} \cdot {\color{brown}\mathbf{x}} \\
+\vdots \\
+{\color {green} \mathbf{a}_{m,*}} \cdot {\color{brown}\mathbf{x}}
+\end{bmatrix}
+$$</p>
+<h3 id="矩阵与矩阵乘法"><a class="header-anchor" href="#矩阵与矩阵乘法"></a>矩阵与矩阵乘法</h3>
+<p>延续线性变换的观点，矩阵和矩阵的相乘，可以看作变换的组合。矩阵 $\mathbf{B}$ 的每个列可以认为是变换后的基向量，而 $\mathbf{A} \mathbf{B}$ 可以认为是把每个基向量再做一次线性变换 $\mathbf{A}$。如下：</p>
+<p>$$
+\mathbf{A}\mathbf{B}
+= \mathbf{A} \begin{bmatrix}
+{\color{red}\mathbf{b}_{*,1}} &amp; {\color{blue}\mathbf{b}_{*,2}} &amp; \cdots &amp; {\color{green}\mathbf{b}_{*,n}}
+\end{bmatrix}
+= \begin{bmatrix}
+\mathbf{A} {\color{red}\mathbf{b}_{*,1}}
+&amp; \mathbf{A} {\color{blue}\mathbf{b}_{*,2}}
+&amp; \cdots
+&amp; \mathbf{A} {\color{green}\mathbf{b}_{*,n}}
+\end{bmatrix}
+$$</p>
+<p>如果再用上面的“点积”观点展开，则会是这样：</p>
+<p>$$
+\mathbf{A}\mathbf{B}
+= \mathbf{A} \begin{bmatrix}
+\mathbf{b}_{*,1} &amp; \mathbf{b}_{*,2} &amp; \cdots &amp; \mathbf{b}_{*,n}
+\end{bmatrix}
+= \begin{bmatrix}
+\begin{bmatrix}
+\mathbf{a}_{1,*} \\
+\mathbf{a}_{2,*} \\
+\vdots \\
+\mathbf{a}_{m,*}
+\end{bmatrix}
+\mathbf{b}_{*,1}
+&amp;
+\begin{bmatrix}
+\mathbf{a}_{1,*} \\
+\mathbf{a}_{2,*} \\
+\vdots \\
+\mathbf{a}_{m,*}
+\end{bmatrix}
+\mathbf{b}_{*,2}
+&amp; \cdots
+&amp;
+\begin{bmatrix}
+\mathbf{a}_{1,*} \\
+\mathbf{a}_{2,*} \\
+\vdots \\
+\mathbf{a}_{m,*}
+\end{bmatrix}
+\mathbf{b}_{*,n}
+\end{bmatrix}
+= \begin{bmatrix}
+\mathbf{a}_{1,*} \cdot \mathbf{b}_{*,1} &amp; \mathbf{a}_{1,*} \cdot \mathbf{b}_{*,2} &amp; \cdots &amp; \mathbf{a}_{1,*} \cdot \mathbf{b}_{*,n} \\
+\mathbf{a}_{2,*} \cdot \mathbf{b}_{*,1} &amp; \mathbf{a}_{2,*} \cdot \mathbf{b}_{*,2} &amp; \cdots &amp; \mathbf{a}_{2,*} \cdot \mathbf{b}_{*,n} \\
+\vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+\mathbf{a}_{m,*} \cdot \mathbf{b}_{*,1} &amp; \mathbf{a}_{m,*} \cdot \mathbf{b}_{*,2} &amp; \cdots &amp; \mathbf{a}_{m,*} \cdot \mathbf{b}_{*,n}
+\end{bmatrix}
+$$</p>
+<p>这个也就是我们熟悉的，每个元素等于行乘列的形式：</p>
+<p>$$
+(\mathbf{A}\mathbf{B})_{ij}
+= {\color{red}\mathbf{a}_{i,*}} \cdot {\color{blue}\mathbf{b}_{*,j}}
+= \begin{bmatrix}
+\cdots &amp; \cdots &amp; \cdots &amp; \cdots \\
+{\color{red}a_{i1}} &amp; {\color{red}a_{i2}} &amp; \cdots &amp; {\color{red}a_{in}} \\
+\cdots &amp; \cdots &amp; \cdots &amp; \cdots
+\end{bmatrix}
+\begin{bmatrix}
+\vdots &amp; {\color{blue}b_{1,j}} &amp; \vdots \\
+\vdots &amp; {\color{blue}b_{2,j}} &amp; \vdots \\
+\vdots &amp; \vdots &amp; \vdots \\
+\vdots &amp; {\color{blue}b_{n,j}} &amp; \vdots
+\end{bmatrix}
+$$</p>
+<h2 id="按元素操作"><a class="header-anchor" href="#按元素操作"></a>按元素操作</h2>
+<p>即将两个矩阵对应位置上的元素做相应的操作。也称为 element-wise operation.</p>
+<h3 id="按元素乘法"><a class="header-anchor" href="#按元素乘法"></a>按元素乘法</h3>
+<p>按元素乘法有个特殊的名字，叫 <a href="https://en.wikipedia.org/wiki/Hadamard_product_(matrices)">Hadamard product</a>
+，一般记作 $A \circ B$ 或 $A \odot B$，即将相同位置的元素相乘</p>
+<p>$$
+\begin{bmatrix}
+a_{11} &amp; a_{12} &amp; \cdots &amp; a_{1n} \\
+a_{21} &amp; {\color{red}a_{22}} &amp; \cdots &amp; a_{2n} \\
+\vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+a_{m1} &amp; a_{m2} &amp; \cdots &amp; a_{mn}
+\end{bmatrix}
+\circ
+\begin{bmatrix}
+b_{11} &amp; b_{12} &amp; \cdots &amp; b_{1n} \\
+b_{21} &amp; {\color{blue}b_{22}} &amp; \cdots &amp; b_{2n} \\
+\vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+b_{m1} &amp; b_{m2} &amp; \cdots &amp; b_{mn}
+\end{bmatrix}
+= \begin{bmatrix}
+a_{11}b_{11}  &amp; a_{12}b_{12}  &amp; \cdots &amp; a_{1n}b_{1n}  \\
+a_{21}b_{21}  &amp; {\color{red}a_{22}}{\color{blue}b_{22}}  &amp; \cdots &amp; a_{2n}b_{2n}  \\
+\vdots &amp; \vdots &amp; \ddots &amp; \vdots \\
+a_{m1}b_{m1}  &amp; a_{m2}b_{m2}  &amp; \cdots &amp; a_{mn}b_{mn}
+\end{bmatrix}
+$$</p>
+<p>其它操作也类似，如加法减法等</p>
+<h3 id="广播-broadcast"><a class="header-anchor" href="#广播-broadcast"></a>广播 broadcast</h3>
+<p>数学上，按元素操作只在矩阵的形状相同时才有效。但在实际应用中，可以尝试把“低维”的元素复制 N 份做填充，这就是 broadcast 机制。其实在介绍矩阵和向量的点积是已经用过这个操作了。示例如下：</p>
+<p>$$
+\mathbf{A} \circ \mathbf{v}
+= \mathbf{A} \circ \begin{bmatrix}\mathbf{v} &amp; \cdots &amp; \mathbf{v} \end{bmatrix}
+$$</p>
+<p>另外注意，这里依旧是以“列”为第一维，“行”为第二维。而在 numpy 中，第 <code>0</code> 维是行：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">&gt;&gt;&gt; w = np.array([[1,2,3],[4,5,6],[7,8,9]])</span><br><span class="line">&gt;&gt;&gt; w</span><br><span class="line">array([[1, 2, 3],</span><br><span class="line">       [4, 5, 6],</span><br><span class="line">       [7, 8, 9]])</span><br><span class="line">&gt;&gt;&gt; x = np.array([1,2,3])</span><br><span class="line">&gt;&gt;&gt; x</span><br><span class="line">array([1, 2, 3])</span><br><span class="line">&gt;&gt;&gt; w * x</span><br><span class="line">array([[ 1,  4,  9],</span><br><span class="line">       [ 4, 10, 18],</span><br><span class="line">       [ 7, 16, 27]])</span><br></pre></td></tr></table></figure></div>
+<p>这个特性可以一直往高维推广，具体机制参考 <a href="https://numpy.org/doc/stable/user/basics.broadcasting.html">numpy broadcast</a>。</p>
+<h2 id="求导"><a class="header-anchor" href="#求导"></a>求导</h2>
+<p>深度学习中最重要的数学知识就是对矩阵求导了，<a href="https://arxiv.org/abs/1802.01528">The Matrix Calculus You Need For Deep Learning</a>
+这篇论文针对性地做了综述。下面的知识算是摘录其中一些部分加深记忆<sup class="footnote-ref"><a href="#fn5" id="fnref5">[5]</a></sup>。矩阵求导更复杂的内容，参考 wiki: <a href="https://en.wikipedia.org/wiki/Matrix_calculus">Matrix calculus</a></p>
+<h3 id="向量点积求导"><a class="header-anchor" href="#向量点积求导"></a>向量点积求导</h3>
+<p>考虑 $y = \mathbf{w} \cdot \mathbf{x}$，因为有多个输入，于是导数为偏导向量，这里我们用行向量表示：</p>
+<p>$$
+\frac{\partial y}{\partial \mathbf{x}}
+= \begin{bmatrix}
+\frac{\partial y}{\partial x_1} &amp;
+\cdots &amp;
+\frac{\partial y}{\partial x_n}
+\end{bmatrix}
+= \begin{bmatrix}
+\frac{\partial (w_1 x_1 + \cdots + w_n x_n)}{\partial x_1} &amp;
+\cdots &amp;
+\frac{\partial (w_1 x_1 + \cdots + w_n x_n)}{\partial x_n}
+\end{bmatrix}
+= \begin{bmatrix} w_1 &amp; \cdots &amp; w_n \end{bmatrix}
+= \mathbf{w}^T
+$$</p>
+<p>同理对 $\mathbf{w}$ 求导的值为：</p>
+<p>$$
+\frac{\partial y}{\partial \mathbf{w}}
+= \mathbf{x}^T
+$$</p>
+<h3 id="jacobian-matrix"><a class="header-anchor" href="#jacobian-matrix"></a>Jacobian Matrix</h3>
+<p>我们知道“导数”要求的是“变化”，即如果输入 $x$ 有微小的变化 $\Delta x$ 时，输入
+$y$ 的变化 $\Delta y$。那么如果有多个输入 $x_1, \cdots, x_n$ 和多个输出 $y_1 =
+f_1(\mathbf{x}), \cdots, y_m = f_m(\mathbf{x})$，则任意输入 $x_i$ 有变化，任意输出 $y_j$ 就有可能有变化。于是它们间的偏导关系是一个矩阵，记做：</p>
+<p>$$
+\mathbf {J}
+=\begin{bmatrix}\frac{\partial y_1}{\partial \mathbf{x}} \\ \vdots \\ \frac{\partial y_m}{\partial \mathbf{x}} \end{bmatrix}
+=\begin{bmatrix}{\dfrac {\partial f_{1}}{\partial x_{1}}}&amp;\cdots &amp;{\dfrac {\partial f_{1}}{\partial x_{n}}}\\\vdots &amp;\ddots &amp;\vdots \\{\dfrac {\partial f_{m}}{\partial x_{1}}}&amp;\cdots &amp;{\dfrac {\partial f_{m}}{\partial x_{n}}}\end{bmatrix}
+$$</p>
+<h3 id="矩阵与向量点积求导"><a class="header-anchor" href="#矩阵与向量点积求导"></a>矩阵与向量点积求导</h3>
+<p>如果有 $m$ 个输出，$y_j = \mathbf{w_j} \cdot \mathbf{x}$（注意 $\mathbf{w_j}$
+本身是 $n$ 维的向量，向量个数是 $m$）。对 $\mathbf{x}$ 的求导比较直观：</p>
+<p>$$
+\frac{\partial \mathbf{y}}{\partial \mathbf{x}}
+= \begin{bmatrix}
+\frac{\partial y_1}{\partial \mathbf{x}} \\
+\frac{\partial y_2}{\partial \mathbf{x}} \\
+\vdots \\
+\frac{\partial y_m}{\partial \mathbf{x}}
+\end{bmatrix}
+= \begin{bmatrix}
+\mathbf{w}_1^T \\
+\mathbf{w}_2^T \\
+\vdots \\
+\mathbf{w}_m^T
+\end{bmatrix}
+$$</p>
+<p>但是，如果对 $\mathbf{w}$ 求导，$\mathbf{w}$ 有 $m \times n$ 个元素，因此求导的结果是一个 $m \times (m \times n)$ 的 Jacobian 矩阵。特别复杂。所幸，在深度学习中，求导的目的是为了做梯度下降，所以为 <code>0</code> 的导数实际上也没用。而通过
+$y_j$ 的定义，我们知道如果 $i \ne j$ 则 $\frac{\partial y_i}{\partial \mathbf{w}_j} = 0$。于是我们去除这些为 $0$ 的项，保留：</p>
+<p>$$
+\frac{\partial \mathbf{y}}{\partial \mathbf{w}}
+= \begin{bmatrix}
+\frac{\partial y_1}{\partial \mathbf{w}_1} \\
+\frac{\partial y_2}{\partial \mathbf{w}_2} \\
+\vdots \\
+\frac{\partial y_m}{\partial \mathbf{w}_m}
+\end{bmatrix}
+= \begin{bmatrix}
+\mathbf{x}^T \\
+\mathbf{x}^T \\
+\vdots \\
+\mathbf{x}^T
+\end{bmatrix}
+$$</p>
+<p>如果我们把 $\mathbf{w}$ 写成矩阵形式 $\mathbf{W} = [\mathbf{w}_1 \cdots,
+\mathbf{w}_m]$，此时 $\mathbf{y} = \mathbf{W} \cdot \mathbf{x} = \mathbf{W}^T \mathbf{x}$，则上面的结论可以写成：</p>
+<p>$$
+\begin{eqnarray}
+\frac{\partial \mathbf{y}}{\partial \mathbf{x}} = \mathbf{W}^T
+\end{eqnarray}
+$$</p>
+<p>$$
+\begin{eqnarray}
+\frac{\partial \mathbf{y}}{\partial \mathbf{W}}
+= \begin{bmatrix}
+\mathbf{x}^T \\
+\mathbf{x}^T \\
+\vdots \\
+\mathbf{x}^T
+\end{bmatrix}
+= \begin{bmatrix}\mathbf{x} \cdots \mathbf{x} \end{bmatrix}^T
+\end{eqnarray}
+$$</p>
+<h3 id="矩阵与向量乘法求导"><a class="header-anchor" href="#矩阵与向量乘法求导"></a>矩阵与向量乘法求导</h3>
+<p>其实上一节的矩阵与向量点积的求导已经得出结论了。当 $\mathbf{y} = \mathbf{A} \mathbf{x}$ 时，有</p>
+<p>$$
+\begin{align}
+\frac{\partial \mathbf{y}}{\partial \mathbf{x}} &amp;= \mathbf{A} \\
+\frac{\partial \mathbf{y}}{\partial \mathbf{A}} &amp;= \begin{bmatrix}\mathbf{x} \cdots \mathbf{x} \end{bmatrix} ^T
+\end{align}
+$$</p>
+<p>这里我们再从数值的角度分析一下，已知 $y_i = \sum_{j}{a_{ik}x_j}$，则有：</p>
+<p>$$
+\frac{\partial y_i}{\partial x_j}
+= \frac{a_{i1}x_1+\cdots+a_{mn}{x_n}}{\partial x_j} = a_{ij}
+$$</p>
+<p>再次</p>
+<p>$$
+\frac{\partial y_i}{\partial w_{ij}}
+= \frac{a_{i1}x_1+\cdots+a_{mn}{x_n}}{\partial w_{ij}} = x_j
+$$</p>
+<p>写成矩阵形式就是结论部分。</p>
+<h3 id="矩阵与矩阵乘法求导"><a class="header-anchor" href="#矩阵与矩阵乘法求导"></a>矩阵与矩阵乘法求导</h3>
+<p>这部分过于复杂，且符号也没有统一，后续如果有用到再进行补充。</p>
+<h3 id="按元素-element-wise-操作"><a class="header-anchor" href="#按元素-element-wise-操作"></a>按元素(element-wise)操作</h3>
+<p>将按元素操作记为 $\unicode{x2D54}$，考虑 $\mathbf{y} = \mathbf{f(u)} \unicode{x2D54} \mathbf{g(v)}$，且向量 $\mathbf{u}, \mathbf{v}, \mathbf{y}$ 有相同的维度。写成如下形式：</p>
+<p>$$
+\begin{bmatrix}
+y_1 \\ y_2 \\ \vdots \\ y_n
+\end{bmatrix}
+= \begin{bmatrix}
+f_1(\mathbf{u}) \unicode{x2D54} g_1(\mathbf{v}) \\
+f_2(\mathbf{u}) \unicode{x2D54} g_2(\mathbf{v}) \\
+\vdots \\
+f_n(\mathbf{u}) \unicode{x2D54} g_n(\mathbf{v})
+\end{bmatrix}
+$$</p>
+<p>于是偏导则变成了 Jacobian 矩阵的形式：</p>
+<p>$$
+\mathbf{J_u}
+= \frac{\partial \mathbf{y}}{\partial \mathbf{u}}
+= \begin{bmatrix}
+\frac{\partial y_1}{\partial \mathbf{u}} \\
+\frac{\partial y_2}{\partial \mathbf{u}} \\
+\vdots \\
+\frac{\partial y_n}{\partial \mathbf{u}} \\
+\end{bmatrix}
+= \begin{bmatrix}
+\frac{\partial}{\partial u_1} f_1(\mathbf{u}) \unicode{x2D54} g_1(\mathbf{v})
+&amp; \frac{\partial}{\partial u_2} f_1(\mathbf{u}) \unicode{x2D54} g_1(\mathbf{v})
+&amp; \cdots
+&amp; \frac{\partial}{\partial u_n} f_1(\mathbf{u}) \unicode{x2D54} g_1(\mathbf{v})
+\\
+\frac{\partial}{\partial u_1} f_2(\mathbf{u}) \unicode{x2D54} g_2(\mathbf{v})
+&amp; \frac{\partial}{\partial u_2} f_2(\mathbf{u}) \unicode{x2D54} g_2(\mathbf{v})
+&amp; \cdots
+&amp; \frac{\partial}{\partial u_n} f_2(\mathbf{u}) \unicode{x2D54} g_2(\mathbf{v})
+\\
+\vdots &amp; \vdots &amp; \ddots &amp; \vdots
+\\
+\frac{\partial}{\partial u_1} f_n(\mathbf{u}) \unicode{x2D54} g_n(\mathbf{v})
+&amp; \frac{\partial}{\partial u_2} f_n(\mathbf{u}) \unicode{x2D54} g_n(\mathbf{v})
+&amp; \cdots
+&amp; \frac{\partial}{\partial u_n} f_n(\mathbf{u}) \unicode{x2D54} g_n(\mathbf{v})
+\end{bmatrix}
+$$</p>
+<p>但是注意到 $\unicode{x2D54}$ 是 element-wise 操作，于是 $y_i$ 只跟
+$f_i(\mathbf{u})$ 和 $g_i(\mathbf{v})$ 相关，换句话说，对于 $i \ne j$ 的情况，有 $\frac{\partial y_i}{\partial u_j} = 0$。更进一步，element-wise 操作代表着 $f_i(\mathbf{u})$ 可以退化成 $f_i(u_i)$，而跟其它所有 $u_k (k \ne i)$ 无关。</p>
+<p>$$
+\mathbf{J_u}
+= \begin{bmatrix}
+\frac{\partial}{\partial u_1} (f_1(u_1) \unicode{x2D54} g_1(v_1))
+&amp; 0
+&amp; \cdots
+&amp; 0
+\\
+0
+&amp; \frac{\partial}{\partial u_2} (f_2(u_2) \unicode{x2D54} g_2(v_2))
+&amp; \cdots
+&amp; 0
+\\
+\vdots &amp; \vdots &amp; \ddots &amp; \vdots
+\\
+0
+&amp; 0
+&amp; \cdots
+&amp; \frac{\partial}{\partial u_n} (f_n(u_n) \unicode{x2D54} g_n(v_n))
+\end{bmatrix}
+$$</p>
+<p>注意到只有对象元素有值，是对角矩阵，于是写成下式：</p>
+<p>$$
+\frac{\partial \mathbf{y}}{\partial \mathbf{u}} = \mathbf{J_u}
+= diag \left(
+\frac{\partial}{\partial u_1} \left(f_1(u_1) \unicode{x2D54} g_1(v_1)\right),
+\cdots,
+\frac{\partial}{\partial u_n} \left(f_n(u_n) \unicode{x2D54} g_n(v_n)\right)
+\right)
+$$</p>
+<p>再进一步，深度学习中一般 $f(u_i) = u_i$ 和 $g(v_i) = v_i$，所以还能简化：</p>
+<p>$$
+\frac{\partial \mathbf{y}}{\partial \mathbf{u}} = \mathbf{J_u}
+= diag \left(
+\frac{\partial}{\partial u_1} \left(u_1 \unicode{x2D54} v_1\right),
+\cdots,
+\frac{\partial}{\partial u_n} \left(u_n \unicode{x2D54} v_n\right)
+\right)
+$$</p>
+<p>于是常见的 element-wise 操作及其导数如下</p>
+<table>
+<thead>
+<tr>
+<th>Op</th>
+<th>对 $u$ 导数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>+</td>
+<td>$\frac{\partial (\mathbf{u}+\mathbf{v})}{\partial \mathbf{u}} = diag(\mathbf{1}) = \mathbf{I} $</td>
+</tr>
+<tr>
+<td>-</td>
+<td>$\frac{\partial (\mathbf{u}-\mathbf{v})}{\partial \mathbf{u}} = diag(\mathbf{1}) = \mathbf{I} $</td>
+</tr>
+<tr>
+<td>$\otimes$</td>
+<td>$\frac{\partial (\mathbf{u}\otimes\mathbf{v})}{\partial \mathbf{u}} = diag(\cdots, \frac{\partial (u_i\times v_i)}{\partial u_i}, \cdots) = diag(\mathbf{v}) $</td>
+</tr>
+<tr>
+<td>$\oslash$</td>
+<td>$\frac{\partial (\mathbf{u}\oslash\mathbf{v})}{\partial \mathbf{u}} = diag(\cdots, \frac{\partial (u_i / v_i)}{\partial u_i}, \cdots) = diag(\cdots, \frac{1}{v_i}, \cdots) = \frac{1}{\mathbf{v}}$</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Op</th>
+<th>对 $v$ 导数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>+</td>
+<td>$\frac{\partial (\mathbf{u}+\mathbf{v})}{\partial \mathbf{v}} = diag(-\mathbf{1}) = -\mathbf{I} $</td>
+</tr>
+<tr>
+<td>-</td>
+<td>$\frac{\partial (\mathbf{u}-\mathbf{v})}{\partial \mathbf{v}} = diag(-\mathbf{1}) = -\mathbf{I} $</td>
+</tr>
+<tr>
+<td>$\otimes$</td>
+<td>$\frac{\partial (\mathbf{u}\otimes\mathbf{v})}{\partial \mathbf{v}} = diag(\cdots, \frac{\partial (u_i\times v_i)}{\partial v_i}, \cdots) = diag(\mathbf{u}) $</td>
+</tr>
+<tr>
+<td>$\oslash$</td>
+<td>$\frac{\partial (\mathbf{u}\oslash\mathbf{v})}{\partial \mathbf{v}} = diag(\cdots, \frac{\partial (u_i / v_i)}{\partial v_i}, \cdots) = diag(\cdots, \frac{-u_i}{v_i^2}, \cdots) = -\frac{\mathbf{u}}{\mathbf{v}^2}$</td>
+</tr>
+</tbody>
+</table>
+<p>由于一般拿导数是用来更新向量的，对角矩阵经常也直接当成向量来使用。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>主要回顾了 dot product、矩阵乘法与 element-wise 乘法的关系，以及这些操作求偏导的矩阵形式。</p>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>注意这里的表示要求向量的座标是基于一对正交基的，另外注意这里没有定义行向量或列向量，因为这是坐标形式，不关心向量是行向量还是列向量 <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p>此处参考 matlab dot product 定义：
+<a href="https://www.mathworks.com/help/matlab/ref/dot.html#bt9p8vi-1_1">https://www.mathworks.com/help/matlab/ref/dot.html#bt9p8vi-1_1</a> <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn3" class="footnote-item"><p>参考：<a href="https://mbernste.github.io/posts/matrix_vector_mult/">https://mbernste.github.io/posts/matrix_vector_mult/</a> <a href="#fnref3" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn4" class="footnote-item"><p>关于线性变换，强推 3blue1brown 的线性代数系列视频，其中<a href="https://www.youtube.com/watch?v=kYB8IZa5AuE">第三章</a> 关于线性变换，
+<a href="https://www.youtube.com/watch?v=XkY2DOUCWMU">第四章</a> 关于矩阵乘法 <a href="#fnref4" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn5" class="footnote-item"><p>这里就不谈链式法则相关的内容了，感兴趣的可以参考我的前一篇文章 <a href="http://lotabout.me/2023/Auto-Differentiation-Part-1-Algorithm/">自动微分（Automatic Differentiation）：算法篇</a> <a href="#fnref5" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+</div></div><script type="text/x-mathjax-config">
+   MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    }); 
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><div class="post-main post-comment"><div id="giscus_thread"></div><script src="https://giscus.app/client.js" data-repo="lotabout/lotabout.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU1NTQ0Nw==" data-category="Announcements" data-category-id="DIC_kwDOATmmt84ClmcD" data-mapping="" data-strict="" data-reactions-enabled="0" data-emit-metadata="" data-input-position="" data-theme="" data-lang="zh-CN" data-loading="" crossorigin="" async>
+</script></div></article><link rel="stylesheet" type="text/css" href="/css/third-party/font-awesome/4.5.0/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/lato-font/3.0.0/css/lato-font.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/fancybox/2.1.5/jquery.fancybox.css"><script src="/js/third-party/jquery/2.0.3/jquery.min.js"></script><script src="/js/third-party/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script async src="https://www.googletagmanager.com/gtag/js?id=#{theme.google_analytics}"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-39956831-2');</script></body></html>

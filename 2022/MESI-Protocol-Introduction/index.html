@@ -1,0 +1,85 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="MESI 是一个（CPU 级别的）缓存一致性协议。看过 N 次 MESI 的 wiki 页面，一起看不进去，网上搜的一些文章，经常会介绍 MESI 的状态机和各种状态，也看得云里雾里。最近硬着头皮啃完了 wiki，感觉理解 MESI 协议的核心其实在 wiki 的第一句："><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>MESI 协议学习笔记 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 7.1.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-noise-link" href="/tags/Cache-Coherence/" rel="tag">Cache Coherence</a><a class="post-tag-noise-link" href="/tags/Consistency/" rel="tag">Consistency</a><a class="post-tag-noise-link" href="/tags/MESI/" rel="tag">MESI</a></div><div class="post-time">2022-04-24</div></div></div><div class="container post-header"><h1>MESI 协议学习笔记</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#write-back-cache-%E5%86%99%E5%9B%9E"><span class="toc-number">1.</span> <span class="toc-text">Write-Back Cache 写回</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#cache-coherence-%E7%BC%93%E5%AD%98%E4%B8%80%E8%87%B4%E6%80%A7"><span class="toc-number">2.</span> <span class="toc-text">Cache-Coherence 缓存一致性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#invalidate-based-%E5%9F%BA%E4%BA%8E%E7%BC%93%E5%AD%98%E5%A4%B1%E6%95%88"><span class="toc-number">3.</span> <span class="toc-text">Invalidate-Based 基于缓存失效</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mesi-%E9%80%BB%E8%BE%91%E7%AE%80%E8%BF%B0"><span class="toc-number">4.</span> <span class="toc-text">MESI 逻辑简述</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mesi-%E4%B8%8E%E5%86%85%E5%AD%98%E5%B1%8F%E9%9A%9C"><span class="toc-number">5.</span> <span class="toc-text">MESI 与内存屏障</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#store-buffer"><span class="toc-number">5.1.</span> <span class="toc-text">Store buffer</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#invalidate-queue"><span class="toc-number">5.2.</span> <span class="toc-text">Invalidate Queue</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E5%AD%98%E5%B1%8F%E9%9A%9C"><span class="toc-number">5.3.</span> <span class="toc-text">内存屏障</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#mesi-%E4%B8%8E-msi-%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">6.</span> <span class="toc-text">MESI 与 MSI 的区别</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">7.</span> <span class="toc-text">小结</span></a></li></ol></details></div><div class="container post-content"><p>MESI 是一个（CPU 级别的）缓存一致性协议。看过 N 次 MESI 的 wiki 页面，一起看不进去，网上搜的一些文章，经常会介绍 MESI 的状态机和各种状态，也看得云里雾里。最近硬着头皮啃完了 wiki，感觉理解 MESI 协议的核心其实在 wiki 的第一句：</p>
+<blockquote>
+<p>The MESI protocol is an <strong>Invalidate-based</strong> cache coherence protocol, and
+is one of the most common protocols that support write-back caches.</p>
+</blockquote>
+<p>发现其实只要能理解什么是 “Invalidate-based”，MESI 协议就很容易理解了。在这之前先补充些相关知识。</p>
+<h2 id="write-back-cache-写回"><a class="header-anchor" href="#write-back-cache-写回"></a>Write-Back Cache 写回</h2>
+<p>当一份内存的数据存储在缓存时，我们有必要保证两者是一致的。假设我们修改了缓存上的数据，这份数据要如何同步回内存呢？常见的有两种方法<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>：</p>
+<ol>
+<li>Write-Though（直写），每次修改都同步更新到缓存和内存中</li>
+<li>Write-Back（写回），修改先更新到缓存上，缓存快失效时才更新回内存中</li>
+</ol>
+<p>它们的核心区别在于更新操作是“同步”还是“异步”。显然异步的写入性能更高。</p>
+<h2 id="cache-coherence-缓存一致性"><a class="header-anchor" href="#cache-coherence-缓存一致性"></a>Cache-Coherence 缓存一致性</h2>
+<p>“一致性”这个词的含义深挖的话还挺深奥的，类似的内容可以参考博主的另一篇文章：<a href="https://lotabout.me/2019/QQA-What-is-Sequential-Consistency/">什么是顺序一致性</a>。这里举一个可能容易理解但不太准确的例子：</p>
+<p>假设没有缓存，多个 CPU 对同一个内存地址做读写，逻辑上，我们会认为这些操作是原子的，有顺序的。假设当前内存的值是 <code>0</code>，CPU1 先发出写操作 <code>W(1)</code>, CPU2 再发出读操作 <code>R</code>，则逻辑上我们理解 CPU2 一定要读到 <code>1</code> 这个值。</p>
+<p>现在假设两个 CPU 都有自己的缓存，CPU1 先发出 <code>W(1)</code> 写到自己的缓存，因为使用了
+Write-Back 技术，还没有更新到内存，此时 CPU2 发出 <code>R</code>，读到的是自己的缓存（或者缓存不存在从内存加载），读到的还是 <code>0</code>，和我们上面说的预期不一致。</p>
+<p>缓存一致性是指：通过在缓存之间做同步，达到仿佛系统不存在缓存时的行为。一般有
+<a href="https://en.wikipedia.org/wiki/Cache_coherence#Overview">如下要求</a>：</p>
+<ul>
+<li>Write Propagation（写传播）：即写入一个缓存要让其它缓存能看到</li>
+<li>Transaction Serialization（事务顺序化）：即不同 CPU 对同一个地址发出读写指令，不管这些指令最终的先后顺序如何，不同 CPU 看到的顺序要一样。</li>
+</ul>
+<p>这也对应我们一般说的可见性和顺序性。</p>
+<h2 id="invalidate-based-基于缓存失效"><a class="header-anchor" href="#invalidate-based-基于缓存失效"></a>Invalidate-Based 基于缓存失效</h2>
+<p>一份数据，缓存 A 有副本，缓存 B 也有副本，这时如果对 A 有修改，那 A、B 就不一致了，怎么办？Invalidate-based 的思路是，对 A 有修改，就想办法让其它副本都失效，只剩下 A 这么一个副本，不就没有“不一致”的情况了？</p>
+<p>那其它缓存要再读数据时怎么办？简单，让剩下的那个副本把数据写回到内存，再从内存里把最新的数据捞到缓存即可。</p>
+<p>MESI 就是用 4 个状态实现了状态机，实现了这个逻辑，我喜欢把它叫作“踢人”逻辑。</p>
+<h2 id="mesi-逻辑简述"><a class="header-anchor" href="#mesi-逻辑简述"></a>MESI 逻辑简述</h2>
+<p>MESI 的状态机包含了 4 个状态，也是名字的由来：</p>
+<ul>
+<li>(M)odified: 单副本 + 脏数据（即缓存改变，未写回内存）</li>
+<li>(E)xclusive: 单副本 + 干净数据</li>
+<li>(S)hared: 多副本 + 干净数据</li>
+<li>(I)nvalid: 数据未加载或缓存已失效</li>
+</ul>
+<p>CPU 会有读写操作，记为 <code>PrRd</code> 和 <code>PrWr</code>，缓存接收到操作后需要与其它缓存同步并更新状态，同步的信息通过总线传递，同步信号有 5 种：<code>BusRd</code>, <code>BusRdX</code>,
+<code>BusUpgr</code>, <code>Flush</code>, <code>FlushOpt</code>，不用记具体的含义，我们只需要知道，这些信号的作用和目的，就是为了在自己接收到写入操作时，把其它缓存踢掉。</p>
+<p>考虑缓存 A 和缓存 B 都有一个副本，都处于 Shared 状态，此时 A 接收到写入操作
+<code>PrRd</code>，则有如下变化：</p>
+<ol>
+<li>A 会向总线发出 <code>BusUpgr</code>，代表自己要更新缓存上的数据</li>
+<li>A 发出信号后，状态变为 Modified（单副本＋脏数据），这就需要 B 的配合了</li>
+<li>B 处于 Shared 状态，在接收到总线上的 <code>BusUpgr</code> 信号后，主动把状态变为 <code>Invalid</code></li>
+<li>于是只剩下 A 一个副本了</li>
+</ol>
+<h2 id="mesi-与内存屏障"><a class="header-anchor" href="#mesi-与内存屏障"></a>MESI 与内存屏障</h2>
+<p>MESI 如果简单粗暴地实现，会有两个很明显的性能问题：</p>
+<ol>
+<li>当尝试写入一个 Invalid 缓存行时，需要等待从其它处理器或主存中读取最新数据，有较长的延时</li>
+<li>将 cache line 置为 Invalid 状态也很慢</li>
+</ol>
+<p>因此 CPU 在实现时一般会通过 Store Buffer 和 Invalidate Queue 机制来做优化。</p>
+<h3 id="store-buffer"><a class="header-anchor" href="#store-buffer"></a>Store buffer</h3>
+<p>在写入 Invalid 状态的缓存时，CPU 会先发出 read-invalid（这样其它 CPU 的缓存行会写入更改并变成 Invalid 的状态），然后把要写入的内容先放在 Store buffer 上，等收到其它 CPU 或内存发送过来的缓存行，做合并后才真正完成写入操作。</p>
+<p>这会导致虽然 CPU 以为某个修改写入缓存了，但其实还在 Store buffer 里。此时如果要读数据，则需要先扫描 Store buffer，此外，其它 CPU 在数据真正写入缓存之前是看不到这次写入的。</p>
+<h3 id="invalidate-queue"><a class="header-anchor" href="#invalidate-queue"></a>Invalidate Queue</h3>
+<p>当收到 Invalidate 申请时（如 Shared 状态收到 BusUpgr），CPU 会将申请记录到内部的Invalidate Queue，并立马返回/响应。缓存会尽快处理这些请求，但不保证“立马完成”。此时 CPU 可能以为缓存已经失效，但真的尝试读取时，缓存还没有置为 Invalid
+状态，于是读到旧的数据。</p>
+<h3 id="内存屏障"><a class="header-anchor" href="#内存屏障"></a>内存屏障</h3>
+<p>这些优化的存在，要求我们在代码里使用内存屏障，插入 store barrier 会强制将
+store buffer 的数据写到缓存中，这样保证数据写到了所有的缓存里；插入 read
+barrier 会保证 invalidate queue 的请求都已经被处理，这样其它 CPU 的修改都已经对当前 CPU可见。</p>
+<h2 id="mesi-与-msi-的区别"><a class="header-anchor" href="#mesi-与-msi-的区别"></a>MESI 与 MSI 的区别</h2>
+<p>不做相关工作也不用太深入。大概就是如果 CPU 要读的数据在其它 CPU 中都不存在，则对于 MSI 来说需要通过 2 个总线事务才能捞到数据，但 MESI 只需要一次。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>本文所有内容均来源于 <a href="https://en.wikipedia.org/wiki/MESI_protocol">MESI 的 wiki</a>。文章的核心想是指出要理解 MESI 协议，关键在于理解它是一个“基于缓存失效”的协议，理解了这点，就能理解 MESI 的状态机为什么要这么做。</p>
+<p>另外简单讨论了 MESI 之下为什么还需要内存屏障，以及 MESI 和同类 MSI 的区别。</p>
+<p>博主做的是上层的应用开发，点到为止已经够用了。</p>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p><a href="https://en.wikipedia.org/wiki/Cache_(computing)#Writing_policies">https://en.wikipedia.org/wiki/Cache_(computing)#Writing_policies</a> <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+</div></div><div class="post-main post-comment"><div id="giscus_thread"></div><script src="https://giscus.app/client.js" data-repo="lotabout/lotabout.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU1NTQ0Nw==" data-category="Announcements" data-category-id="DIC_kwDOATmmt84ClmcD" data-mapping="" data-strict="" data-reactions-enabled="0" data-emit-metadata="" data-input-position="" data-theme="" data-lang="zh-CN" data-loading="" crossorigin="" async>
+</script></div></article><link rel="stylesheet" type="text/css" href="/css/third-party/font-awesome/4.5.0/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/lato-font/3.0.0/css/lato-font.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/fancybox/2.1.5/jquery.fancybox.css"><script src="/js/third-party/jquery/2.0.3/jquery.min.js"></script><script src="/js/third-party/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script async src="https://www.googletagmanager.com/gtag/js?id=#{theme.google_analytics}"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-39956831-2');</script></body></html>
