@@ -1,0 +1,93 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="使用 Webflux/Reactor 编程，如果对其中的原理了解不够全面，容易掉坑里。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Webflux 线程模型理解 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 7.1.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-noise-link" href="/tags/Reactive/" rel="tag">Reactive</a><a class="post-tag-noise-link" href="/tags/Streams/" rel="tag">Streams</a><a class="post-tag-noise-link" href="/tags/java/" rel="tag">java</a></div><div class="post-time">2024-06-07</div></div></div><div class="container post-header"><h1>Webflux 线程模型理解</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E5%AD%90"><span class="toc-number">1.</span> <span class="toc-text">引子</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#reactor-stream-%E7%AE%80%E4%BB%8B"><span class="toc-number">2.</span> <span class="toc-text">Reactor Stream 简介</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#reactor-%E4%B8%8E-reactive-streams-%E8%A7%84%E8%8C%83"><span class="toc-number">3.</span> <span class="toc-text">Reactor 与 Reactive Streams 规范</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E5%A6%82%E4%BD%95%E8%B0%83%E5%BA%A6"><span class="toc-number">4.</span> <span class="toc-text">线程如何调度</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A0%E5%A5%88%E4%B8%8B%E7%9A%84-subscribeon-%E4%B8%8E-publishon"><span class="toc-number">5.</span> <span class="toc-text">无奈下的 subscribeOn 与 publishOn</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%8E%E8%AE%B0"><span class="toc-number">6.</span> <span class="toc-text">后记</span></a></li></ol></details></div><div class="container post-content"><p>使用 Webflux/Reactor 编程，如果对其中的原理了解不够全面，容易掉坑里。</p>
+<h2 id="引子"><a class="header-anchor" href="#引子"></a>引子</h2>
+<p>一个业务系统是用 Webflux 写的，发现后台在做批量任务时，会卡住页面的访问。排查发现是把 r2dbc 的 IO 线程给卡住了，导致页面请求时从数据库捞数据的请求卡死。但这个批量操作本身并没有特别多的 DB 操作，为什么会卡住呢？</p>
+<h2 id="reactor-stream-简介"><a class="header-anchor" href="#reactor-stream-简介"></a>Reactor Stream 简介</h2>
+<p>Java 9 引入了 <code>java.util.concurrent.Flow</code> 接口，支持[Reactive Streams 规范]
+(<a href="https://www.reactive-streams.org/">https://www.reactive-streams.org/</a>)。规范的核心是定义了发布者(Publisher)和订阅者(Subscriber)的交互逻辑，规定Subscriber 必须以 PULL (拉取)的方式获取数据，以此解决异步流式处理中的背压问题<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>。</p>
+<p>Reactive Streams 规定的交互流程如下（由于标准中有些部分留白，实际有两种常见模式）：</p>
+<img src="/2024/Webflux-Threading-Model/2024-05-27-webflux-threading-model-reactive-streams.svg" class="" title="Reactive Stream">
+<p>主体流程分为这么几步：</p>
+<ol>
+<li>Subscriber 向 Publisher 订阅。<code>onSubscribe</code> 的入参是订阅者 Subscriber。</li>
+<li>Publisher 通知 Subscriber 订阅成功，并发送一个 <code>Subscription</code> 对象用于后续交互。</li>
+<li>当 Subscriber 有处理能力时，调用 Subscription 的 <code>request</code> 方法通知
+Publisher 发送 N 个数据</li>
+<li>每有一个新数据，调用 Subscriber 的 <code>onNext</code> 方法一次，直到发送了 N 个数据。</li>
+</ol>
+<p>为什么需要有 <code>Subscription</code> 这个接口呢？为什么不直接把 <code>request</code> 方法定义在
+Publisher 中呢？有个大前提是 Reactive Streams 规范中，一个 Publisher 可以有多个 Subscriber，于是如果没有 <code>Subscription</code>，则 Publisher 需要在内部维护这个
+Subscriber 与数据的关系，增加了复杂度。因此不管是从概念上的解耦还是减小实现复杂性及提高性能性能方面考虑，把 Subscriber 与 Publisher 之间交互的生命周期抽象成<code>Subscription</code>，都是一个不错的选择。</p>
+<p>另外注意到图里有两种模式。Reactive Sterams 只规定调用了 <code>Subscription.request</code>
+之后，如果有新的数据需要调用 Subscriber 的 <code>onNext</code> 方法。但是并没有规定
+<code>onNext</code> 谁来调用。于是根据 Publisher 中数据是否需要共享，可以分为 Cold 和 Hot
+两种模式。</p>
+<p>Cold 模式下数据是分离的，每个 Subscriber 都有自己的数据流，例如
+<code>Flux.range</code>，每个 subscriber 都会从头开始计数。于是 Publisher 可以把当前消费的位置保存在 Subscription 中，由 Subscription 来调用 <code>onNext</code> 方法。</p>
+<p>Hot 模式下数据是共享的，例如 <code>Flux.interval(..).share()</code>，记录了开始到现有的秒数，每个 Subscriber 在订阅时都希望得到当前秒数，而不是从第 1s 开始。于是秒数信息必须由 Publisher 保存，并且对 Subscriber 共享，此时 <code>subscription.request</code>
+就只是个传话筒了。</p>
+<h2 id="reactor-与-reactive-streams-规范"><a class="header-anchor" href="#reactor-与-reactive-streams-规范"></a>Reactor 与 Reactive Streams 规范</h2>
+<p>在流式代码中，通常只有一个数据源（例如调用某个 API），之后会对这个数据做一系列的 <code>map</code>, <code>filter</code> 等操作，每个这样的操作符，从逻辑上都可以等价于既是一个
+publisher 又是一个 subscriber。例如下面这样的代码:</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="type">var</span> <span class="variable">myPub</span> <span class="operator">=</span> Flux.range(<span class="number">1</span>, <span class="number">10</span>)</span><br><span class="line">                .map(x -&gt; x * <span class="number">2</span>)</span><br><span class="line">                .filter(x -&gt; x &gt; <span class="number">10</span>);</span><br><span class="line"></span><br><span class="line">myPub.subscribe(System.out::println);</span><br></pre></td></tr></table></figure></div>
+<p>首先是构建 <code>publisher</code>，的过程，每个操作符<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>都会保留它的父 publisher：</p>
+<img src="/2024/Webflux-Threading-Model/2024-05-27-webflux-threading-model-assemble.svg" class="" title="Assemble Stage">
+<p>于是当我们执行 <code>myPub.subscribe</code><sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup> 时，每个操作符本身作为一个 Subscriber，会不断调用父 Publisher 的 <code>subscribe</code> 方法；而父 Publisher 在调用 <code>onSubscribe</code> 时，每个操作符作为一个 Subscriber，会不断调用下一个操作符的 <code>onSubscribe</code> 方法:</p>
+<img src="/2024/Webflux-Threading-Model/2024-05-27-webflux-threading-model-subscribe.svg" class="" title="Subscribe">
+<p>而当 Subscriber 调用 <code>request</code> 方法时，也是相同的路径<sup class="footnote-ref"><a href="#fn4" id="fnref4">[4]</a></sup>:</p>
+<img src="/2024/Webflux-Threading-Model/2024-05-27-webflux-threading-model-request.svg" class="" title="request and onNext">
+<h2 id="线程如何调度"><a class="header-anchor" href="#线程如何调度"></a>线程如何调度</h2>
+<p>上面我们讲解了如何组装流式代码以及它的内部执行流程，但这些代码是在哪个线程上执行的呢？我们知道对于同步代码，代码会在同一个线程上执行，于是上面的示例中，所有的调用都在同一个线程上：</p>
+<img src="/2024/Webflux-Threading-Model/2024-05-27-webflux-threading-model-same-thread.svg" class="" title="Same Thread">
+<p>图中的棕线代表线程。但是这个例子比较特殊，因为 <code>Flux.range</code> 的数据是就绪的，而如果需要使用诸如 <code>WebClient</code> 调用 API 后做处理，则涉及到异步调用 IO，此时则会是这样：</p>
+<img src="/2024/Webflux-Threading-Model/2024-05-27-webflux-threading-model-two-thread.svg" class="" title="Run on Different Thread">
+<p>上图会假设 WebClient 调用了外部服务，当外部服务返回时会在另一个线程上执行回调函数 callback，而这个 callback 会调用 <code>B.onNext</code> 方法，以此类推后续的 <code>onNext</code>
+都会在这个线程上执行。</p>
+<p>这就有大问题了！例如底层调用使用的是 Netty，则执行 callback 的线程一般就是
+Netty的 worker 线程，但现在我们必须在这个线程上执行所有的 onNext 方法，如果某个操作符（如某个 <code>map</code>）是 CPU 密集型的，就会导致该 worker 线程被长时间阻塞，此时 Netty 的 Worker 线程池成为瓶颈，造成其它子模块的请求没有 worker 线程能处理而卡死，子功能之间互相耦合、干扰。</p>
+<h2 id="无奈下的-subscribeon-与-publishon"><a class="header-anchor" href="#无奈下的-subscribeon-与-publishon"></a>无奈下的 subscribeOn 与 publishOn</h2>
+<p>为了解决上面的问题，Reactor 提供了 <code>subscribeOn</code> 和 <code>publishOn</code> 两个方法，可以分别影响 <code>request</code> 和 <code>onNext</code> 方法的执行线程。例如：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="type">var</span> <span class="variable">myPub</span> <span class="operator">=</span> Flux.range(<span class="number">1</span>, <span class="number">10</span>)</span><br><span class="line">                .map(x -&gt; x * <span class="number">2</span>)</span><br><span class="line">                .subscribeOn(Schedulers.elastic())</span><br><span class="line">                .filter(x -&gt; x &gt; <span class="number">10</span>);</span><br><span class="line">myPub.subscribe(System.out::println);</span><br></pre></td></tr></table></figure></div>
+<p>则执行的流程如下:</p>
+<img src="/2024/Webflux-Threading-Model/2024-05-27-webflux-threading-model-subscribeOn.svg" class="" title="subscribeOn">
+<p>可以看到 <code>subscribeOn</code> 方法会影响 <code>request</code> 方法的执行线程，另外由于整个流程没有另外的线程切换（如上节提到的 <code>WebClient</code>），因此 <code>onNext</code> 方法也会在同一个线程执行。我们又知道诸如 <code>map(x -&gt; x * 2)</code> 这样的操作是在 <code>onNext</code> 方法中执行的，于是也会在新的线程上执行。</p>
+<p>由于 <code>request</code> 方法调用顺序从代码的视角是由下到上的，因此一般说 <code>subscribeOn</code>
+影响的是向上的调用链，直到 <code>publishOn</code> 或其它的 <code>subscribeOn</code> 方法为止。</p>
+<p>同样的，<code>publishOn</code> 方法会影响 <code>onNext</code> 方法的执行线程，例如：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="type">var</span> <span class="variable">myPub</span> <span class="operator">=</span> Flux.range(<span class="number">1</span>, <span class="number">10</span>)</span><br><span class="line">                .map(x -&gt; x * <span class="number">2</span>)</span><br><span class="line">                .publishOn(Schedulers.elastic())</span><br><span class="line">                .filter(x -&gt; x &gt; <span class="number">10</span>);</span><br><span class="line">myPub.subscribe(System.out::println);</span><br></pre></td></tr></table></figure></div>
+<img src="/2024/Webflux-Threading-Model/2024-05-27-webflux-threading-model-publishOn.svg" class="" title="publishOn">
+<p>由于 <code>onNext</code> 方法调用顺序从代码的视角是由上到下的，因此一般说 <code>publishOn</code>
+影响的是向下的调用链，直到其它的 <code>publishOn</code> 为止。</p>
+<p>但要注意，如果 <code>subscribeOn</code> 和 <code>publishOn</code> 同时存在，则 <code>subscribeOn</code> 的作用会“穿过” <code>publishOn</code>：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">var</span> <span class="variable">myPub</span> <span class="operator">=</span> Flux.range(<span class="number">1</span>, <span class="number">10</span>)</span><br><span class="line">                .map(x -&gt; x * <span class="number">2</span>)</span><br><span class="line">                .publishOn(Schedulers.elastic())</span><br><span class="line">                .subscribeOn(Schedulers.elastic())</span><br><span class="line">                .filter(x -&gt; x &gt; <span class="number">10</span>);</span><br><span class="line">myPub.subscribe(System.out::println);</span><br></pre></td></tr></table></figure></div>
+<img src="/2024/Webflux-Threading-Model/2024-05-27-webflux-threading-model-mixed.svg" class="" title="publishOn">
+<p>在这种情况下，第 2 行的 <code>map</code> 还是会被第 <code>4</code> 行的 <code>subscribeOn</code> 影响；而第 5
+行的 <code>fitler</code> 最终会被 <code>publishOn</code> 影响。</p>
+<h2 id="后记"><a class="header-anchor" href="#后记"></a>后记</h2>
+<p>学习这个线程模型距离我开始学习 Webflux 几乎有 4 年以上的时间了，在我自认为对
+Webflux 了解还算充分的时候被教育了。时至今日，我依然有两个暴论：</p>
+<ol>
+<li>Webflux 只适用于诸如网关这样的业务简单但高并发的场景。</li>
+<li>对于绝大多数人来说，green thread 类型的异步模型才是最好的。</li>
+</ol>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>背压问题还有其它处理手段，可以参考我之前的文章 <a href="https://lotabout.me/2020/Back-Pressure">背压与流量控制</a> <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p>这里简化了很多实现细节，如实际上操作符并没有实现
+<code>Subscriber</code> 接口，而是在调用 <code>subscribe</code> 时才生成对应的 Subscriber。但并不影响整体逻辑的理解。 <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn3" class="footnote-item"><p>严格来说 <code>System.out::println</code> 不是一个 Subscriber，实际上 <code>subscribe</code> 方法会将它包装成一个 <code>LambdaSubscriber</code>。 <a href="#fnref3" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn4" class="footnote-item"><p>这里只是抽象的模型，省略了 Subscription 与Publisher 的交互，以及 Cold Hot publisher 的区别等等。 <a href="#fnref4" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+</div></div><div class="post-main post-comment"><div id="giscus_thread"></div><script src="https://giscus.app/client.js" data-repo="lotabout/lotabout.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU1NTQ0Nw==" data-category="Announcements" data-category-id="DIC_kwDOATmmt84ClmcD" data-mapping="" data-strict="" data-reactions-enabled="0" data-emit-metadata="" data-input-position="" data-theme="" data-lang="zh-CN" data-loading="" crossorigin="" async>
+</script></div></article><link rel="stylesheet" type="text/css" href="/css/third-party/font-awesome/4.5.0/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/lato-font/3.0.0/css/lato-font.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/fancybox/2.1.5/jquery.fancybox.css"><script src="/js/third-party/jquery/2.0.3/jquery.min.js"></script><script src="/js/third-party/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script async src="https://www.googletagmanager.com/gtag/js?id=#{theme.google_analytics}"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-39956831-2');</script></body></html>

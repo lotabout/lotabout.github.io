@@ -1,0 +1,123 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="检索增强生成(Retrival Augmented Generation, RAG)技术随大模型的兴起而备受关注，还有一众向量数据库也随之一起“鸡犬升天”，另外还有最近火热的 AI 搜索也可认为是
+RAG 的变种。但是随着应用的深入，RAG 的局限性也越来越明显。本文算是对自己近两年
+RAG 从业的不完全梳理，希望能对大家有所帮助。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>关于 RAG 的一些碎碎念 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 7.1.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-noise-link" href="/tags/LLM/" rel="tag">LLM</a><a class="post-tag-noise-link" href="/tags/RAG/" rel="tag">RAG</a></div><div class="post-time">2024-12-31</div></div></div><div class="container post-header"><h1>关于 RAG 的一些碎碎念</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#rag-%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="toc-number">1.</span> <span class="toc-text">RAG 的作用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#naive-rag"><span class="toc-number">2.</span> <span class="toc-text">Naive RAG</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#rag-%E7%BC%BA%E5%B0%91%E5%A4%A7%E5%B1%80%E8%A7%82"><span class="toc-number">3.</span> <span class="toc-text">RAG 缺少大局观</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%97%A0%E6%B3%95%E6%9C%9B%E6%96%87%E7%94%9F%E4%B9%89"><span class="toc-number">4.</span> <span class="toc-text">无法望文生义</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%BA%9B%E6%8F%90%E5%8D%87%E6%89%8B%E6%AE%B5"><span class="toc-number">5.</span> <span class="toc-text">一些提升手段</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%87%E6%A1%A3%E7%BB%93%E6%9E%84%E5%8C%96"><span class="toc-number">5.1.</span> <span class="toc-text">文档结构化</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%9A%E8%B7%AF%E5%8F%AC%E5%9B%9E%E4%B8%8E%E9%87%8D%E6%8E%92%E5%BA%8F"><span class="toc-number">5.2.</span> <span class="toc-text">多路召回与重排序</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E8%AF%A2%E6%94%B9%E5%86%99-%E6%89%A9%E5%B1%95"><span class="toc-number">5.3.</span> <span class="toc-text">查询改写&#x2F;扩展</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%87%E6%A1%A3-meta-%E5%88%A9%E7%94%A8%E4%B8%8E%E6%9F%A5%E8%AF%A2%E7%90%86%E8%A7%A3"><span class="toc-number">5.4.</span> <span class="toc-text">文档 meta 利用与查询理解</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%E5%A4%A7%E5%B1%80%E8%A7%82%E9%97%AE%E9%A2%98%E5%85%B6%E5%AE%83%E5%B0%9D%E8%AF%95"><span class="toc-number">6.</span> <span class="toc-text">解决大局观问题其它尝试</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%90%BD%E5%9C%B0%E7%9A%84%E6%9C%80%E5%A4%A7%E9%97%AE%E9%A2%98-%E4%BA%BA%E5%8A%9B"><span class="toc-number">7.</span> <span class="toc-text">落地的最大问题: 人力</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%AA%E6%9D%A5%E5%9C%A8%E5%93%AA%EF%BC%9F"><span class="toc-number">8.</span> <span class="toc-text">未来在哪？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">9.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>检索增强生成(Retrival Augmented Generation, RAG)技术随大模型的兴起而备受关注，还有一众向量数据库也随之一起“鸡犬升天”，另外还有最近火热的 AI 搜索也可认为是
+RAG 的变种。但是随着应用的深入，RAG 的局限性也越来越明显。本文算是对自己近两年
+RAG 从业的不完全梳理，希望能对大家有所帮助。</p>
+<h2 id="rag-的作用"><a class="header-anchor" href="#rag-的作用"></a>RAG 的作用</h2>
+<p>RAG 能解决纯靠大模型生成的一些问题：</p>
+<ol>
+<li>幻觉问题：大模型可能会“凭空捏造”一些看似合理的信息，但实际上是错误的。</li>
+<li>知识更新问题：大模型无法及时更新知识，如新闻、最新研究等。</li>
+<li>私有知识问题：企业内部的资料非公开，大模型训练时不包含这些信息。</li>
+</ol>
+<p>当然还有一些其它工程问题，如生成速度、资源消耗、上下文限制等。</p>
+<h2 id="naive-rag"><a class="header-anchor" href="#naive-rag"></a>Naive RAG</h2>
+<p><img src="2024-12-31-RAG-naive.svg" alt="Naive RAG Model"></p>
+<p>一个简单的 RAG 流程主要包含三个部分：</p>
+<ol>
+<li>索引器 Indexer: 解析文档，对文档做切片并向量化，存储在向量数据库中。</li>
+<li>检索器 Retriever: ，从向量库中检索与问题最相关的 top-N 文本切片。</li>
+<li>生成器 Generator: 根据检索到的文本切片生成回答。</li>
+</ol>
+<p>为什么要这么做？本质上还是因为“知识”太多，大模型的上下文放不下，因此需要提前筛选出相关的内容。但由于筛选的过程是很耗时的（不管是因为数量太大，还是筛选的逻辑很复杂），因此需要提前建立索引。</p>
+<h2 id="rag-缺少大局观"><a class="header-anchor" href="#rag-缺少大局观"></a>RAG 缺少大局观</h2>
+<p>我们看下面这个文档，假设它被切成了右边的 4 个切片并分别建立索引:</p>
+<p><img src="2024-12-31-RAG-segments.svg" alt="RAG segmentation example"></p>
+<p>现在我们提出问题：<code>RAG 有什么优点</code>，假设 Retriever 只返回 top-1 的结果，上帝视角来看就会遇到问题：</p>
+<ol>
+<li>单看片段 ③，我们并不知道它说的是什么东西的优缺点，它并没有提到 RAG，很可能不会被召回</li>
+<li>因为只返回 top-1，但实际上“优点”可能即在片段 ③，也在片段 ④ 中，于是回答不完整</li>
+</ol>
+<p>这就是 RAG 缺少大局观的问题，处理的目标对象是“文档的切片”，而切片的局部性注定了它无法看到整篇文档的信息，也无法看到整个知识库的信息，因此：</p>
+<ol>
+<li>RAG 检索切片时，可能会因为切片本身包含的上下文信息不足，而漏掉正确的切片</li>
+<li>RAG 无法判断需要多少个切片才能回答问题，于是诸如“列举 XXX”，“总结 XXX”的问题常常回答不完整</li>
+<li>RAG 无法判断文档间的联系，如法律条文，新的解释覆盖旧的解释，但 RAG 无法判断哪个是最新的</li>
+</ol>
+<h2 id="无法望文生义"><a class="header-anchor" href="#无法望文生义"></a>无法望文生义</h2>
+<p>RAG 是基于文档的，但文档都有自己的语境，有时仅凭文档内容根本无法理解，必须要结合语境。有时需要参考其它文档，有时需要了解文档所处的背景（如是在哪个知识库下的），有时需要有一些先验知识（如行业黑话）。</p>
+<p>例如银行发了一张卡叫“宝贝成长卡”，你问“宝贝成长卡怎么销卡”，可能找遍所有的文档都找不到答案。这时需要分析知道“宝贝成长卡”是一张“借计卡”，再去找“借记卡销卡”相关的流程才能找到答案。</p>
+<p>再例如有一篇文章说的是“A 卡的种类”，你可以理解是“AMD 显卡的种类”，但如果金融背景下，它可能就是指“信用卡评分模型的种类”了。单看这个文章是很难决定是否和问题匹配的。</p>
+<p>再有像是一些行业黑话，口语，网络用语等，这些都是文档本身没有的但是用户会问的，
+RAG 仅靠文档是无法建立这两者之间的联系的。</p>
+<h2 id="一些提升手段"><a class="header-anchor" href="#一些提升手段"></a>一些提升手段</h2>
+<h3 id="文档结构化"><a class="header-anchor" href="#文档结构化"></a>文档结构化</h3>
+<p>做法是提取文档的结构化信息，如标题、目录等，将这些信息也加入到切片中一起做索引。</p>
+<p><img src="2024-12-31-RAG-heading-as-context.svg" alt="Add Heading as context"></p>
+<p>这种方法背后的想法是文档的各级标题通常包含大量信息，在切片中加入可极大增加切片的信息量。另外还有很多细节需要优化，如目录相可能会干扰正文，可视情况移除；遇到列表最好放在同一个切片。</p>
+<p>当然文档结构化本身是个脏活累活，一方面有许多不同类型的文档需要支持，如 PDF、
+Word、Excel、PPT 等。另一方面即便只是 doc，如何提取标题、目录也是个大问题。毕竟绝大多数文档都是不规范的。</p>
+<h3 id="多路召回与重排序"><a class="header-anchor" href="#多路召回与重排序"></a>多路召回与重排序</h3>
+<p>上面的 Naive RAG 模型中，只使用了向量化这一种手段，通常也称为语义检索(Semantic
+Search)或 Dense Retrieval。但向量化在一些场景下效果并不好，例如：</p>
+<ul>
+<li>专有名词：一些领域特定的词汇在向量模型训练时可能没有出现过</li>
+<li>缺乏精确性：返回的可能是语义相近但并不是精确匹配的内容</li>
+<li>长度敏感：文档切片、Query 的长度不同，很可能有不同的效果</li>
+</ul>
+<p>所以通常会使用多路召回，再加上重排序，以提高检索的效果。</p>
+<p><img src="2024-12-31-RAG-multi-retrieval.svg" alt="Multi Retrieval"></p>
+<p>实践中最重要的是加上关键词检索，例如 ElasticSearch、Solr 等。但由于评分体系不同，最后需要重新对所有的文档进行排序。常见的做法有：</p>
+<ul>
+<li>可以专门使用一个重排序模型，如 bge-reranker</li>
+<li>也可以使用 Reciprocal Rank Fusion (RRF) 这类简单的融合方法</li>
+<li>还可以对各种分数归一化后再加权求和（如 Milvus 会对关键词搜索的分数使用
+arctan 归一化<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>）</li>
+</ul>
+<h3 id="查询改写-扩展"><a class="header-anchor" href="#查询改写-扩展"></a>查询改写/扩展</h3>
+<p>对于像行业黑话，或者其它很难直接通过文档建立联系的概念，可以考虑由人工来提供一些信息，在查询前对 Query 进行改写或扩展。亦或者使用知识图谱或 LLM 来补充信息。</p>
+<p><img src="2024-12-31-RAG-query-rewritten.svg" alt="Query Rewritten"></p>
+<h3 id="文档-meta-利用与查询理解"><a class="header-anchor" href="#文档-meta-利用与查询理解"></a>文档 meta 利用与查询理解</h3>
+<p>用户的问题常常也会直接或间接包含“结构化”的查询条件，如“二孩的专项附加扣除是多少”隐含时间信息“今年”；再如“XX 公司 2023 年的营收是多少”指定了公司名和时间。这些信息是过滤条件的强表达，如果在检索时不体现，则通常意味着结果不准确。</p>
+<p>这通常需要结合文档的 meta 信息，例如维护文档的时间信息、作者信息、来源信息等。再利用 LLM 从用户 Query 中抽取相关的过滤条件，在检索时加入这些条件。</p>
+<p><img src="2024-12-31-RAG-doc-meta.svg" alt="Query with meta"></p>
+<h2 id="解决大局观问题其它尝试"><a class="header-anchor" href="#解决大局观问题其它尝试"></a>解决大局观问题其它尝试</h2>
+<p>上面提到的文档结构化、多路召回、查询改写等都可以认为是在打补丁，怎么为文档片段增加上下文信息。但它们依旧解决不了”如何决定需要多少文档片段”这类问题。</p>
+<p>目前看到最多的尝试就是使用知识图谱来解决这个问题。其中的典型是
+GraphRAG<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>，它的流程如下:</p>
+<p><img src="2024-12-31-RAG-graphrag.svg" alt="GraphRAG pipeline"></p>
+<p>它的问答流程其实已经不是一个传统的 RAG 了，可以理解成它是在索引阶段，通过对文档片段抽取实体关系及对应的描述，聚类成了一个（非典型的）知识图谱。而在检索阶段，就直接使用生成的聚类描述来回答问题。说实话我觉得这套方法大概率是无法落地的，有如下质疑：</p>
+<ol>
+<li>如何正确的且无监督地抽取实体关系</li>
+<li>如何决定何时使用聚类来回答，何时使用普通的文档片段</li>
+<li>如何保证响应时间（GraphRAG 回答时需要先使用聚类描述生成答案，由 LLM 筛选正确后再汇总）</li>
+</ol>
+<p>但这个方法其实让我想到传统机器学习中的混合高斯模型(GMM<sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup>)，它代表的混合模型思想，我粗浅的理解是：如果用一个分布无法解释数据，那就用多个分布来解释。在
+RAG 中，可以理解成：如果用一个长度的文档片段无法解释问题，那就用多个文档片段来解决。</p>
+<p>例如在建索引时，可以分别以 200、400、600、… 个字为单位建立索引。并在检索时定位到对应长度的片段。这样可以保证大概率有一个足够长的片段是包含了足够多上下文的。当然，向量模型的能力可能并足以理解这么长的文本，导致效果不佳。</p>
+<h2 id="落地的最大问题-人力"><a class="header-anchor" href="#落地的最大问题-人力"></a>落地的最大问题: 人力</h2>
+<p>遇到效果问题，很多客户都会提“微调行不行”，可以，但是得加钱。</p>
+<p>我只调过 Ranking 模型和 LLM，都需要高质量的标注数据。但一般产出这些数据需要对应的业务专家，尤其是 LLM 的 SFT 数据，还需要提供结果的回答。我们见到的很多客户，连知识库的数据预期从哪来，哪些合适放在知识库都回答不了，更别说调动资源来准备这些数据了。</p>
+<p>也因此，ToB 的 RAG 项目很难落地，无监督的各种方法很快就会达到上限，而后续的数据治理又没法推进，于是死局。</p>
+<h2 id="未来在哪？"><a class="header-anchor" href="#未来在哪？"></a>未来在哪？</h2>
+<p>其实这个问题才是我的这碟醋，上面的内容都是为这碟醋包的饺子。当然也是在脑洞与胡思乱想。</p>
+<p>我觉得不管是简单的向量化，还是像 GraphRAG，或者其它使用 LLM 提前建图谱的各种方法，本质上都是在尝试提前更好地“理解”文档，甚至建立文档间的联系。这个问题其实是“知识的表示”。</p>
+<p>如果说大模型是世界知识的“无损”压缩，那么 RAG 就是在尝试压缩知识库中的这些知识，并在回答问题时提取出最相关的知识。但显然不管是向量化还是 GraphRAG，都不是一个足够好的压缩方式。</p>
+<p>因此我认为未来会有一种高效的训练方式，能够在“理解”知识库的内容后，高效地压缩成一个模型，并且具有很高的压缩比。同时知识可以叠加，在问答时，可以结合世界知识模型和知识库浓缩模型来回答问题。</p>
+<p>另一个问题是：搜索引擎是一个足够好的压缩方式吗？我认为对绝大多数场景来说是的。我也认为当前的 RAG 如果做的足够好，检索方面可能也就是一个复杂的搜索引擎了。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/2312.10997v5">Retrieval-Augmented Generation for Large Language Models: A Survey</a> 23年12月的一篇综述论文</li>
+<li><a href="https://arxiv.org/pdf/2402.19473">Retrieval-Augmented Generation for AI-Generated Content: A Survey</a> 另一篇 24 年 2 月的综述论文</li>
+<li><a href="https://arxiv.org/pdf/2408.08921">Graph Retrieval-Augmented Generation: A Survey</a> 使用图来增强 RAG 的综述，24 年 8 月</li>
+<li><a href="https://zhuanlan.zhihu.com/p/673465732">大模型RAG 场景、数据、应用难点与解决（四）</a> 知乎的一篇 RAG 文章，里面很多痛我们也实际遇到了</li>
+</ul>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>参见 <a href="https://github.com/milvus-io/milvus/discussions/34415">https://github.com/milvus-io/milvus/discussions/34415</a> <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p><a href="https://arxiv.org/pdf/2404.16130">https://arxiv.org/pdf/2404.16130</a> <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn3" class="footnote-item"><p>参考文章: <a href="https://builtin.com/articles/gaussian-mixture-model">https://builtin.com/articles/gaussian-mixture-model</a> <a href="#fnref3" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+</div></div><div class="post-main post-comment"><div id="giscus_thread"></div><script src="https://giscus.app/client.js" data-repo="lotabout/lotabout.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU1NTQ0Nw==" data-category="Announcements" data-category-id="DIC_kwDOATmmt84ClmcD" data-mapping="" data-strict="" data-reactions-enabled="0" data-emit-metadata="" data-input-position="" data-theme="" data-lang="zh-CN" data-loading="" crossorigin="" async>
+</script></div></article><link rel="stylesheet" type="text/css" href="/css/third-party/font-awesome/4.5.0/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/lato-font/3.0.0/css/lato-font.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/fancybox/2.1.5/jquery.fancybox.css"><script src="/js/third-party/jquery/2.0.3/jquery.min.js"></script><script src="/js/third-party/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script async src="https://www.googletagmanager.com/gtag/js?id=#{theme.google_analytics}"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-39956831-2');</script></body></html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="之前的文章 &lt;a href=&quot;/2019/QQA-How-does-nginx-health-check-work/&quot; title=&quot;QQA: Nginx 如何做健康检查?&quot;&gt;QQA: Nginx 如何做健康检查?&lt;/a&gt; 介绍了 Nginx 如何做被动健康检查(passive health check)，本文以
+&lt;a href=&quot;https://github.com/Netflix/ribbon&quot;&gt;Ribbon&lt;/a&gt; 为例，介绍主动健康检查(active
+health check) 有哪些注意点。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>主动健康检查要点(Ribbon 为例) | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 7.1.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-noise-link" href="/tags/health-check/" rel="tag">health check</a><a class="post-tag-noise-link" href="/tags/ribbon/" rel="tag">ribbon</a></div><div class="post-time">2020-01-05</div></div></div><div class="container post-header"><h1>主动健康检查要点(Ribbon 为例)</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B8%E5%9E%8B%E6%B5%81%E7%A8%8B"><span class="toc-number">1.</span> <span class="toc-text">典型流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ribbon-%E7%9B%B8%E5%85%B3%E5%AE%9E%E7%8E%B0"><span class="toc-number">2.</span> <span class="toc-text">Ribbon 相关实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B3%A8%E6%84%8F%E7%82%B9"><span class="toc-number">3.</span> <span class="toc-text">注意点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>之前的文章 <a href="/2019/QQA-How-does-nginx-health-check-work/" title="QQA: Nginx 如何做健康检查?">QQA: Nginx 如何做健康检查?</a> 介绍了 Nginx 如何做被动健康检查(passive health check)，本文以
+<a href="https://github.com/Netflix/ribbon">Ribbon</a> 为例，介绍主动健康检查(active
+health check) 有哪些注意点。</p>
+<h2 id="典型流程"><a class="header-anchor" href="#典型流程"></a>典型流程</h2>
+<p>典型的主动检查需要客户端至少有一个 ping thread，定期检测服务器是否健康，流程如下图：</p>
+<img src="/2020/Active-Health-Check-With-Ribbon-Example/Active-Health-Check.svg" class="" title="Active Health Check">
+<ol>
+<li>Ping thread 检测到两个服务器都正常工作</li>
+<li>于是客户端会将请求分发到两个服务器上</li>
+<li>此时 Server 2 宕机，发送到该机器的请求处理失败，返回错误</li>
+<li>由于新一轮的检测还没有开始，客户端没有意识到服务器已宕机，依旧将请求分发给
+Server 2</li>
+<li>新一轮 Ping 检测到 Server 2 宕机，将其标记为不可用</li>
+<li>于是客户端将所有请求分发到 Server 1</li>
+<li>此时 Server 2 恢复正常，但由于还没有被客户端检测到，不会向它分发请求</li>
+<li>新一轮 Ping 检测到 Server 2 恢复，将其标记为可用</li>
+<li>客户端重新将请求分配给 Server 2</li>
+</ol>
+<h2 id="ribbon-相关实现"><a class="header-anchor" href="#ribbon-相关实现"></a>Ribbon 相关实现</h2>
+<p>要实现上节中的策略，Ribbon 对其中的关键节点做了相应的抽象：</p>
+<ol>
+<li><code>Server</code> 代表服务器，<code>.setAlive(boolean)</code> 方法可标记服务是否健康</li>
+<li><code>IPing.isAlive(Server server)</code> 用于检测服务是否健康。<code>DummyPing</code> 实现不对服务进行检测，<code>ribbon-httpclient</code> 包中的 <code>PingUrl</code> 实现则会请求指定 URL，根据返回是否符合预期来判断服务是否健康</li>
+<li><code>IPingStrategy</code> 接口定义以什么策略来 ping 多台服务器，默认是顺序 ping，ping
+完一台 ping 下一台</li>
+<li><code>IRule</code> 定义如何分发请求，默认是轮流选择（round-robin），会跳过标记为不可用的服务</li>
+<li><code>ILoadBalancer</code> 代表负载均衡，在创建时需要指定上述的各项元素</li>
+</ol>
+<p>简单使用示例如下（代码不可直接运行）：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="type">IRule</span> <span class="variable">rule</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">RetryRule</span>(<span class="keyword">new</span> <span class="title class_">RoundRobinRule</span>(), maxRetryMills);</span><br><span class="line"><span class="type">IPing</span> <span class="variable">ping</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">PingUrl</span>(<span class="literal">false</span>, healthUrl);</span><br><span class="line">((PingUrl) ping).setPingAppendString(healthExpected.trim());</span><br><span class="line"></span><br><span class="line"><span class="type">BaseLoadBalancer</span> <span class="variable">loadBalancer</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">BaseLoadBalancer</span>(ping, rule);</span><br><span class="line">loadBalancer.addServers(endpoints.stream().map(Server::<span class="keyword">new</span>).collect(Collectors.toList()));</span><br><span class="line">loadBalancer.setPingInterval(pingIntervalSeconds);</span><br><span class="line"></span><br><span class="line"><span class="type">MyLoadBalancerContext</span> <span class="variable">context</span> <span class="operator">=</span> MyLoadBalancerContext(loadBalancer);</span><br><span class="line"></span><br><span class="line"><span class="type">Server</span> <span class="variable">server</span> <span class="operator">=</span> context.getLoadBalancer().chooseServer(<span class="literal">null</span>);</span><br><span class="line"><span class="type">URI</span> <span class="variable">newUri</span> <span class="operator">=</span> context.reconstructURIWithServer(server, originalUrl);</span><br><span class="line"></span><br><span class="line"><span class="comment">// do what ever you want with newUri</span></span><br></pre></td></tr></table></figure></div>
+<h2 id="注意点"><a class="header-anchor" href="#注意点"></a>注意点</h2>
+<p>其实上述流程还有一些缺陷，需要在具体实现中注意：</p>
+<ul>
+<li>在步骤 #3 中，Server 2 宕机导致请求失败时，要如何处理？（是否需要类似被动检查中的故障转移？）
+<ul>
+<li>是否要重试？重试是对当前服务还是转发到其它服务？</li>
+<li>是否需要将当前服务标记为不可用？防止 #4 时继续向它发送请求？</li>
+</ul>
+</li>
+<li>Ping 的时间间隔多少合适？间隔太短则会产生大量检测流量，太大则对服务变化不敏感。</li>
+</ul>
+<p>在 Ribbon 中，有 <code>RetryRule</code> 策略，在选择 Server 时，如果发现 <code>server.isAlive = false</code>，则会等待一段时间，期间如果 <code>server.isAlive</code> 变成 true 则继续请求，否则则返回错误。在 PingUrl 检查机制下，其实只可能等待下次 Ping 成功 isAlive 才可能变成 true，所以重试也没有太多实际用处。但如果 Ping 的方式是类似 eureka 这种注册中心通知的机制，则可以发挥作用。</p>
+<p>另外因为 Ribbon 的边界是选择服务器，因此如果是请求结果错误（如连接失败），并不会直接反映到 Ribbon 的 Server 状态。因此如果需要的话，需要自己手工将对应的
+server 的 isAlive 设置成 false 来标记为不可用。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://www.jianshu.com/p/f09fa02a383f">聊聊WebClient的LoadBalance支持</a> 如何用 Ribbon 为 webclient 添加负载均衡</li>
+<li><a href="http://www.gxitsky.com/2019/03/03/springcloud-04-client-loadbalancer-ribbon-1/">Spring Cloud系列(四)：客户端负载均衡 Ribbon</a> 讲解了一些 Ribbon 的使用方法</li>
+<li><a href="https://github.com/Netflix/ribbon/blob/master/ribbon-loadbalancer/src/main/java/com/netflix/loadbalancer/RetryRule.java#L86">RetryRule.java#L86</a> RetryRule 的具体实现</li>
+</ul>
+</div></div><div class="post-main post-comment"><div id="giscus_thread"></div><script src="https://giscus.app/client.js" data-repo="lotabout/lotabout.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU1NTQ0Nw==" data-category="Announcements" data-category-id="DIC_kwDOATmmt84ClmcD" data-mapping="" data-strict="" data-reactions-enabled="0" data-emit-metadata="" data-input-position="" data-theme="" data-lang="zh-CN" data-loading="" crossorigin="" async>
+</script></div></article><link rel="stylesheet" type="text/css" href="/css/third-party/font-awesome/4.5.0/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/lato-font/3.0.0/css/lato-font.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/fancybox/2.1.5/jquery.fancybox.css"><script src="/js/third-party/jquery/2.0.3/jquery.min.js"></script><script src="/js/third-party/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script async src="https://www.googletagmanager.com/gtag/js?id=#{theme.google_analytics}"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-39956831-2');</script></body></html>

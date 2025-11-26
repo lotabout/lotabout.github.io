@@ -1,0 +1,23 @@
+html {
+  font-family: Helvetica, Tahoma, Arial, "Hiragino Sans GB", "Heiti SC", "Microsoft YaHei", "WenQuanYi Micro Hei", Heiti, ubuntu, SimSun, sans-serif;
+}
+
+.content p, .content ol, .content ul {
+  line-height: 1.7;
+}
+
+h2, h3 {
+  margin: initial;
+}
+
+
+h2 {
+  border-bottom: 1px solid var(--table-border-color);
+  font-weight: 500;
+  margin: 1em 0 .2em;
+}
+
+hr {
+  border: none;
+  border-bottom: 1px solid var(--table-border-color);
+}

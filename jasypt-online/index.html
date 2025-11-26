@@ -1,0 +1,240 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="OCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot; /&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width&quot; /&gt;
+    &lt;title&gt;Jasypt 在线加解密&lt;/title&gt;
+    &lt;script src=&quot;/js/third-party/jquery/2.0.3/jquery.min.js&quot;&gt;&lt;/script&gt;
+    &lt;style type=&quot;text/css&quot; media=&quot;screen&quot;&gt;
+body {
+  margin: 0;
+  padding: 0;
+}
+.content {
+  max-width: 980px;
+  margin: 24px auto;
+}
+.main {
+  display: flex;
+}
+#plain {
+  flex: 0 1 50%;
+  min-height: 200px;
+}
+#buttons {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+}
+#buttons &gt; * {
+  margin: 8px;
+}
+#encrypted{
+  flex: 0 1 50%;
+}
+    &lt;/style&gt;
+    &lt;script charset=&quot;utf-8&quot;&gt;
+      $(document).ready(function () {
+        $('#encrypt').click(function() {
+          var source = $('#plain').val();
+          var password = $('#password').val();
+          if (password === &quot;&quot;) {
+            alert(&quot;密码不能为空&quot;)
+            return;
+          }
+
+          $('#encrypt').prop('disabled', true);
+          $.ajax({
+            url: &quot;https://1922599053516752.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/jasypt-service/jasypt/encrypt&quot;,
+            method: 'POST',
+            data: JSON.stringify({'password': password, 'text': source}),
+            contentType: &quot;application/json&quot;,
+            dataType: &quot;json&quot;,
+          }).done(function(data) {
+            $('#encrypted').val(data.data)
+          })
+          .fail(function(xhr) {
+            $('#encrypted').val(&quot;加密失败&quot;)
+          })
+          .always(function() {
+            $('#encrypt').prop('disabled', false);
+          });
+        });
+
+        $('#decrypt').click(function() {
+          var encrypted = $('#encrypted').val();
+          var password = $('#password').val();
+          if (password === &quot;&quot;) {
+            alert(&quot;密码不能为空&quot;)
+            return;
+          }
+
+          $('#decrypt').prop('disabled', true);
+          $.ajax({
+            url: &quot;https://1922599053516752.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/jasypt-service/jasypt/decrypt&quot;,
+            method: 'POST',
+            data: JSON.stringify({'password': password, 'text': encrypted}),
+            contentType: &quot;application/json&quot;,
+            dataType: &quot;json&quot;,
+          }).done(function(data) {
+            $('#plain').val(data.data)
+          })
+          .fail(function(xhr) {
+            $('#plain').val(&quot;解密失败&quot;)
+          })
+          .always(function() {
+            $('#decrypt').prop('disabled', false);
+          });
+        });
+      });
+    &lt;/script&gt;
+  &lt;/head&gt;
+  &lt;body&gt;
+    &lt;div class=&quot;content&quot;&gt;
+      &lt;h1&gt;Jasypt 在线加解密工具&lt;/h1&gt;
+      &lt;p&gt;注意：服务托管在阿里函数计算平台，首次访问需要等待较长时间（10 秒左右）
+      "><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title> | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 7.1.1"></head><body><header class="wrapper header"><div class="container blog-title"><a class="title" id="logo" href="/.">三点水</a><span class="subtitle">不积小流，无以成江海</span><label id="toggle-menu" for="menu" onclick><i class="fa fa-bars"></i></label></div><input id="menu" type="checkbox"><div class="container nav-items"><a class="sidebar-nav-item" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></div></header><article class="wrapper"><div class="post-entry"><div class="post"><div class="container post-header"><h1></h1></div><div class="container post-content"><!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+    <title>Jasypt 在线加解密</title>
+    <script src="/js/third-party/jquery/2.0.3/jquery.min.js"></script>
+    <style type="text/css" media="screen">
+body {
+  margin: 0;
+  padding: 0;
+}
+.content {
+  max-width: 980px;
+  margin: 24px auto;
+}
+.main {
+  display: flex;
+}
+#plain {
+  flex: 0 1 50%;
+  min-height: 200px;
+}
+#buttons {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+}
+#buttons > * {
+  margin: 8px;
+}
+#encrypted{
+  flex: 0 1 50%;
+}
+    </style>
+    <script charset="utf-8">
+      $(document).ready(function () {
+        $('#encrypt').click(function() {
+          var source = $('#plain').val();
+          var password = $('#password').val();
+          if (password === "") {
+            alert("密码不能为空")
+            return;
+          }
+
+          $('#encrypt').prop('disabled', true);
+          $.ajax({
+            url: "https://1922599053516752.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/jasypt-service/jasypt/encrypt",
+            method: 'POST',
+            data: JSON.stringify({'password': password, 'text': source}),
+            contentType: "application/json",
+            dataType: "json",
+          }).done(function(data) {
+            $('#encrypted').val(data.data)
+          })
+          .fail(function(xhr) {
+            $('#encrypted').val("加密失败")
+          })
+          .always(function() {
+            $('#encrypt').prop('disabled', false);
+          });
+        });
+
+        $('#decrypt').click(function() {
+          var encrypted = $('#encrypted').val();
+          var password = $('#password').val();
+          if (password === "") {
+            alert("密码不能为空")
+            return;
+          }
+
+          $('#decrypt').prop('disabled', true);
+          $.ajax({
+            url: "https://1922599053516752.cn-shanghai.fc.aliyuncs.com/2016-08-15/proxy/jasypt-service/jasypt/decrypt",
+            method: 'POST',
+            data: JSON.stringify({'password': password, 'text': encrypted}),
+            contentType: "application/json",
+            dataType: "json",
+          }).done(function(data) {
+            $('#plain').val(data.data)
+          })
+          .fail(function(xhr) {
+            $('#plain').val("解密失败")
+          })
+          .always(function() {
+            $('#decrypt').prop('disabled', false);
+          });
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <div class="content">
+      <h1>Jasypt 在线加解密工具</h1>
+      <p>注意：服务托管在阿里函数计算平台，首次访问需要等待较长时间（10 秒左右）
+      </p>
+      <div class="main">
+        <textarea id="plain" class="plain" placeholder="原文"></textarea>
+        <div id="buttons">
+          <input id="password" placeholder="密码">
+          <button id="encrypt">加密 &raquo;</button>
+          <button id="decrypt">&laquo; 解密</button>
+        </div>
+        <textarea id="encrypted" class="encrypted" placeholder="密文"></textarea>
+      </div>
+      <h2>Spring 中使用 Jasypt</h2>
+
+      <p>Spring 的配置文件中会有一些敏感信息，如数据库密码，因此有时我们希望将敏感信息加密，Jasypt 就是其中比较方便的工具。</p>
+      <p>Jasypt 是一个 jar 包，实现了常用的一些加解密算法，在 Spring 中使用一般会用相应的 Spring starter 包，在 <code>pom.xml</code> 中加入依赖</p>
+
+      <pre>
+&lt;dependency&gt;
+  &lt;groupId&gt;com.github.ulisesbocchio&lt;/groupId&gt;
+  &lt;artifactId&gt;jasypt-spring-boot-starter&lt;/artifactId&gt;
+  &lt;version&gt;2.1.1&lt;/version&gt;
+&lt;/dependency&gt;
+      </pre>
+
+      <p>接下来就可以在 <code>application.yaml</code> 中指定加密的配置，例如 <code>spring.datasource.password: pass@1</code>，则可以加密如下：</p>
+
+      <pre>
+spring.datasource.password: ENC(o9FgF1JelkE/l2TrOd0iHg==)
+jasypt.encryptor.password: secret
+      </pre>
+
+      <p>具体来说，加密的内容需要用 <code>ENC(..)</code> 括起来，加密用的密码通过 <code>jasypt.encryptor.password</code> 指定。</p>
+      <p>因为必须要解密，密码就需要放在配置文件里，或者放在代码中：</p>
+
+      <pre>
+System.setProperty("jasypt.encryptor.password", ConstantValue.JASYPT_ENCRYPTOR_PASSWORD);
+      </pre>
+
+      <p>当然也可以把密码放在环境变量中，不过总体而言，客户端加密是个防君子不防小人的方法。</p>
+
+    </div>
+  </body>
+</html>
+</div></div></div><div class="post-main post-comment"><div id="giscus_thread"></div><script src="https://giscus.app/client.js" data-repo="lotabout/lotabout.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU1NTQ0Nw==" data-category="Announcements" data-category-id="DIC_kwDOATmmt84ClmcD" data-mapping="" data-strict="" data-reactions-enabled="0" data-emit-metadata="" data-input-position="" data-theme="" data-lang="zh-CN" data-loading="" crossorigin="" async>
+</script></div></article><link rel="stylesheet" type="text/css" href="/css/third-party/font-awesome/4.5.0/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/lato-font/3.0.0/css/lato-font.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/fancybox/2.1.5/jquery.fancybox.css"><script src="/js/third-party/jquery/2.0.3/jquery.min.js"></script><script src="/js/third-party/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script async src="https://www.googletagmanager.com/gtag/js?id=#{theme.google_analytics}"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-39956831-2');</script></body></html>

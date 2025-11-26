@@ -1,0 +1,121 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="ockquote&gt;
+&lt;p&gt;Kubernetes gives Pods their own IP addresses and a single DNS name for a set
+of Pods, and can load-balance across them."><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Kubernetes Service iptables 网络通信验证 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 7.1.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-noise-link" href="/tags/iptables/" rel="tag">iptables</a><a class="post-tag-noise-link" href="/tags/k8s/" rel="tag">k8s</a><a class="post-tag-noise-link" href="/tags/kube-proxy/" rel="tag">kube-proxy</a><a class="post-tag-noise-link" href="/tags/service/" rel="tag">service</a></div><div class="post-time">2022-01-24</div></div></div><div class="container post-header"><h1>Kubernetes Service iptables 网络通信验证</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E9%85%8D%E7%BD%AE"><span class="toc-number">1.</span> <span class="toc-text">实验配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#dns"><span class="toc-number">2.</span> <span class="toc-text">DNS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#iptables-%E8%BD%AC%E5%8F%91"><span class="toc-number">3.</span> <span class="toc-text">iptables 转发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#iptables-%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1"><span class="toc-number">4.</span> <span class="toc-text">iptables 负载均衡</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#snat"><span class="toc-number">5.</span> <span class="toc-text">SNAT</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">7.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><blockquote>
+<p>Kubernetes gives Pods their own IP addresses and a single DNS name for a set
+of Pods, and can load-balance across them.</p>
+</blockquote>
+<p>K8s <a href="https://kubernetes.io/docs/concepts/services-networking/service/">Service</a>
+会为每个 Pod 都设置一个它自己的 IP，并为一组 Pod 提供一个统一的 DNS 域名，还可以提供在它们间做负载均衡的能力。这篇文章会对 kube-proxy 的 iptables 模式内部的机制做一个验证。大体上涉及的内容如下：</p>
+<img src="/2022/Kubernetes-Service-Model-Verification/service.svg" class="" title="Service with IP tables">
+<h2 id="实验配置"><a class="header-anchor" href="#实验配置"></a>实验配置</h2>
+<p>创建一个 Service，配置如下：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Service</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">creationTimestamp:</span> <span class="string">&quot;2022-01-23T02:32:38Z&quot;</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">spring-test</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">default</span></span><br><span class="line">  <span class="attr">resourceVersion:</span> <span class="string">&quot;94418&quot;</span></span><br><span class="line">  <span class="attr">uid:</span> <span class="string">cdaab6bc-a518-4235-a161-a4cae6f564cf</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">clusterIP:</span> <span class="number">10.1</span><span class="number">.68</span><span class="number">.7</span></span><br><span class="line">  <span class="attr">clusterIPs:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="number">10.1</span><span class="number">.68</span><span class="number">.7</span></span><br><span class="line">  <span class="attr">externalTrafficPolicy:</span> <span class="string">Cluster</span></span><br><span class="line">  <span class="attr">internalTrafficPolicy:</span> <span class="string">Cluster</span></span><br><span class="line">  <span class="attr">ipFamilies:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">IPv4</span></span><br><span class="line">  <span class="attr">ipFamilyPolicy:</span> <span class="string">SingleStack</span></span><br><span class="line">  <span class="attr">ports:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">nodePort:</span> <span class="number">31080</span></span><br><span class="line">    <span class="attr">port:</span> <span class="number">8080</span></span><br><span class="line">    <span class="attr">protocol:</span> <span class="string">TCP</span></span><br><span class="line">    <span class="attr">targetPort:</span> <span class="number">8080</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">spring-test</span></span><br><span class="line">  <span class="attr">sessionAffinity:</span> <span class="string">None</span></span><br><span class="line">  <span class="attr">type:</span> <span class="string">NodePort</span></span><br><span class="line"><span class="attr">status:</span></span><br><span class="line">  <span class="attr">loadBalancer:</span> &#123;&#125;</span><br></pre></td></tr></table></figure></div>
+<p>创建后的 service 如下：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ k get svc -o wide -A</span><br><span class="line">NAMESPACE     NAME          TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)                  AGE     SELECTOR</span><br><span class="line">default       kubernetes    ClusterIP   10.1.0.1       &lt;none&gt;        443/TCP                  2d22h   &lt;none&gt;</span><br><span class="line">default       sender        NodePort    10.1.177.169   &lt;none&gt;        8081:31081/TCP           46h     app=sender</span><br><span class="line">default       spring-test   NodePort    10.1.68.7      &lt;none&gt;        8080:31080/TCP           2d4h    app=spring-test</span><br><span class="line">kube-system   kube-dns      ClusterIP   10.1.0.10      &lt;none&gt;        53/UDP,53/TCP,9153/TCP   2d22h   k8s-app=kube-dns</span><br></pre></td></tr></table></figure></div>
+<p>注意其中的 spring-test 和 kube-dns 两项，后面会用到。另外 service 对应的 pod
+IP 如下：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ k get ep</span><br><span class="line">NAME          ENDPOINTS                         AGE</span><br><span class="line">kubernetes    192.168.50.48:6443                2d23h</span><br><span class="line">sender        10.244.1.7:8080,10.244.2.7:8080   47h</span><br><span class="line">spring-test   10.244.1.3:8080,10.244.2.3:8080   2d4h</span><br></pre></td></tr></table></figure></div>
+<h2 id="dns"><a class="header-anchor" href="#dns"></a>DNS</h2>
+<p>K8s 会为 Service 创建一个 <a href="https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#a-aaaa-records">DNS</a>
+域名，格式为 <code>&lt;svc&gt;.&lt;namespace&gt;.svc.&lt;cluster-domain&gt;</code>，例如我们创建的
+<code>spring-test</code> Service 则会有
+<code>spring-test.default.svc.cluster.local</code><sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup> 域名。</p>
+<p>我们首先进入 pod，看一下 <code>/etc/resolv.conf</code> 文件，关于域名解析的配置：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nameserver 10.1.0.10</span><br><span class="line">search default.svc.cluster.local svc.cluster.local cluster.local</span><br><span class="line">options ndots:5</span><br></pre></td></tr></table></figure></div>
+<ul>
+<li>
+<p>这里的 <code>10.1.0.10</code> 是 kube-dns service 的 cluster IP</p>
+</li>
+<li>
+<p>文件中配置了多个 search 域，因此我们写 <code>spring-test</code> 或
+<code>spring-test.default</code> 或 <code>spring-test.default.svc</code> 都是可以解析的，另外注意解析后的 IP 也不是具体哪个 POD 的地址，而是为 Service 创建的虚拟地址
+ClusterIP。</p>
+  <div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">root@spring-test-77d9d6dcb5-m9mvr:/# nslookup spring-test</span><br><span class="line">Server:         10.1.0.10</span><br><span class="line">Address:        10.1.0.10#53</span><br><span class="line"></span><br><span class="line">Name:   spring-test.default.svc.cluster.local</span><br><span class="line">Address: 10.1.68.7</span><br><span class="line"></span><br><span class="line">root@spring-test-77d9d6dcb5-m9mvr:/# nslookup spring-test.default</span><br><span class="line">Server:         10.1.0.10</span><br><span class="line">Address:        10.1.0.10#53</span><br><span class="line"></span><br><span class="line">Name:   spring-test.default.svc.cluster.local</span><br><span class="line">Address: 10.1.68.7</span><br><span class="line"></span><br><span class="line">root@spring-test-77d9d6dcb5-m9mvr:/# nslookup spring-test.default.svc</span><br><span class="line">Server:         10.1.0.10</span><br><span class="line">Address:        10.1.0.10#53</span><br><span class="line"></span><br><span class="line">Name:   spring-test.default.svc.cluster.local</span><br><span class="line">Address: 10.1.68.7</span><br></pre></td></tr></table></figure></div>
+</li>
+<li>
+<p><code>ndots:5</code> 指的是如果域名中的 <code>.</code> 大于等于 5 个，则不走 search 域，目的是减少常规域名的解析次数<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup></p>
+</li>
+</ul>
+<h2 id="iptables-转发"><a class="header-anchor" href="#iptables-转发"></a>iptables 转发</h2>
+<p>DNS 里创建的记录解决了域名到 ClusterIP 的转换问题，发送到 ClusterIP 的请求，如何转发到对应的 POD 里呢？K8s Service 有几种实现方式，这里验证的是 iptables 的实现方式：kube-proxy 会监听 etcd 中关于 k8s 的事件，并动态地对 iptables 做配置，最终由 iptables 来完成转发。先看看跟这个 Service 相关的规则如下：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">0.  -A PREROUTING -j KUBE-SERVICES</span><br><span class="line">1.  -A KUBE-NODEPORTS -p tcp -m tcp --dport 31080 -j KUBE-SVC-S</span><br><span class="line">2.  -A KUBE-SEP-A -s 10.244.2.3/32 -j KUBE-MARK-MASQ</span><br><span class="line">3.  -A KUBE-SEP-A -p tcp -m tcp -j DNAT --to-destination 10.244.2.3:8080</span><br><span class="line">4.  -A KUBE-SEP-B -s 10.244.1.3/32 -j KUBE-MARK-MASQ</span><br><span class="line">5.  -A KUBE-SEP-B -p tcp -m tcp -j DNAT --to-destination 10.244.1.3:8080</span><br><span class="line">6.  -A KUBE-SERVICES -d 10.1.68.7/32 -p tcp -m tcp --dport 8080 -j KUBE-SVC-S</span><br><span class="line">7.  -A KUBE-SVC-S ! -s 10.244.0.0/16 -d 10.1.68.7/32 -p tcp -m tcp --dport 8080 -j KUBE-MARK-MASQ</span><br><span class="line">8.  -A KUBE-SVC-S -p tcp -m tcp --dport 31080 -j KUBE-MARK-MASQ</span><br><span class="line">9.  -A KUBE-SVC-S -m statistic --mode random --probability 0.50000000000 -j KUBE-SEP-B</span><br><span class="line">10. -A KUBE-SVC-S -j KUBE-SEP-A</span><br></pre></td></tr></table></figure></div>
+<p>我们先用 <code>iptables-save</code> 打印出所有的规则，筛选出和 <code>spring-test</code> service
+相关的规则，删除了一些 comment，并对名字做了简化。可以看到有这么几类：</p>
+<ul>
+<li><code>KUBE-NODEPORTS</code>，这类规则用来将发送到 NodePort 的报文转到 <code>KUBE-SVC-*</code></li>
+<li><code>KUBE-SERVICES</code>：是识别目标地址为 ClusterIP(<code>10.1.68.7</code>)，命中的报文转到
+<code>KUBE-SVC-*</code> 做处理</li>
+<li><code>KUBE-SVC</code> 的作用是做负载均衡，将请求分配到 <code>KUBE-SEP</code> 中</li>
+<li><code>KUBE-SEP</code> 通过 DNAT 替换目标地址为 Pod IP，转发到具体的 POD 中</li>
+</ul>
+<p>另外经常看到 <code>-j KUBE-MARK-MASQ</code>，它的作用是在请求里加上 mark，在
+<code>POSTROUTING</code> 规则中做 SNAT，这点后面再细说。</p>
+<p>我们开启 iptables 的 trace 模式<sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup>，并在其中一个 pod 发送一个请求，检查 TRACE 中规则的命中情况（由于输出特别多，这里挑选了重要的输出并做了精简）：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">0:  nat:PREROUTING    IN=cni0 OUT=           SRC=10.244.1.7 DST=10.1.68.7  DPT=8080</span><br><span class="line">6:  nat:KUBE-SERVICES IN=cni0 OUT=           SRC=10.244.1.7 DST=10.1.68.7  DPT=8080</span><br><span class="line">10: nat:KUBE-SVC-S    IN=cni0 OUT=           SRC=10.244.1.7 DST=10.1.68.7  DPT=8080</span><br><span class="line">3:  nat:KUBE-SEP-A    IN=cni0 OUT=           SRC=10.244.1.7 DST=10.1.68.7  DPT=8080</span><br><span class="line">    mangle:FORWARD    IN=cni0 OUT=flannel.1  SRC=10.244.1.7 DST=10.244.2.3 DPT=8080 </span><br></pre></td></tr></table></figure></div>
+<ul>
+<li>在 <code>PREROUTING</code> 时，进入第 6 条进判定</li>
+<li><code>KUBE-SERVICES</code> 判断目标地址为 <code>10.1.68.7</code> 且目标端口为 <code>8080</code>，于是跳转进入 <code>KUBE-SVC-S</code> 链的判断</li>
+<li><code>KUBE-SVC-S</code> 有多条规则，从日志看最终是从第 10 条退出，进入 <code>KUBE-SEP-A</code> 链</li>
+<li><code>KUBE-SEP-A</code> 最终命中第 3 条规则退出，但此时会进行 DNAT 转换目标地址</li>
+<li>下一条日志显示，<code>DST</code> 目标地址已经变成 pod 地址 <code>10.244.2.3</code> 了</li>
+</ul>
+<p>类似的，如果我们是通过 NodePort 来访问 Service，则 Trace 日志如下：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">0: nat:PREROUTING:      IN=eth0 OUT=     SRC=192.168.50.135 DST=192.168.50.238 DPT=31080</span><br><span class="line">6: nat:KUBE-SERVICES:   IN=eth0 OUT=     SRC=192.168.50.135 DST=192.168.50.238 DPT=31080</span><br><span class="line">1: nat:KUBE-NODEPORTS:  IN=eth0 OUT=     SRC=192.168.50.135 DST=192.168.50.238 DPT=31080</span><br><span class="line">9: nat:KUBE-SVC-S:      IN=eth0 OUT=     SRC=192.168.50.135 DST=192.168.50.238 DPT=31080</span><br><span class="line">9: nat:KUBE-SVC-S:      IN=eth0 OUT=     SRC=192.168.50.135 DST=192.168.50.238 DPT=31080</span><br><span class="line">5: nat:KUBE-SEP-A:      IN=eth0 OUT=     SRC=192.168.50.135 DST=192.168.50.238 DPT=31080</span><br><span class="line">   mangle:FORWARD:      IN=eth0 OUT=cni0 SRC=192.168.50.135 DST=10.244.1.3     DPT=8080</span><br></pre></td></tr></table></figure></div>
+<h2 id="iptables-负载均衡"><a class="header-anchor" href="#iptables-负载均衡"></a>iptables 负载均衡</h2>
+<p>上一节我们比较关注 iptables 转发的内容，那么如何做负载均衡？这部分是比较纯粹的
+iptables 知识<sup class="footnote-ref"><a href="#fn4" id="fnref4">[4]</a></sup>:</p>
+<p>首先：iptables 对于规则的解析是严格顺序的，所以如果只是单纯列出两个条目，则会永远命中第一条：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">-A KUBE-SVC-S -j KUBE-SEP-A</span><br><span class="line">-A KUBE-SVC-S -j KUBE-SEP-B</span><br></pre></td></tr></table></figure></div>
+<p>于是，我们需要第一条规则在某些条件下不命中。这样 iptables 就有机会执行后面的规则。iptables 提供了两种方法，第一种是有随机数，也是上一节我们看到的：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">-A KUBE-SVC-S -m statistic --mode random --probability 0.50000000000 -j KUBE-SEP-B</span><br></pre></td></tr></table></figure></div>
+<p>这条规则在执行时，iptables 会随机生成一个数，并以 <code>probability</code> 的概率命中当前规则。换句话说，第一条命中的概率是 <code>p</code>，则第二条规则就是 <code>1-p</code>。如果有 3 个副本，则会类似下面这样的规则，大家可以计算下最后三个 Pod 是不是平均分配：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">-A KUBE-SVC-S --mode random --probability 0.33333333349 -j KUBE-SEP-A</span><br><span class="line">-A KUBE-SVC-S --mode random --probability 0.50000000000 -j KUBE-SEP-B</span><br><span class="line">-A KUBE-SVC-S -j KUBE-SEP-C</span><br></pre></td></tr></table></figure></div>
+<p>另外一种模式是 round-robin，但是 kubernetes 的 iptables 模式不支持，这里就不细说了。猜想 kubernetes iptables 模式下不支持的原因是虽然单机 iptables 能支持
+round-robin，但多机模式下，无法做到全局的 round-robin。</p>
+<h2 id="snat"><a class="header-anchor" href="#snat"></a>SNAT</h2>
+<p>前面我们提到 KUBE 系列的规则经常看到 <code>-j KUBE-MARK-MASQ</code>，和它相关的规则有这些：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">-A KUBE-MARK-MASQ -j MARK --set-xmark 0x4000/0x4000</span><br><span class="line">-A KUBE-POSTROUTING -m mark ! --mark 0x4000/0x4000 -j RETURN</span><br><span class="line">-A KUBE-POSTROUTING -j MARK --set-xmark 0x4000/0x0</span><br><span class="line">-A KUBE-POSTROUTING -m comment --comment &quot;kubernetes service traffic requiring SNAT&quot; -j MASQUERADE</span><br></pre></td></tr></table></figure></div>
+<p>首先 <code>KUBE-MARK-MASQ</code> 的作用是把报文打上 <code>0x4000/0x4000</code> 的标记，在
+<code>KUBE-POSTROUTING</code> 时，如果报文中包含这个标记，会执行 <code>-j MASQUERADE</code> 操作，而这个操作的作用就是做源地址转换（SNAT）。那 SNAT 是什么，为什么要做 SNAT 呢？</p>
+<p>这里引用<a href="https://www.asykim.com/blog/deep-dive-into-kubernetes-external-traffic-policies">这篇文章</a>里的图做说明：</p>
+<img src="/2022/Kubernetes-Service-Model-Verification/SNAT.svg" class="" title="SNAT or Not">
+<p>如果没有 SNAT，被转发到 POD 的请求返回时，会尝试把请求直接返回给 Client，我们知道一个 TCP 连接的依据是(src_ip, src_port, dst_ip, dst_port)，现在client 在等待 <code>eIP/NP</code> 返回的报文，等到的却是 <code>pod IP</code> 的返回，client 不认这个报文。换句话说，经过 proxy 的流量都正常情况下都应该原路返回才能工作。</p>
+<p>在一些情况下可能希望关闭 SNAT，K8S 提供 <code>externalTrafficPolicy: Local</code> 的配置项，但流量的流转也会发生变化，这里不深入。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>这篇文章和上一篇<a href="https://lotabout.me/2022/Flannel-Verification/">Flannel 网络通信验证</a>类似，都是尝试搭建环境，在学习 kube-proxy 工作机制的同时，对 kube-proxy 的产出
+iptables 做一些验证。文章中验证了这些内容：</p>
+<ol>
+<li>验证了 service ClusterIP 和 domain 的创建，及 pod 中 <code>/etc/resolv.conf</code> 中搜索域的设置</li>
+<li>验证了 kube-proxy 生成的 iptables 规则，并验证请求在这些规则中的流转</li>
+<li>学习了 iptables 负载均衡的工作机制</li>
+<li>了解了 SNAT 是什么，kube-proxy 需要做 SNAT 的原因</li>
+</ol>
+<p>这篇文章的信息量不大，希望读者也撸起袖子，实打实地做一些验证，能让我们对
+kube-proxy 涉及的 iptables 的操作有更深刻的理解。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://sookocheff.com/post/kubernetes/understanding-kubernetes-networking-model/">A Guide to the Kubernetes Networking Model</a> 讲解了 K8S 的网络模型，有一些（动）图描述网络包的走向</li>
+<li><a href="https://serenafeng.github.io/2020/03/26/kube-proxy-in-iptables-mode/">Deep Dive kube-proxy with iptables mode</a> 深挖 kube-proxy 在 iptables 模式下的工作原理，比本文更深入</li>
+<li><a href="https://kubernetes.io/docs/tasks/debug-application-cluster/debug-service/">Debug Service</a> K8S 官方文档，讲解 Service 不工作时常见的 Debug 方法</li>
+</ul>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p><code>cluster.local</code> 是可以改的，但是比较麻烦，参考：<a href="https://stackoverflow.com/a/66106716">https://stackoverflow.com/a/66106716</a> <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p>参考 <a href="https://hansedong.github.io/2018/11/20/9/">https://hansedong.github.io/2018/11/20/9/</a> <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn3" class="footnote-item"><p><a href="https://www.opensourcerers.org/2016/05/27/how-to-trace-iptables-in-rhel7-centos7/">https://www.opensourcerers.org/2016/05/27/how-to-trace-iptables-in-rhel7-centos7/</a> <a href="#fnref3" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn4" class="footnote-item"><p><a href="https://scalingo.com/blog/iptables">Turning IPTables into a TCP load balancer for fun and profit</a> <a href="#fnref4" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+</div></div><div class="post-main post-comment"><div id="giscus_thread"></div><script src="https://giscus.app/client.js" data-repo="lotabout/lotabout.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU1NTQ0Nw==" data-category="Announcements" data-category-id="DIC_kwDOATmmt84ClmcD" data-mapping="" data-strict="" data-reactions-enabled="0" data-emit-metadata="" data-input-position="" data-theme="" data-lang="zh-CN" data-loading="" crossorigin="" async>
+</script></div></article><link rel="stylesheet" type="text/css" href="/css/third-party/font-awesome/4.5.0/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/lato-font/3.0.0/css/lato-font.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/fancybox/2.1.5/jquery.fancybox.css"><script src="/js/third-party/jquery/2.0.3/jquery.min.js"></script><script src="/js/third-party/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script async src="https://www.googletagmanager.com/gtag/js?id=#{theme.google_analytics}"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-39956831-2');</script></body></html>

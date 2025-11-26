@@ -1,0 +1,189 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="本文对 Kubernetes 使用 Flannel + vxlan 的网络通信做一个验证，并尝试说明其中使用的一些机制。整体的流程如下图："><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Flannel 网络通信验证 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 7.1.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-noise-link" href="/tags/flannel/" rel="tag">flannel</a><a class="post-tag-noise-link" href="/tags/k8s/" rel="tag">k8s</a><a class="post-tag-noise-link" href="/tags/network/" rel="tag">network</a></div><div class="post-time">2022-01-23</div></div></div><div class="container post-header"><h1>Flannel 网络通信验证</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E9%AA%8C%E9%85%8D%E7%BD%AE"><span class="toc-number">1.</span> <span class="toc-text">实验配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#pod-%E4%B8%8E%E8%99%9A%E6%8B%9F%E7%BD%91%E5%8D%A1"><span class="toc-number">2.</span> <span class="toc-text">Pod 与虚拟网卡</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#pod-%E7%9A%84%E7%BD%91%E5%8D%A1%E5%9C%A8%E5%93%AA%EF%BC%9F"><span class="toc-number">2.1.</span> <span class="toc-text">Pod 的网卡在哪？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#vet-%E8%99%9A%E6%8B%9F%E7%BD%91%E5%8D%A1"><span class="toc-number">2.2.</span> <span class="toc-text">VET 虚拟网卡</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%99%9A%E6%8B%9F%E7%BD%91%E5%8D%A1%E4%B8%8E%E6%A1%A5%E6%8E%A5"><span class="toc-number">2.3.</span> <span class="toc-text">虚拟网卡与桥接</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%91%E9%80%81%E6%96%B9"><span class="toc-number">3.</span> <span class="toc-text">发送方</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#vxlan"><span class="toc-number">3.1.</span> <span class="toc-text">vxlan</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A5%E6%94%B6%E6%96%B9"><span class="toc-number">4.</span> <span class="toc-text">接收方</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#flannel-%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="toc-number">5.</span> <span class="toc-text">Flannel 的作用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">7.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>本文对 Kubernetes 使用 Flannel + vxlan 的网络通信做一个验证，并尝试说明其中使用的一些机制。整体的流程如下图：</p>
+<img src="/2022/Flannel-Verification/Flannel-Overall.svg" class="" title="Flannel overall">
+<p>Kubernetes 规定了网络模型，要求<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>如下，flannel 只是其中一种实现。</p>
+<ol>
+<li>任意两个 pod 之间其实是可以直接通信的，无需经过显式地使用 NAT 来接收数据和地址的转换；</li>
+<li>node 与 pod 之间是可以直接通信的，无需使用明显的地址转换；</li>
+<li>pod 看到自己的 IP 跟别人看见它所用的 IP 是一样的，中间不能经过转换。</li>
+</ol>
+<h2 id="实验配置"><a class="header-anchor" href="#实验配置"></a>实验配置</h2>
+<p>使用 3 个虚拟机搭建的 Kubernetes 1.23 集群，其中 Flannel 版本为 0.16.1. 上面起了两个服务，分别为两副本。Pod 信息如下：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ k get pods -o wide</span><br><span class="line">NAME                           READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES</span><br><span class="line">sender-779db554f9-d796q        1/1     Running   0          83s     10.244.2.7   centos73   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">sender-779db554f9-kr69b        1/1     Running   0          84s     10.244.1.7   centos72   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">spring-test-77d9d6dcb5-2cgs5   1/1     Running   0          5h28m   10.244.1.3   centos72   &lt;none&gt;           &lt;none&gt;</span><br><span class="line">spring-test-77d9d6dcb5-m9mvr   1/1     Running   0          5h28m   10.244.2.3   centos73   &lt;none&gt;           &lt;none&gt;</span><br></pre></td></tr></table></figure></div>
+<p>实验里会尝试说明 <code>sender-779db554f9-kr69b</code>(<code>10.244.1.7</code>) 到
+<code>spring-test-77d9d6dcb5-m9mvr</code>(<code>10.244.2.3</code>)之间的网络通信。</p>
+<h2 id="pod-与虚拟网卡"><a class="header-anchor" href="#pod-与虚拟网卡"></a>Pod 与虚拟网卡</h2>
+<p>首先要说明的是 Pod 里看到的网卡，在宿主机上是如何实现的，这部分知识强烈推荐这篇文章：<a href="https://dustinspecker.com/posts/how-do-kubernetes-and-docker-create-ip-addresses/">How Do Kubernetes and Docker Create IP Addresses?!</a>。具体来说，是要确认下面这部分内容：</p>
+<img src="/2022/Flannel-Verification/pod-interface-bridge.svg" class="" title="Pod and VTEP">
+<h3 id="pod-的网卡在哪？"><a class="header-anchor" href="#pod-的网卡在哪？"></a>Pod 的网卡在哪？</h3>
+<p>首先，我们进入 <code>sender-779db554f9-kr69b</code> 所在 pod，看到网卡信息如下（省略了
+loopback）：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">root@sender-779db554f9-kr69b:/# ifconfig</span><br><span class="line">eth0: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1450</span><br><span class="line">        inet 10.244.1.7  netmask 255.255.255.0  broadcast 10.244.1.255</span><br><span class="line">        ether 22:5e:27:43:63:fa  txqueuelen 0  (Ethernet)</span><br><span class="line">...</span><br></pre></td></tr></table></figure></div>
+<p>注意 pod 的 IP 地址和 MAC 地址，之后我们在 centos71 机器上列出所有网卡信息：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos72 ~]$ ip link</span><br><span class="line">1: lo: &lt;LOOPBACK,UP,LOWER_UP&gt; mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000</span><br><span class="line">    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00</span><br><span class="line">2: eth0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1500 qdisc pfifo_fast state UP mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether 52:54:00:a0:f0:57 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">3: docker0: &lt;NO-CARRIER,BROADCAST,MULTICAST,UP&gt; mtu 1500 qdisc noqueue state DOWN mode DEFAULT group default</span><br><span class="line">    link/ether 02:42:19:9e:c1:e1 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">4: flannel.1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue state UNKNOWN mode DEFAULT group default</span><br><span class="line">    link/ether f2:17:d1:67:5c:94 brd ff:ff:ff:ff:ff:ff</span><br><span class="line">5: cni0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue state UP mode DEFAULT group default qlen 1000</span><br><span class="line">    link/ether 0a:07:55:0f:84:7f brd ff:ff:ff:ff:ff:ff</span><br><span class="line">7: veth45885375@if3: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue master cni0 state UP mode DEFAULT group default</span><br><span class="line">    link/ether a6:f6:90:57:ea:33 brd ff:ff:ff:ff:ff:ff link-netnsid 1</span><br><span class="line">11: veth8360c992@if3: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue master cni0 state UP mode DEFAULT group default</span><br><span class="line">    link/ether 26:73:c7:95:d2:0f brd ff:ff:ff:ff:ff:ff link-netnsid 2</span><br></pre></td></tr></table></figure></div>
+<p>并没有发现 Pod 里使用的这张虚拟网卡（MAC 地址没有匹配上的）。发现不了的原因是
+Kubernetes/Docker 等虚拟化方案，本质上是用 namespace/cgroups 对资源进行隔离，
+Pod 里使用的虚拟网卡，其实在另一个网络 namespace 下，那么如何确认这一点呢？<a href="https://stackoverflow.com/a/62193064">参考这里</a> 需要如下步骤：</p>
+<ol>
+<li>
+<p>查找 pod 对应的 docker container id（这里找的是 k8s 起的 pause container）:</p>
+ <div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ sudo docker ps --format &#x27;&#123;&#123;.ID&#125;&#125; &#123;&#123;.Names&#125;&#125; &#123;&#123;.Image&#125;&#125;&#x27;</span><br><span class="line">7f780a596b66 k8s_app_sender-779db554f9-kr69b_default_f8c7cac8-680a-45ad-a091-2b8ada73d289_0 baobao:5000/jz/sender</span><br><span class="line">d7226b120121 k8s_POD_sender-779db554f9-kr69b_default_f8c7cac8-680a-45ad-a091-2b8ada73d289_0 registry.aliyuncs.com/google_containers/pause:3.6</span><br><span class="line">...</span><br></pre></td></tr></table></figure></div>
+</li>
+<li>
+<p>这里我们要找的是 <code>k8s_POD</code> 开头的镜像，然后查找它的 pid:</p>
+ <div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ sudo docker inspect --format &#x27;&#123;&#123;.State.Pid&#125;&#125;&#x27; d7226b120121</span><br><span class="line">513</span><br></pre></td></tr></table></figure></div>
+</li>
+<li>
+<p>查询 PID=513 进程对应的 veth 网卡</p>
+ <div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos72 ~]$ sudo nsenter -t 513 -n ip link</span><br><span class="line">...</span><br><span class="line">3: eth0@if11: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue state UP mode DEFAULT group default</span><br><span class="line">    link/ether 22:5e:27:43:63:fa brd ff:ff:ff:ff:ff:ff link-netnsid 0</span><br></pre></td></tr></table></figure></div>
+</li>
+</ol>
+<p>可以看到它的 MAC 地址和 POD 里看到的 MAC 地址是一样的。说明 POD 里使用的网卡就是这一张。</p>
+<h3 id="vet-虚拟网卡"><a class="header-anchor" href="#vet-虚拟网卡"></a>VET 虚拟网卡</h3>
+<p>上文提到每个 POD 的网卡是在自己的 namespace 下的，既然 namespace 是用来做网络隔离的，不同 namespace 下的网络自然是不通的。但是 k8s 又要求“node 与 pod 之间是可以直接通信”，于是我们需要打通两个 namespace，让宿主机和 POD 能直接通信。</p>
+<p>这里使用的技术是 Virtual Ethernet(<a href="https://man7.org/linux/man-pages/man4/veth.4.html">VETH</a>)，
+VETH 是成对出现的，可以理解成创建了一条隧道，两端各是一张网卡，可以分别位于两个 namespace 之中，发往其中一端的包等价于发给另一端，这样就可以打通两个
+namespace。我们看 pod namespace 下的网卡：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos72 ~]$ sudo nsenter -t 513 -n ip link</span><br><span class="line">...</span><br><span class="line">3: eth0@if11: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue state UP mode DEFAULT group default</span><br><span class="line">    link/ether 22:5e:27:43:63:fa brd ff:ff:ff:ff:ff:ff link-netnsid 0</span><br></pre></td></tr></table></figure></div>
+<p>注意到网卡中的 <code>@if11</code> 字样，另一个关键信息是 <code>link-netnsid 0</code>，说明它关联的是
+ID 为 <code>0</code> 的 namespace 下的 ID 为 <code>11</code> 的网卡。我们首先确定
+namespace<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">$ sudo ls /var/run/netns # docker 创建的 namespace 需要软链后才能查到</span><br><span class="line">$ sudo ip netns list</span><br><span class="line">c9e7f13179fa (id: 2)</span><br><span class="line">5cc5ba76a35a (id: 1)</span><br><span class="line">default</span><br></pre></td></tr></table></figure></div>
+<p>虽然没有直接展示，但 <code>0</code> 对应的是默认的 namespace，也就是宿主机的 namespace。再结合之前的输出：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">11: veth8360c992@if3: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue master cni0 state UP mode DEFAULT group default</span><br><span class="line">    link/ether 26:73:c7:95:d2:0f brd ff:ff:ff:ff:ff:ff link-netnsid 2</span><br></pre></td></tr></table></figure></div>
+<p>可以确认它关联的是 <code>veth8360c992@if3</code> 这个网卡。同理也可以反推 <code>veth8360c992</code>
+关联的是 <code>netnsid = 2</code> 的 <code>id = 3</code> 的网卡，也是符合预期的。</p>
+<h3 id="虚拟网卡与桥接"><a class="header-anchor" href="#虚拟网卡与桥接"></a>虚拟网卡与桥接</h3>
+<p>如果我们尝试通过 <code>ip addr</code> 查看 <code>veth</code> 网卡的 IP 地址，会发现它们是没有 IP 的：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos72 ~]$ ip addr</span><br><span class="line">5: cni0: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue state UP group default qlen 1000</span><br><span class="line">    link/ether 0a:07:55:0f:84:7f brd ff:ff:ff:ff:ff:ff</span><br><span class="line">    inet 10.244.1.1/24 brd 10.244.1.255 scope global cni0</span><br><span class="line">       valid_lft forever preferred_lft forever</span><br><span class="line">7: veth45885375@if3: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue master cni0 state UP group default</span><br><span class="line">    link/ether a6:f6:90:57:ea:33 brd ff:ff:ff:ff:ff:ff link-netnsid 1</span><br><span class="line">11: veth8360c992@if3: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue master cni0 state UP group default</span><br><span class="line">    link/ether 26:73:c7:95:d2:0f brd ff:ff:ff:ff:ff:ff link-netnsid 2</span><br></pre></td></tr></table></figure></div>
+<p>这是因为对于每个 POD，宿主机上都会创建 <code>veth</code> 虚拟网卡，而为了更方便这些卡的管理，k8s 会创建一张桥接的网卡 <code>cni0</code>。可以通过下面的命令查看：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos72 ~]$ brctl show cni0</span><br><span class="line">bridge name     bridge id               STP enabled     interfaces</span><br><span class="line">cni0            8000.0a07550f847f       no              veth45885375</span><br><span class="line">                                                        veth8360c992</span><br></pre></td></tr></table></figure></div>
+<p>桥接(bridge)网卡可以认为是一个 2 层的交换机，当它收到一个报文时，会根据自己维护的 MAC 地址映射表将报文从不同的端口发出，如果没有找到 MAC 地址则会往所有端口都发一份。它的 MAC 映射表如下：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos72 ~]$ brctl showmacs cni0</span><br><span class="line">port no mac addr                is local?       ageing timer</span><br><span class="line">  3     26:73:c7:95:d2:0f       yes                0.00</span><br><span class="line">  3     26:73:c7:95:d2:0f       yes                0.00</span><br><span class="line">  2     a6:f6:90:57:ea:33       yes                0.00</span><br><span class="line">  2     a6:f6:90:57:ea:33       yes                0.00</span><br></pre></td></tr></table></figure></div>
+<p>对数据敏感一些会发现出现的两个 MAC 地址分别对应 <code>veth45885375</code> 和
+<code>veth8360c992</code>。</p>
+<h2 id="发送方"><a class="header-anchor" href="#发送方"></a>发送方</h2>
+<p>那么当 Pod 中向另一个宿主机上的 Pod 发请求时，会发生什么呢？整体流程如下：</p>
+<img src="/2022/Flannel-Verification/Sender.svg" class="" title="Sender">
+<ol>
+<li>
+<p>首先请求发到 Pod 内的 eth0 网卡，通过我们上面说的 VETH 的机制，相当于发送到
+<code>cni0</code> 网卡</p>
+</li>
+<li>
+<p>此时内核需要查路由表，决定发送到哪个网卡：</p>
+ <div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos72 ~]$ route</span><br><span class="line">Destination     Gateway         Genmask         Flags Metric Ref    Use Iface</span><br><span class="line">default         RT-AC86U-D830   0.0.0.0         UG    0      0        0 eth0</span><br><span class="line">10.244.0.0      10.244.0.0      255.255.255.0   UG    0      0        0 flannel.1</span><br><span class="line">10.244.2.0      10.244.2.0      255.255.255.0   UG    0      0        0 flannel.1</span><br></pre></td></tr></table></figure></div>
+<p>我们发现目标地址 <code>10.244.2.3</code> 命中 <code>10.244.2.0</code> 网段，于是发往 <code>flannel.1</code> 网卡</p>
+</li>
+<li>
+<p>接下去需要由 <code>flannel.1</code> 将报文通过 <code>eth0</code> 端口发到 <code>centos73</code> 机器上，这里涉及 vxlan 的工作机制，下面详细说。</p>
+</li>
+</ol>
+<h3 id="vxlan"><a class="header-anchor" href="#vxlan"></a>vxlan</h3>
+<p>vxlan 可以这么理解：如果有一个 2 层的包，源地址是：MAC-A，目标地址是：MAC-B，但 MAC-B 可能在一个遥远的机器上，通过链路层无法直接到达。vxlan 的想法是把这个二层的包封装成一个 3 层的UDP，将 UDP 包发送到目标机器上，目标机器再把 2 层的包拆出来，发送到 MAC-B 所在的网卡。</p>
+<p>Flannel 创建的 <code>flannel.1</code> 网卡就配置了 vxlan：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos72 ~]$ ip -d link show</span><br><span class="line">4: flannel.1: &lt;BROADCAST,MULTICAST,UP,LOWER_UP&gt; mtu 1450 qdisc noqueue state UNKNOWN mode DEFAULT group default</span><br><span class="line">    link/ether f2:17:d1:67:5c:94 brd ff:ff:ff:ff:ff:ff promiscuity 0</span><br><span class="line">    vxlan id 1 local 192.168.50.238 dev eth0 srcport 0 0 dstport 8472 nolearning ageing 300 noudpcsum noudp6zerocsumtx noudp6zerocsumrx addrgenmode eui64 numtxqueues 1 numrxqueues 1 gso_max_size 65536 gso_max_segs 65535</span><br></pre></td></tr></table></figure></div>
+<p>可以看到输出里有 <code>vxlan</code> 字样，代表它的类型是 vxlan。那么 vxlan 具体如何工作呢？</p>
+<ol>
+<li>
+<p><code>flannel.1</code> 收到请求，查找目标的 MAC 地址。请求包需要发往 <code>10.244.2.0</code>，
+<code>flannel.1</code> 需要决定，转发给哪个 MAC 地址才有可能到最终的目的地，这里和传统的转发没有区别，需要查找 ARP 表：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos72 ~]$ arp</span><br><span class="line">Address                  HWtype  HWaddress           Flags Mask            Iface</span><br><span class="line">10.244.2.0               ether   16:c7:83:3b:52:63   CM                    flannel.1</span><br></pre></td></tr></table></figure></div>
+</li>
+<li>
+<p><code>flannel.1</code> 决定将包发往 <code>16:c7:83:3b:52:63</code> 地址，此时 vxlan 机制介入，将这个包封装成 UDP 包，但是它需要知道，<code>16:c7:83:3b:52:63</code> 物理地址对应的包，需要发到哪台机器上，此时需要查找转发表 fdb:</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos72 ~]$ bridge fdb show</span><br><span class="line">16:c7:83:3b:52:63 dev flannel.1 dst 192.168.50.145 self permanent</span><br></pre></td></tr></table></figure></div>
+</li>
+<li>
+<p>根据 fdb 表中的 <code>dst 192.168.50.145</code>，<code>flannel.1</code> 知道需要将 UDP 包发往
+<code>192.168.50.145</code> 这台机器。但真正发送又需要查找路由表：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos72 ~]$ route</span><br><span class="line">Destination     Gateway         Genmask         Flags Metric Ref    Use Iface</span><br><span class="line">192.168.50.0    0.0.0.0         255.255.255.0   U     0      0        0 eth0</span><br></pre></td></tr></table></figure></div>
+</li>
+<li>
+<p>于是 UDP 包从 <code>eth0</code> 网卡发出，当然过程中也需要查找 ARP，这些常规操作不再赘述。</p>
+</li>
+</ol>
+<h2 id="接收方"><a class="header-anchor" href="#接收方"></a>接收方</h2>
+<p>接收方主要处理 vxlan 报文进行解包，同时要在网桥处需要转发到正确发送方，整体流程如下：</p>
+<img src="/2022/Flannel-Verification/Receiver.svg" class="" title="Receiver">
+<ol>
+<li>
+<p>接收方 centos73 机器的 <code>eth0</code> 网卡接到 vxlan 的 UDP 包，将包解开发现是一个
+2 层的包，需要发往 <code>16:c7:83:3b:52:63</code>，即 centos73 上的 <code>flannel.1</code> 网卡</p>
+</li>
+<li>
+<p><code>flannel.1</code> 接收到包，发现是 3 层的发往 <code>10.244.2.3</code> 的包，查找路由表决定转发给 <code>cni0</code>：</p>
+ <div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos73 ~]$ route</span><br><span class="line">Kernel IP routing table</span><br><span class="line">Destination     Gateway         Genmask         Flags Metric Ref    Use Iface</span><br><span class="line">10.244.2.0      0.0.0.0         255.255.255.0   U     0      0        0 cni0</span><br></pre></td></tr></table></figure></div>
+</li>
+<li>
+<p><code>cni0</code> 接收到报文，需要决定发给哪个 MAC 地址，此时需要查 ARP 表：</p>
+ <div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos73 ~]$ arp</span><br><span class="line">Address                  HWtype  HWaddress           Flags Mask            Iface</span><br><span class="line">10.244.2.3               ether   ee:28:c4:70:20:89   C                     cni0</span><br></pre></td></tr></table></figure></div>
+</li>
+<li>
+<p>于是 <code>cni0</code> 需要将包发给 <code>ee:28:c4:70:20:89</code>，但是 <code>cni0</code> 本身是个网桥
+(bridge)，相当于一个交换机连接了两根网线，现在要往哪个口发呢？先看 MAC 表</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos73 ~]$ brctl showmacs cni0</span><br><span class="line">port no mac addr                is local?       ageing timer</span><br><span class="line">  3     26:89:75:90:a4:6f       yes                0.00</span><br><span class="line">  3     26:89:75:90:a4:6f       yes                0.00</span><br><span class="line">  2     f2:7f:88:e2:e9:b6       yes                0.00</span><br><span class="line">  2     f2:7f:88:e2:e9:b6       yes                0.00</span><br></pre></td></tr></table></figure></div>
+</li>
+<li>
+<p>由于 MAC 表里没有 <code>ee:28:c4:70:20:89</code> 的条目，于是 <code>cni0</code> 会先将请求广播，两个口都发包，等待请求，当然最终会由 <code>vethc3fdc583</code> 网卡响应，也可以看到
+MAC 表的更新：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos73 ~]$ brctl showmacs cni0</span><br><span class="line">port no mac addr                is local?       ageing timer</span><br><span class="line">  3     26:89:75:90:a4:6f       yes                0.00</span><br><span class="line">  3     26:89:75:90:a4:6f       yes                0.00</span><br><span class="line">  2     ee:28:c4:70:20:89       no                 3.13      # 新条目</span><br><span class="line">  2     f2:7f:88:e2:e9:b6       yes                0.00</span><br><span class="line">  2     f2:7f:88:e2:e9:b6       yes                0.00</span><br></pre></td></tr></table></figure></div>
+</li>
+<li>
+<p>于是，请求发往 <code>vethc3fdc583</code> 网卡，并由于 VETH 的作用，相当于发到了 pod
+<code>spring-test-77d9d6dcb5-m9mvr</code> 对应的网卡上，到达目的地。</p>
+</li>
+</ol>
+<h2 id="flannel-的作用"><a class="header-anchor" href="#flannel-的作用"></a>Flannel 的作用</h2>
+<p>上面提到的内容里，除了 <code>flannel.1</code> 网卡的名字，其它内容似乎看不到 Flannel 的身影，那么 flannel 做了哪些事呢<sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup>？</p>
+<ol>
+<li>
+<p>flanneld 在宿主机启动时会为宿主机注册子网，如 <code>10.244.1.0</code>；添加到其它宿主机的路由条目；同时为 <code>flannel.1</code> 配置 vxlan 模式（当然也支持其它模式）</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos72 ~]$ route</span><br><span class="line">Kernel IP routing table</span><br><span class="line">Destination     Gateway         Genmask         Flags Metric Ref    Use Iface</span><br><span class="line">10.244.0.0      10.244.0.0      255.255.255.0   UG    0      0        0 flannel.1</span><br><span class="line">10.244.1.0      0.0.0.0         255.255.255.0   U     0      0        0 cni0</span><br><span class="line">10.244.2.0      10.244.2.0      255.255.255.0   UG    0      0        0 flannel.1</span><br></pre></td></tr></table></figure></div>
+</li>
+<li>
+<p>配置宿主机 ARP 条目，将其它宿主机的子网，如 <code>10.244.2.0</code> 指向 <code>flannel.1</code>
+网卡，且目标地址是对方宿主机上 <code>flannel.1</code> 的 MAC，如 <code>16:c7:83:3b:52:63</code></p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos72 ~]$ arp</span><br><span class="line">Address                  HWtype  HWaddress           Flags Mask            Iface</span><br><span class="line">10.244.0.0               ether   86:e4:96:71:0a:45   CM                    flannel.1</span><br><span class="line">10.244.2.0               ether   16:c7:83:3b:52:63   CM                    flannel.1</span><br></pre></td></tr></table></figure></div>
+</li>
+<li>
+<p>配置 FDB 表，将发送给 <code>16:c7:83:3b:52:63</code> 的请求，通过 <code>192.168.50.145</code> 发送</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">[jinzhouz@centos72 ~]$ bridge fdb show</span><br><span class="line">16:c7:83:3b:52:63 dev flannel.1 dst 192.168.50.145 self permanent</span><br><span class="line">86:e4:96:71:0a:45 dev flannel.1 dst 192.168.50.48 self permanent</span><br></pre></td></tr></table></figure></div>
+</li>
+</ol>
+<p>可以看到 flannel 的主要作用就是自动创建资源，然后（监听 etcd 中关于节点变动的消息）动态对 ARP、FDB 表做维护。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>本文是博主自己在学习 Flannel 过程中，结合现有的环境做的一些“验证”，尝试去理解
+Flannel 中各个环节的机制，具体来说有：</p>
+<ul>
+<li>namespace 隔离和 veth 机制打通 namespace</li>
+<li>bridge 的工作原理，可以类比交换机</li>
+<li>vxlan 的工作机制，以及 fdb 表的工作机制</li>
+<li>复习了 2 层、3 层网络知识，复习路由表、ARP 表的作用</li>
+</ul>
+<p>另外在实验过程中尝试过用 tcpdump 抓包验证，的确可以验证一些关键信息，如发送接收了 UDP 封装的 vxlan 包，包的 MAC 地址在流转中变化等。但具体流经哪张网卡，以及其中的查表机在tcpdump中无法体现，因此这里也没有做记录。</p>
+<p>当然，计算机网络是非常复杂的，博主也并非网工专业人士，如有理解不到位之处，请评论区指出。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://dustinspecker.com/posts/how-do-kubernetes-and-docker-create-ip-addresses/">How Do Kubernetes and Docker Create IP Addresses?!</a> 详细介绍了宿主机和 pod/container 的网络机制</li>
+<li><a href="https://cloud.tencent.com/developer/article/1871939">深入理解kubernetes（k8s）网络原理之五-flannel原理</a> 对 flannel 运行过程讲解得比较详细</li>
+<li><a href="https://github.com/containernetworking/cni/issues/702">In k8s, how the bridge cni0 know which veth to go for a packet</a> 解释 cni0 的工作原理，但感觉不是特别明确，需要有额外的知识才能理解</li>
+</ul>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p><a href="https://www.infoq.cn/article/ERuLek5gPfUxdHC5cMTO">从零开始入门 K8s：Kubernetes 网络概念及策略控制</a> <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p><a href="https://openterprise.it/2020/09/working-with-kernel-network-namespaces-created-by-docker/">https://openterprise.it/2020/09/working-with-kernel-network-namespaces-created-by-docker/</a> <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn3" class="footnote-item"><p><a href="http://yangjunsss.github.io/2018-07-21/%E5%AE%B9%E5%99%A8%E7%BD%91%E7%BB%9C-Flannel-%E4%B8%BB%E8%A6%81-Backend-%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86%E5%92%8C%E9%AA%8C%E8%AF%81/">容器网络 flannel 主要 backend 基本原理和验证</a> <a href="#fnref3" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+</div></div><div class="post-main post-comment"><div id="giscus_thread"></div><script src="https://giscus.app/client.js" data-repo="lotabout/lotabout.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU1NTQ0Nw==" data-category="Announcements" data-category-id="DIC_kwDOATmmt84ClmcD" data-mapping="" data-strict="" data-reactions-enabled="0" data-emit-metadata="" data-input-position="" data-theme="" data-lang="zh-CN" data-loading="" crossorigin="" async>
+</script></div></article><link rel="stylesheet" type="text/css" href="/css/third-party/font-awesome/4.5.0/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/lato-font/3.0.0/css/lato-font.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/fancybox/2.1.5/jquery.fancybox.css"><script src="/js/third-party/jquery/2.0.3/jquery.min.js"></script><script src="/js/third-party/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script async src="https://www.googletagmanager.com/gtag/js?id=#{theme.google_analytics}"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-39956831-2');</script></body></html>
