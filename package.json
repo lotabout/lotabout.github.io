@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "hexo": "7.1.1",
-    "hexo-clean-css": "0.0.3",
+    "hexo-clean-css": "2.0.0",
     "hexo-deployer-git": "0.0.4",
     "hexo-filter-fix-cjk-spacing": "0.0.5",
     "hexo-footnotes": "^1.0.1",
