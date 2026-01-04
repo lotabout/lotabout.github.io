@@ -114,7 +114,7 @@ async 的文章，才认识到流控需求的普遍性和背压的重要性。
 - [Some thoughts on asynchronous API design in a post-async/await
     world](https://vorpus.org/blog/some-thoughts-on-asynchronous-api-design-in-a-post-asyncawait-world/)
     async/await 下 API 设计的一些问题
-- [Backpressuring in Streams](https://nodejs.org/es/docs/guides/backpressuring-in-streams/)
+- [Backpressuring in Streams](https://nodejs.org/en/learn/modules/backpressuring-in-streams)
     NodeJs Stream 里的背压支持
 - [RxJava Backpressure](https://github.com/ReactiveX/RxJava/wiki/Backpressure) Rxjava 如何实现背压
 - [Tokio Backpressure](https://tokio.rs/docs/overview/#backpressure) Tokio 背
