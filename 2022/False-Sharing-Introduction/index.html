@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="如果你阅读过 Java 的 &lt;code&gt;Striped64&lt;/code&gt; 源码（没看过的可以看看博主的
+&lt;a href=&quot;https://lotabout.me/books/Java-Concurrency/Source-Atomic/Striped64.html&quot;&gt;这篇文章&lt;/a&gt;），可能遇到过 &lt;code&gt;@Contended&lt;/code&gt; 注解。如果你经常看 C 语言的代码，也可能遇到过在结构体加 padding 的情形。它们都是为了提高缓存的性能，解决伪共享（False Sharing）的问题。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>伪共享（False Sharing）简介 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 7.1.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-noise-link" href="/tags/MESI/" rel="tag">MESI</a><a class="post-tag-noise-link" href="/tags/cache/" rel="tag">cache</a><a class="post-tag-noise-link" href="/tags/false-sharing/" rel="tag">false sharing</a></div><div class="post-time">2022-05-01</div></div></div><div class="container post-header"><h1>伪共享（False Sharing）简介</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E8%A1%8C-cache-line"><span class="toc-number">1.</span> <span class="toc-text">缓存行（cache line）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%93%E5%AD%98%E4%B8%80%E8%87%B4%E6%80%A7%E4%B8%8E-mesi-%E5%8D%8F%E8%AE%AE"><span class="toc-number">2.</span> <span class="toc-text">缓存一致性与 MESI 协议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BC%AA%E5%85%B1%E4%BA%AB-false-sharing"><span class="toc-number">3.</span> <span class="toc-text">伪共享（False Sharing）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%9C%BA%E6%99%AF%E4%B8%8E%E8%A7%A3%E6%B3%95"><span class="toc-number">4.</span> <span class="toc-text">常见场景与解法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#false-sharing-%E7%9A%84%E5%BD%B1%E5%93%8D%E6%9C%89%E5%A4%9A%E5%A4%A7%EF%BC%9F"><span class="toc-number">5.</span> <span class="toc-text">False Sharing 的影响有多大？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">7.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>如果你阅读过 Java 的 <code>Striped64</code> 源码（没看过的可以看看博主的
+<a href="https://lotabout.me/books/Java-Concurrency/Source-Atomic/Striped64.html">这篇文章</a>），可能遇到过 <code>@Contended</code> 注解。如果你经常看 C 语言的代码，也可能遇到过在结构体加 padding 的情形。它们都是为了提高缓存的性能，解决伪共享（False Sharing）的问题。</p>
+<h2 id="缓存行-cache-line"><a class="header-anchor" href="#缓存行-cache-line"></a>缓存行（cache line）</h2>
+<p>首先需要知道一个概念：cache line（缓存行）。缓存从内存加载数据时，并不是只加载我们请求的那部分，而是会多加载一些，例如我们想访问一个 int，只有 4 字节，但缓存会一次性加载 64 字段（不同机器不同）。缓存每次处理的这一“块”数据，就叫 cache
+line。</p>
+<p>为什么缓存要多加载数据呢？为了利用空间局部性（space locality）来提高性能
+<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>。相当于是缓存做了猜想，后续地址的数据，通常就是接下来马上要访问的数据，提前加载能提高性能。</p>
+<h2 id="缓存一致性与-mesi-协议"><a class="header-anchor" href="#缓存一致性与-mesi-协议"></a>缓存一致性与 MESI 协议</h2>
+<p>现代 CPU 体系中，一般每个核都单独配备了自己的（L1）缓存，为了保证多个
+CPU 在读写缓存时保证整体数据的一致性，通常需要使用缓存一致性协议，MESI 就是其中一种（可以参考博主的<a href="https://lotabout.me/2022/MESI-Protocol-Introduction/">这篇文章</a>）。</p>
+<p>MESI 协议可以简单理解为“踢人协议”，如果一个 CPU 写数据到缓存里，则需要“踢”掉其它缓存里的副本。</p>
+<img src="/2022/False-Sharing-Introduction/MESI-invalidate.svg" class="" title="MESI invalidate">
+<p>上图中，第 ⑦ 步就是“踢人”的操作。同时要注意如果 CPU 对缓存只做“读”操作，缓存也是需要同步的，如上图的第 ⑤ 步，只是它的开销更小。</p>
+<h2 id="伪共享-false-sharing"><a class="header-anchor" href="#伪共享-false-sharing"></a>伪共享（False Sharing）</h2>
+<p>缓存一致性说的是一个 cache line 在不同缓存间的同步操作。那如果一个 cache line
+上存了两个变量，并且两个变量分别被不同的线程写入呢？</p>
+<img src="/2022/False-Sharing-Introduction/MESI-false-sharing.svg" class="" title="MESI invalidate">
+<p>可以看到，虽然 CPU A 和 CPU B 各自在写自己关心的变量 <code>x</code> 和 <code>y</code>，但由于它们存在于同一个 cache line，每次写入都会造成另一个 CPU 的缓存失效。造成严重的性能问题。</p>
+<h2 id="常见场景与解法"><a class="header-anchor" href="#常见场景与解法"></a>常见场景与解法</h2>
+<p>我们看到伪共享的发生有两个条件：</p>
+<ol>
+<li>两个变量在同一个缓存行里。通常是一个类/结构体的两个 field，或是同一个数组的相邻元素</li>
+<li>不同线程同时对两个地址读写<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>。因此通常发生在高并发的场景下。</li>
+</ol>
+<p>由于 #2 条件多线程处理一般是业务要求，解法通常是打破 #1 条件：<strong>加 padding，让一个cache line 里只保留一个变量</strong><sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup>。例如 <code>int</code> 只占
+<code>4</code> 字节，可以在后面加 15个没用的 int 变量，撑满 <code>64</code> 字节<sup class="footnote-ref"><a href="#fn4" id="fnref4">[4]</a></sup>。而
+Java 专门提供了<code>@Contended</code><sup class="footnote-ref"><a href="#fn5" id="fnref5">[5]</a></sup> 来简化这种情形。</p>
+<h2 id="false-sharing-的影响有多大？"><a class="header-anchor" href="#false-sharing-的影响有多大？"></a>False Sharing 的影响有多大？</h2>
+<p>JMH 有一个测 False Sharing 的
+<a href="http://hg.openjdk.java.net/code-tools/jmh/file/251f914ff0c1/jmh-samples/src/main/java/org/openjdk/jmh/samples/JMHSample_22_FalseSharing.java">Benchmark</a>
+，在我的机器上（20c、Java 11）运行结果<sup class="footnote-ref"><a href="#fn6" id="fnref6">[6]</a></sup>如下：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">Benchmark                          Mode  Cnt      Score     Error   Units</span><br><span class="line">BenchmarkRunner.baseline          thrpt   25  10145.377 ± 240.354  ops/us</span><br><span class="line">BenchmarkRunner.baseline:reader   thrpt   25   1305.421 ± 120.908  ops/us</span><br><span class="line">BenchmarkRunner.baseline:writer   thrpt   25   8839.956 ± 211.739  ops/us</span><br><span class="line">BenchmarkRunner.contended         thrpt   25  11329.372 ± 105.857  ops/us</span><br><span class="line">BenchmarkRunner.contended:reader  thrpt   25   2845.015 ±  48.006  ops/us</span><br><span class="line">BenchmarkRunner.contended:writer  thrpt   25   8484.357 ± 112.052  ops/us</span><br><span class="line">BenchmarkRunner.hierarchy         thrpt   25  11373.481 ±  39.691  ops/us</span><br><span class="line">BenchmarkRunner.hierarchy:reader  thrpt   25   2885.091 ±  56.386  ops/us</span><br><span class="line">BenchmarkRunner.hierarchy:writer  thrpt   25   8488.389 ±  78.959  ops/us</span><br><span class="line">BenchmarkRunner.padded            thrpt   25  11338.519 ±  49.043  ops/us</span><br><span class="line">BenchmarkRunner.padded:reader     thrpt   25   2868.776 ±  51.762  ops/us</span><br><span class="line">BenchmarkRunner.padded:writer     thrpt   25   8469.743 ±  78.427  ops/us</span><br><span class="line">BenchmarkRunner.sparse            thrpt   25   9288.740 ±  63.073  ops/us</span><br><span class="line">BenchmarkRunner.sparse:reader     thrpt   25   2582.364 ±  26.045  ops/us</span><br><span class="line">BenchmarkRunner.sparse:writer     thrpt   25   6706.376 ±  77.000  ops/us</span><br></pre></td></tr></table></figure></div>
+<p>baseline、contended 及 padded 吞吐上的差别大概 <code>10%</code>（网上一些文章差异在 2 倍、
+3 倍，和我的结果出入这么大的原因还没找到）。我们再用 perf 对比 cache misses：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">---------------------------- Baseline ------------------------------------</span><br><span class="line">      1,012,415.83 msec task-clock                #   19.258 CPUs utilized</span><br><span class="line">            39,279      context-switches          #    0.039 K/sec</span><br><span class="line">             1,813      cpu-migrations            #    0.002 K/sec</span><br><span class="line">            82,632      page-faults               #    0.082 K/sec</span><br><span class="line"> 4,855,609,024,017      cycles                    #    4.796 GHz                      (50.03%)</span><br><span class="line"> 4,682,761,843,004      instructions              #    0.96  insn per cycle           (62.52%)</span><br><span class="line">   685,213,954,685      branches                  #  676.811 M/sec                    (62.53%)</span><br><span class="line">       160,820,719      branch-misses             #    0.02% of all branches          (62.51%)</span><br><span class="line"> 2,551,078,768,362      L1-dcache-loads           # 2519.793 M/sec                    (62.47%)</span><br><span class="line">    23,872,018,958      L1-dcache-load-misses     #    0.94% of all L1-dcache hits    (62.47%)</span><br><span class="line">    12,410,125,606      LLC-loads                 #   12.258 M/sec                    (49.98%)</span><br><span class="line">         2,810,037      LLC-load-misses           #    0.02% of all LL-cache hits     (50.01%)</span><br><span class="line"></span><br><span class="line">---------------------------- Contended -----------------------------------</span><br><span class="line">      1,011,118.07 msec task-clock                #   19.219 CPUs utilized</span><br><span class="line">            38,773      context-switches          #    0.038 K/sec</span><br><span class="line">             1,830      cpu-migrations            #    0.002 K/sec</span><br><span class="line">            82,441      page-faults               #    0.082 K/sec</span><br><span class="line"> 4,849,385,107,175      cycles                    #    4.796 GHz                      (49.99%)</span><br><span class="line"> 6,794,835,895,672      instructions              #    1.40  insn per cycle           (62.48%)</span><br><span class="line"> 1,006,635,368,787      branches                  #  995.567 M/sec                    (62.49%)</span><br><span class="line">       147,370,270      branch-misses             #    0.01% of all branches          (62.49%)</span><br><span class="line"> 3,585,031,069,557      L1-dcache-loads           # 3545.611 M/sec                    (62.50%)</span><br><span class="line">       615,324,166      L1-dcache-load-misses     #    0.02% of all L1-dcache hits    (62.51%)</span><br><span class="line">       167,043,519      LLC-loads                 #    0.165 M/sec                    (50.01%)</span><br><span class="line">         2,434,845      LLC-load-misses           #    1.46% of all LL-cache hits     (50.01%)</span><br></pre></td></tr></table></figure></div>
+<p>对比其中的 <code>L1-dcache-load-misses</code>，可以看出，加了 <code>@Contended</code> 的 cache miss
+只有 baseline 的 <code>3%</code>。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>缓存的加载写入以 cache line 为单位，典型的大小为 64B。为了保证多 CPU 下缓存数据的一致性，需要使用一些缓存一致性协议，MESI 是其中的一个经典协议，写入缓存行时会“踢掉”其它 CPU 上的缓存。如果两个变量在同一个 cache line 中，且多线程频繁读写这两个变量，会导致多 CPU “互踢”对方的 cache line，导致性能下降。在博主的机器上 False Sharing 实测大概慢 10%，而 cache miss 大概是正常的 33 倍。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://www.baeldung.com/java-false-sharing-contended">A Guide to False Sharing and @Contended</a>
+里面基本把 False Sharing 涉及的知识都说清楚了，推荐阅读</li>
+<li><a href="https://shipilev.net/talks/jvmls-July2013-contended.pdf">@Contended (a.k.a. JEP 142)</a> PPT 介绍 <code>@Contended</code> 功能及实现</li>
+<li><a href="https://www.programmersought.net/article/343975650.html">JVM series: Contend annotation and false-sharing</a> 其中的实验显示 padding 版本的吞吐大概是没有 padding 版本的 2 倍</li>
+</ul>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>注意一般 C 语言里 padding 还有另一个作用，将数据按“字”来对齐地址，这也有助于提高性能，但缓存的视角主要还是在局部性上 <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p>两个线程同时写入的情况比较明显；一写一读也有问题；两个线程都是读则没有问题 <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn3" class="footnote-item"><p>采用 padding 的方式其实不一定靠谱，因为编译器优化有可能会把没用的字段去掉 <a href="#fnref3" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn4" class="footnote-item"><p><code>64</code> 这个数字并不是固定的，有些机器会设置为 <code>128</code> 字节，
+Linux 下可以执行 <code>getconf LEVEL1_DCACHE_LINESIZE</code> 来查看 cache line 大小，
+MacOS 下执行 <code>sysctl hw.cachelinesize</code> <a href="#fnref4" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn5" class="footnote-item"><p>Java 8 中通过 <code>@sun.misc.Contended</code> 引用，
+<a href="https://www.javaspecialists.eu/archive/Issue249-Contended-since-9.html">Java 9 及之后</a>，通过
+<code>@jdk.internal.vm.annotation.Contended</code> 引用，但需要额外 export 一些包 <a href="#fnref5" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn6" class="footnote-item"><p>需要在启动参数上加上 <code>-XX:-RestrictContended</code>，用户代码里加的 <code>@Contended</code> 才能生效。 <a href="#fnref6" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+</div></div><div class="post-main post-comment"><div id="giscus_thread"></div><script src="https://giscus.app/client.js" data-repo="lotabout/lotabout.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU1NTQ0Nw==" data-category="Announcements" data-category-id="DIC_kwDOATmmt84ClmcD" data-mapping="" data-strict="" data-reactions-enabled="0" data-emit-metadata="" data-input-position="" data-theme="" data-lang="zh-CN" data-loading="" crossorigin="" async>
+</script></div></article><link rel="stylesheet" type="text/css" href="/css/third-party/font-awesome/4.5.0/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/lato-font/3.0.0/css/lato-font.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/fancybox/2.1.5/jquery.fancybox.css"><script src="/js/third-party/jquery/2.0.3/jquery.min.js"></script><script src="/js/third-party/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script async src="https://www.googletagmanager.com/gtag/js?id=#{theme.google_analytics}"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-39956831-2');</script></body></html>

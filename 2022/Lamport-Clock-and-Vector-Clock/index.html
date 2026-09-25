@@ -1,0 +1,79 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="Lamport 时钟之前一直似懂非懂，今天看了 Martin Kleppmann 的
+&lt;a href=&quot;https://www.youtube.com/watch?v=x-D8iFU1d-o&quot;&gt;教学视频&lt;/a&gt;，觉得自己又行了。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Lamport 时钟与 Vector 时钟 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 7.1.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-noise-link" href="/tags/consistency/" rel="tag">consistency</a><a class="post-tag-noise-link" href="/tags/lamport-clock/" rel="tag">lamport clock</a><a class="post-tag-noise-link" href="/tags/vector-clock/" rel="tag">vector clock</a></div><div class="post-time">2022-05-08</div></div></div><div class="container post-header"><h1>Lamport 时钟与 Vector 时钟</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%A0%E6%9E%9C%E5%85%B3%E7%B3%BB%E4%B8%8E%E7%89%A9%E7%90%86%E6%97%B6%E9%92%9F"><span class="toc-number">1.</span> <span class="toc-text">因果关系与物理时钟</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#lamport-%E6%97%B6%E9%92%9F"><span class="toc-number">2.</span> <span class="toc-text">Lamport 时钟</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#lamport-%E6%97%B6%E9%92%9F%E7%9A%84%E5%B1%80%E9%99%90"><span class="toc-number">2.1.</span> <span class="toc-text">Lamport 时钟的局限</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#vector-%E6%97%B6%E9%92%9F"><span class="toc-number">3.</span> <span class="toc-text">Vector 时钟</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">4.</span> <span class="toc-text">小结</span></a></li></ol></details></div><div class="container post-content"><p>Lamport 时钟之前一直似懂非懂，今天看了 Martin Kleppmann 的
+<a href="https://www.youtube.com/watch?v=x-D8iFU1d-o">教学视频</a>，觉得自己又行了。</p>
+<h2 id="因果关系与物理时钟"><a class="header-anchor" href="#因果关系与物理时钟"></a>因果关系与物理时钟</h2>
+<p>假设你发了朋友圈，有两个朋友评论：</p>
+<ul>
+<li>A 说：“这是在北京吧”</li>
+<li>B 回复 A 说：“应该不是，看着像上海”</li>
+</ul>
+<p>我们人肉能识别出两句话之间的因果关系：<code>#A</code> 是因，<code>#B</code> 是果，但是计算机怎么判断呢？</p>
+<p>一种思路是给评论加上生成时间，比如 <code>#A_10:01</code>, <code>#B_10:02</code>，系统按时间对评论排序，就能判断 <code>#B</code> 发生成 <code>#A</code> 之后。这个方法逻辑上没问题，但现实中没有一种可靠的方法，能准确地同步各个机器上的时间（也称为物理时间）。于是可能出现下面的情况：</p>
+<img src="/2022/Lamport-Clock-and-Vector-Clock/causal.svg" class="" title="Physical Clock">
+<p>处理 <code>B</code> 评论的机器时钟慢了，导致 <code>B</code> 评论的时间戳更小，系统排序时把 <code>#B</code> 放在了前面，因果错乱。</p>
+<h2 id="lamport-时钟"><a class="header-anchor" href="#lamport-时钟"></a>Lamport 时钟</h2>
+<p>Lamport 时钟<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup>是一种逻辑上的机制，用来给各个事件打标签，保证如果事件 <code>A</code> 发生于 <code>B</code> 之前，则 <code>A</code> 的标签 <code>L(A)</code> 一定小于 <code>B</code> 的标签 <code>L(B)</code>。</p>
+<p>具体要怎么做呢？每个机器各自维护一个计数器 <code>t</code>，然后：</p>
+<ol>
+<li>初始化时，每个机器都把 <code>t</code> 置为 <code>0</code></li>
+<li>本机产生一个事件时，先执行 <code>t = t+1</code>，再用自增后的 <code>t</code> 来标记事件</li>
+<li>要发送一个事件时，执行 <code>t = t+1</code>，并发送 <code>(t, m)</code>，即把计数器和事件都发出去</li>
+<li>接收到一个事件 <code>(t', m)</code> 时，则需要更新本地的计数器 <code>t = max(t, t') + 1</code>，并把 <code>m</code> 发送到本地</li>
+</ol>
+<p>于是如果使用这个算法，则上面朋友圈的例子就变成了：</p>
+<img src="/2022/Lamport-Clock-and-Vector-Clock/lamport-clock.svg" class="" title="Lamport Clock">
+<p>可以看到事件 <code>(4, 这是北京吧)</code> 发生在 <code>(6, 应该不是)</code>之前，它们的标签 <code>t</code> 能反映出这一点。</p>
+<h3 id="lamport-时钟的局限"><a class="header-anchor" href="#lamport-时钟的局限"></a>Lamport 时钟的局限</h3>
+<p>为什么 Lamport 时钟能体现事件发生的“因果”关系？如果两个事件有“因果”，它们一定是有“同步”的操作，而 Lamport 时钟则是在“同步”时（第 #4 点），通过 <code>max(t, t')</code>同步了二者的逻辑时间。</p>
+<img src="/2022/Lamport-Clock-and-Vector-Clock/lamport-clock-sync.svg" class="" title="Lamport Clock">
+<p>由于 <code>A-Before</code> 的事件满足 <code>t &lt;= T</code>，而 <code>B-After</code> 的事件满足 <code>t &gt;= T+1</code>，所以能保证 <code>A-before &lt;= T &lt; T+1 &lt;= B-after</code>，而 <code>B-after</code> 中的事件逻辑上是发生成
+<code>A-before</code> 的事件之后的，且标签 <code>t</code> 也满足先后关系，因此保证了因果顺序。</p>
+<p>但是在上图中，我们虽然推出 <code>A-before &lt; B-after</code>，但其它几个区域发生的事件就没法有确定的对比结论了。例如所有 <code>B-before</code> 中的事件，一定发生成 <code>A-after</code> 中的事件之前吗？（<code>B-before &lt; A-after</code>），细想一下会发现并没有办法得出这个结论。明确可比的有这几个区域：</p>
+<ul>
+<li><code>A-before &lt; A-after</code>，A 机事件发生的先后决定</li>
+<li><code>B-before &lt; B-after</code>，B 机事件发生的先后决定</li>
+<li><code>A-before &lt; B-after</code>，A、B 之间的因果性决定</li>
+</ul>
+<p>从另一个角度看，Lamport 时钟可以保证如果事件 <code>a &lt; b</code>（<code>a</code> 发生在 <code>b</code> 之前），就可以推出它们的标签满足 <code>L(a) &lt; L(b)</code>。但反过来，如果看到两个标签 <code>L(a) &lt; L(b)</code>，能反推出 <code>a &lt; b</code> 吗？其实是不行的，因为我们能判定的只有 <code>A-before</code> 和
+<code>B-after</code> 两个区域的事件，但只看 <code>L(a)</code> 和 <code>L(b)</code> 我们并不知道 <code>a</code> 和 <code>b</code> 落在哪个区域，因此无法判断 <code>a</code> 和 <code>b</code> 发生的先后。这就是 Lamport 时钟的局限性，</p>
+<h2 id="vector-时钟"><a class="header-anchor" href="#vector-时钟"></a>Vector 时钟</h2>
+<p>vector 时钟可以解决这个问题：如果两个事件落在可比较的区域，则通过对比 vector
+时钟产生的标记，可以得出对应事件发生的先后顺序，即通过 <code>L(a) &lt; L(b)</code> 可以得出
+<code>a &lt; b</code> 的结论。那 vector 时钟是怎么做到的？</p>
+<ol>
+<li>假设有 N 台机器，记为 <code>N[1], N[2], ..N[n]</code></li>
+<li>每台机器需要维护一个 N 维向量作为计数器，记为 <code>T = &lt;t1, t2, ..., tn&gt;</code></li>
+<li><code>N[i]</code> 本机产生一个事件时，就把本机向量里的 <code>ti</code> 递增，即 <code>T[i]++</code></li>
+<li>机器 <code>N[i]</code> 发送消息 <code>m</code> 时，先执行 <code>T[i]++</code>，再发送 <code>(T, m)</code></li>
+<li>机器 <code>N[j]</code> 收到消息 <code>(T', m)</code> 时，执行 <code>T = max(T, T')</code>，再执行 <code>T[j]++</code></li>
+</ol>
+<p>这些规则看起来很复杂，但实际上它和 Lamport 时钟的“同步逻辑”一样，只是每个节点都保存了其它所有节点，最后一次同步过的计数器。执行起来如下图<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>：</p>
+<img src="/2022/Lamport-Clock-and-Vector-Clock/vector-clock.svg" class="" title="Vector Clock">
+<p>Vector 时钟最后的标签有多维，如何比较呢？vector 时钟要求，如果每一维上，都有
+<code>T[i] &lt; T'[i]</code>，则认为 <code>T &lt; T'</code>；如果每一维都有 <code>T[i] = T'[i]</code>，则认为 <code>T = T'</code>；其它情况，都认为 <code>T</code> 和 <code>T'</code> 不可比。</p>
+<p>条件 <code>a &lt; b</code> 推出 <code>T(a) &lt; T(b)</code> 的结论是比较简单的，与 Lamport 时钟类似，这里给个图，不多说明了：</p>
+<img src="/2022/Lamport-Clock-and-Vector-Clock/vector-clock-sync.svg" class="" title="Vector Clock Sync">
+<p>从 <code>T(a) &lt; T(b)</code> 反推 <code>a &lt; b</code> 呢？其实从 <code>T</code> 的定义来看，可以理解成 <code>T</code> 代表的是当前事件及之前发生的所有事件的集合，而 <code>T(a) &lt; T(b)</code> 可以等价于集合的从属关系，那么事件 <code>a</code> 一定包含在 <code>T(b)</code> 里，因此 <code>a &lt; b</code><sup class="footnote-ref"><a href="#fn3" id="fnref3">[3]</a></sup>。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>Lamport 时钟解决的是分布式系统下的因果一致性问题，方式是在多机有交互时求计数器的 <code>max</code>。它的局限是无法从计数器的大小反推事件的先后顺序。</p>
+<p>Vector 时钟基本思路和 Lamport 时钟一样，但它在每个机器上都维护了最后看到的，其它机器的计数器。</p>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>Lamport Clock，也称为
+<a href="https://en.wikipedia.org/wiki/Lamport_timestamp">Lamport Timestamp</a>，以发明者 Leslie Lamport 命名，Lamport 也是著名的 Paxos 的发明者。 <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p>注意这张图和上面 lamport 时钟的示例，算法的细节上有简化，收到信息时没有递增计数器 <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn3" class="footnote-item"><p>写到这里的时候受到知识的诅咒了，不管是从图像来看，还是从集合的视角来看，都太显然了，如果读者没理解的话，推荐看 Martin Kleppmann 的教程，说得比我明白。当然他的教程里有数学表示，更精确。 <a href="#fnref3" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+</div></div><div class="post-main post-comment"><div id="giscus_thread"></div><script src="https://giscus.app/client.js" data-repo="lotabout/lotabout.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU1NTQ0Nw==" data-category="Announcements" data-category-id="DIC_kwDOATmmt84ClmcD" data-mapping="" data-strict="" data-reactions-enabled="0" data-emit-metadata="" data-input-position="" data-theme="" data-lang="zh-CN" data-loading="" crossorigin="" async>
+</script></div></article><link rel="stylesheet" type="text/css" href="/css/third-party/font-awesome/4.5.0/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/lato-font/3.0.0/css/lato-font.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/fancybox/2.1.5/jquery.fancybox.css"><script src="/js/third-party/jquery/2.0.3/jquery.min.js"></script><script src="/js/third-party/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script async src="https://www.googletagmanager.com/gtag/js?id=#{theme.google_analytics}"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-39956831-2');</script></body></html>

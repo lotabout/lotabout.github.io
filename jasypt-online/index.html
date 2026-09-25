@@ -1,0 +1,111 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="纯前端实现的 Jasypt 在线加解密工具（PBEWithMD5AndDES），密码和原文不会发送到任何服务器。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Jasypt 在线加解密工具 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 7.1.1"></head><body><header class="wrapper header"><div class="container blog-title"><a class="title" id="logo" href="/.">三点水</a><span class="subtitle">不积小流，无以成江海</span><label id="toggle-menu" for="menu" onclick><i class="fa fa-bars"></i></label></div><input id="menu" type="checkbox"><div class="container nav-items"><a class="sidebar-nav-item" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></div></header><article class="wrapper"><div class="post-entry"><div class="post"><div class="container post-header"><h1>Jasypt 在线加解密工具</h1></div><div class="container post-content"><style type="text/css" media="screen">
+#jasypt-tool {
+  display: flex;
+  margin-bottom: 24px;
+}
+#jasypt-tool #plain {
+  flex: 0 1 50%;
+  min-height: 200px;
+}
+#jasypt-tool #buttons {
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+}
+#jasypt-tool #buttons > * {
+  margin: 8px;
+}
+#jasypt-tool #encrypted {
+  flex: 0 1 50%;
+}
+</style>
+
+<p>所有加解密都在浏览器本地完成（纯 JavaScript 实现，与 Jasypt 默认的 <code>PBEWithMD5AndDES</code> 兼容），密码和原文不会发送到任何服务器。</p>
+
+<div id="jasypt-tool">
+  <textarea id="plain" class="plain" placeholder="原文"></textarea>
+  <div id="buttons">
+    <input id="password" placeholder="密码">
+    <button id="encrypt">加密 &raquo;</button>
+    <button id="decrypt">&laquo; 解密</button>
+  </div>
+  <textarea id="encrypted" class="encrypted" placeholder="密文"></textarea>
+</div>
+
+<h2>Spring 中使用 Jasypt</h2>
+
+<p>Spring 的配置文件中会有一些敏感信息，如数据库密码，因此有时我们希望将敏感信息加密，Jasypt 就是其中比较方便的工具。</p>
+<p>Jasypt 是一个 jar 包，实现了常用的一些加解密算法，在 Spring 中使用一般会用相应的 Spring starter 包，在 <code>pom.xml</code> 中加入依赖</p>
+
+<pre>
+&lt;dependency&gt;
+  &lt;groupId&gt;com.github.ulisesbocchio&lt;/groupId&gt;
+  &lt;artifactId&gt;jasypt-spring-boot-starter&lt;/artifactId&gt;
+  &lt;version&gt;2.1.1&lt;/version&gt;
+&lt;/dependency&gt;
+</pre>
+
+<p>接下来就可以在 <code>application.yaml</code> 中指定加密的配置，例如 <code>spring.datasource.password: pass@1</code>，则可以加密如下：</p>
+
+<pre>
+spring.datasource.password: ENC(o9FgF1JelkE/l2TrOd0iHg==)
+jasypt.encryptor.password: secret
+</pre>
+
+<p>具体来说，加密的内容需要用 <code>ENC(..)</code> 括起来，加密用的密码通过 <code>jasypt.encryptor.password</code> 指定。</p>
+<p>因为必须要解密，密码就需要放在配置文件里，或者放在代码中：</p>
+
+<pre>
+System.setProperty("jasypt.encryptor.password", ConstantValue.JASYPT_ENCRYPTOR_PASSWORD);
+</pre>
+
+<p>当然也可以把密码放在环境变量中，不过总体而言，客户端加密是个防君子不防小人的方法。</p>
+
+<script src="/jasypt-online/jasypt.js"></script>
+<script charset="utf-8">
+(function () {
+  var plain = document.getElementById('plain');
+  var encrypted = document.getElementById('encrypted');
+  var password = document.getElementById('password');
+
+  function requirePassword() {
+    if (password.value === '') {
+      alert('密码不能为空');
+      return null;
+    }
+    return password.value;
+  }
+
+  document.getElementById('encrypt').addEventListener('click', function () {
+    var pwd = requirePassword();
+    if (pwd === null) return;
+    try {
+      encrypted.value = Jasypt.encrypt(plain.value, pwd);
+    } catch (e) {
+      encrypted.value = '加密失败：' + e.message;
+    }
+  });
+
+  document.getElementById('decrypt').addEventListener('click', function () {
+    var pwd = requirePassword();
+    if (pwd === null) return;
+    /* 允许直接粘贴配置文件里的 ENC(...) 形式 */
+    var text = encrypted.value.trim();
+    var wrapped = /^ENC\(([\s\S]*)\)$/.exec(text);
+    if (wrapped) text = wrapped[1];
+    try {
+      plain.value = Jasypt.decrypt(text, pwd);
+    } catch (e) {
+      plain.value = '解密失败：' + e.message;
+    }
+  });
+})();
+</script>
+</div></div></div><div class="post-main post-comment"><div id="giscus_thread"></div><script src="https://giscus.app/client.js" data-repo="lotabout/lotabout.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU1NTQ0Nw==" data-category="Announcements" data-category-id="DIC_kwDOATmmt84ClmcD" data-mapping="" data-strict="" data-reactions-enabled="0" data-emit-metadata="" data-input-position="" data-theme="" data-lang="zh-CN" data-loading="" crossorigin="" async>
+</script></div></article><link rel="stylesheet" type="text/css" href="/css/third-party/font-awesome/4.5.0/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/lato-font/3.0.0/css/lato-font.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/fancybox/2.1.5/jquery.fancybox.css"><script src="/js/third-party/jquery/2.0.3/jquery.min.js"></script><script src="/js/third-party/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script async src="https://www.googletagmanager.com/gtag/js?id=#{theme.google_analytics}"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-39956831-2');</script></body></html>

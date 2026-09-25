@@ -1,0 +1,1 @@
+[{"name":"Install JDK 1.8","apt":{"name":"openjdk-8-jdk"},"tags":["install"],"become":"yes"}]

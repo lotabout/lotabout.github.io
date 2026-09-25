@@ -1,0 +1,480 @@
+<!DOCTYPE HTML>
+<html lang="zh" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Evacuation - Java G1GC 小册子</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        
+        
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+        <link rel="stylesheet" href="../css/lotabout.css">
+        
+
+        
+        <!-- MathJax -->
+        <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+        
+    </head>
+    <body>
+    <div id="body-container">
+        <!-- Provide site root to javascript -->
+        <script>
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script>
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script>
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script>
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../index.html">JVM G1GC 小册子</a></li><li class="chapter-item expanded affix "><li class="part-title">算法篇</li><li class="chapter-item expanded "><a href="../algo/gcs.html"><strong aria-hidden="true">1.</strong> G1 简介</a></li><li class="chapter-item expanded "><a href="../algo/concurrent-marking.html"><strong aria-hidden="true">2.</strong> 并发标记</a></li><li class="chapter-item expanded "><a href="../algo/evacuation.html" class="active"><strong aria-hidden="true">3.</strong> Evacuation</a></li><li class="chapter-item expanded "><a href="../algo/soft-real-time.html"><strong aria-hidden="true">4.</strong> 软实时性</a></li><li class="chapter-item expanded "><a href="../algo/generational.html"><strong aria-hidden="true">5.</strong> 分代 G1 GC</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <a id="home" class="icon-button" type="button" title="Go to Home" href="/">
+                            <i class="fa fa-home"></i>
+                        </a>
+
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                    </div>
+
+                    <h1 class="menu-title">Java G1GC 小册子</h1>
+
+                    <div class="right-buttons">
+
+                        
+                        
+                        
+
+                    </div>
+                </div>
+
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script>
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1><a class="header" href="#evacuation转移" id="evacuation转移">Evacuation（转移）</a></h1>
+<p>Evacuation 直译是“驱逐”，作用是把所选区域内的存活对象转移到空闲区域，之后被转移的区域只剩下死亡的对象，可以被释放，可以类比成标记复制里的“复制”阶段。</p>
+<h2><a class="header" href="#g1-里的转移" id="g1-里的转移">G1 里的转移</a></h2>
+<p>为了更好地理解下面提到的一些机制的作用，我们先对 G1 转移有个整体的理解。</p>
+<p>G1 转移时只会处理部分区域，通常称为回收集合（Collection Set，简称 CSet），下图里区域 <code>B</code> 和 <code>C</code> 就是 CSet。回收时，GC Root 直接可达的对象 <code>h</code>，以及间接可达的 <code>f</code> 和 <code>i</code> 都会被复制到空闲区域 <code>D</code>，复制时，相应的指针也会指向新的对象。转移后，CSet 里剩下的对象都是垃圾，最后把 CSet 释放即可。</p>
+<p><img src="evacuation/2023-01-jvm-g1-evacuation-overall.svg" alt="Evacuation Overview" /></p>
+<p>这张图隐藏了两个细节，它们是理解 G1 evacuation 的重要前提：</p>
+<ol>
+<li>C1 在判断 CSet 里的对象是否存活时，并<strong>不会</strong>利用并发标记的位图，而是自己重新从根集合进行扫描，这点与 CMS 不同，要特别注意</li>
+<li>判断 CSet 中对象是否存活，除了查看 GC Root 的引用外，也需要判断是否存在非 CSet 区域中存活对象的引用（上图的区域 <code>A</code>），判断非 CSet 区域中对象是否存活，则不再从 GC root 递归扫描，而是直接利用并发标记的位图，且也会考虑区域里的 <code>TAMS</code></li>
+</ol>
+<p>另外 G1 的实际实现是包含分代处理的，我们先把本章说的算法当成是纯的 Mixed
+GC/Full GC 来理解。</p>
+<h2><a class="header" href="#记忆集合remember-set" id="记忆集合remember-set">记忆集合（Remember Set）</a></h2>
+<p>上文提到，G1 在判断 CSet 里的对象是否存活时，除了扫描 GC Roots，也会扫描非CSet
+区域里其它对象对本区域的引用（如上节图中扫描区域 <code>A</code> 发现对象 <code>b</code> 引用了 <code>f</code>）。</p>
+<p>但是，回收的区域只占整个堆的小部分，如果需要扫描所有的非 CSet 区域，那不就等价于把整体堆重新标记了一遍？所以为了提升效率，我们需要空间换时间。记忆集合（Remember Set，简称 RSet）就是这样一个结构，帮助我们快速判断：对于区域 <code>X</code>，有哪些其它区域“可能”包含引用了本区域内对象的对象。</p>
+<p>做个类比，比如上学时你在 1 班，2 班的小明，5 班小刚都欠你钱。你可以记个帐本，里面写 <code>2 班/小明，5 班/小刚</code>，这个帐本是精确到人的。如果欠钱的人特别多，帐本记不下，于是简化成只记班级 <code>2 班，5 班</code>，收钱的时候就挨个问对应班级的同学“你是不是欠我钱”。但如果每个班欠钱的只有几个，收钱时却要询问全班的人，很浪费时间。于是可以优化帐本上，记到某班某组：<code>2 班/1 组，5 班/3 组</code>，这样收钱时不需要问全班人，只需要问一个组的人就行了。</p>
+<p>记忆集合 RSet 就是这个帐本，班级就是区域，而班级里的“组”就是下面要介绍的“卡表（Card Table）”。</p>
+<h3><a class="header" href="#卡表card-table" id="卡表card-table">卡表（Card Table)</a></h3>
+<p>逻辑上，我们把一段内存空间按 512B<sup class="footnote-reference"><a href="#ref-card-table-size">1</a></sup> 切成小块，每个块我们用
+1B 的空间记录一些关于这个块的信息，如最近这块内存里有没有修改。实现上我们用一个数组来记录块信息，这个数组就称作卡表（Card Table），数组的元素就称为卡片（Card）。</p>
+<p><img src="evacuation/2023-01-jvm-g1-card-table.svg" alt="Evacuation Overview" /></p>
+<p>因为空间的划分是固定大小的，所以要定位一个对象所在的卡表的索引，只需要计算
+<code>(objec_address - heap_start) / 512</code> 即可。另外由于卡片大小是 1B，可以记录很多状态，本章中只关心两种：</p>
+<ul>
+<li>净卡片（clean）</li>
+<li>脏卡片（dirty）</li>
+</ul>
+<h3><a class="header" href="#rset-的结构" id="rset-的结构">RSet 的结构</a></h3>
+<p>每个区域都有一个 RSet。一个 RSet 是一个哈希表，记录的是“X 区域的 Y Card 里可能有对象引用了当前区域的某个对象”。表的 Key 是 X 区域的地址，表的Value 是X 区域的某干个 Card 索引，如下图所示：</p>
+<p><img src="evacuation/2023-01-jvm-g1-rset.svg" alt="Evacuation Overview" /></p>
+<p>可以看到 RSet 记录的粒度只到 Card 级别，那具体 Card 里哪个对象引用了当前区域的哪个对象？这部分信息 RSet 给不出，因此在 evacuation 时，需要扫描 Card 里的所有对象才行。但是相比于扫描整个堆，这个工作量已经小得多了。</p>
+<h2><a class="header" href="#rset-写屏障" id="rset-写屏障">RSet 写屏障</a></h2>
+<p>上面我们理解了如何使用 RSet 来帮助我们扫描根集合，那 RSet 的信息是如何更新维护的呢？和 SATB 的维护类似，RSet 也是使用写屏障来维护的，但不同于 SATB 中的
+pre-write barrier，RSet 需要使用 post-write barrier，因为更新 RSet 需要使用的是修改后的值。RSet 写屏障伪代码如下<sup class="footnote-reference"><a href="#ref-rset-write-barrier">2</a></sup>：</p>
+<pre><code>1. def evacuation_write_barrier(obj, field, newobj):
+2.     check = obj ^ newobj
+3.     check = check &gt;&gt; LOG_OF_HEAP_REGION_SIZE
+4.     if newobj == NULL:
+5.         check = 0
+6.     if check == 0:
+7.         return
+8.
+9.     if not is_dirty_card(obj):
+10.         to_dirty(obj)
+11.         enqueue($current_thread.dirty_card_queue, obj)
+12.
+13.     *field = newobj
+</code></pre>
+<p>这份伪代码不能很好地展示为什么叫 <code>post-write</code> barrier，但大体逻辑正常看，有几个注意点：</p>
+<p>第 2 行到第 7 行，是在检查 <code>obj</code> 和 <code>newobj</code> 是不是在同一个区域，如果 <code>obj</code>
+和 <code>newobj</code> 在同一个区域，则它们的高位相同，于是第二行的 XOR 操作得到的结果就会是 <code>0</code>，于是通过第 6 行的 <code>if</code> 语句。</p>
+<p>第 9 行要注意引用的方向，因为要执行的是 <code>obj.field = newobj</code>，是 <code>obj</code> 引用<code>newobj</code>，所以更新 RSet 的时候，是要往 <code>newobj</code> 的 RSet 里加入 <code>obj</code> 的 card。第 9 行的判断如果通过，则会把 <code>obj</code> 对应的 Card 标成 dirty，并将 <code>obj</code> 加入
+RSet 日志队列 <code>dirty_card_queue</code> 中。</p>
+<p>这里的 <code>dirty_card_queue</code> 和 SATB 队列机制基本一样，也是每个线程本地有个队列，如果本地队列满了就添加到全局队列中，有专门的维护线程来处理队列里的元素。队列的元素是 Card 的索引。如下图：</p>
+<p><img src="evacuation/2023-01-jvm-g1-rs_log.svg" alt="Evacuation Overview" /></p>
+<h2><a class="header" href="#dirtycardqueueset-维护线程" id="dirtycardqueueset-维护线程">DirtyCardQueueSet 维护线程</a></h2>
+<p>DirtyCardQueueSet 维护线程会与 mutator 并发执行，作用是消费 DirtyCardQueueSet
+集合并更新RSet。具体来说是这么几件事：</p>
+<ol>
+<li>从 DirtyCardQueueSet 中取出 DirtyCardQueue，并从头开始扫描</li>
+<li>每次取出一个 Card Index，先把对应的 Card 标记成 clean</li>
+<li>扫描 Card 中的所有对象中的引用</li>
+<li>在引用所在区域的 RSet 添加当前 Card</li>
+</ol>
+<p>步骤如下图：</p>
+<p><img src="evacuation/2023-01-jvm-g1-rs_log-consumer.svg" alt="Evacuation Overview" /></p>
+<p>DirtyCardQueueSet 集合中的数量超过阈值（默认为 <code>5</code>）时，维护线程启动，直到数量降低至阈值的 <code>1/4</code> 以下。</p>
+<p>另外要注意，整个 RSet 的维护机制，从逻辑上和并发标记毫无关系，是完全独立的机制。当然从实现上可以做一些优化，比如 JDK 11中 已经在标记阶段增加了重建 RSet 的步骤。</p>
+<h2><a class="header" href="#热卡片" id="热卡片">热卡片</a></h2>
+<p>如果有某个 Card 中的对象会频繁修改，我们把这样的 Card 称为热卡片（hoto card）。热卡片会频繁被加入 DirtyCardQueue，也会维护线程频繁处理，增加空间和时间的消耗，因此需要特殊处理。</p>
+<p>G1 会维护一个计数表，记录从上次 evacuation 以来，哪些卡片变成 dirty 过，及对应的次数。当一个卡片被标记为 dirty 时，如果它的计数超过了阈值（默认是<code>4</code>），则会被加入<strong>热队列</strong>的尾部，加入热队列的卡片不会被 DirtyCardQueueSet 维护线程处理，在evacuation 时会单独处理。另外热队列的大小是固定的（默认 1KB），如果队列满了，会从队列头部取出较老的 Card，把它作为普通 Card 处理。</p>
+<h2><a class="header" href="#evacuation-步骤" id="evacuation-步骤">evacuation 步骤</a></h2>
+<p>有了 RSet 的信息 evacuation 的步骤就比较清晰了：</p>
+<ol>
+<li>选择要回收的区域，即 CSet。这个步骤会利用并发标记里统计的存活计数信息</li>
+<li>根转移。这里指的是 CSet 里被根集合（GC Roots 及不在 CSet 中的区域中的对象）直接引用的对象</li>
+<li>其它对象转移。指以 #2 为起点，扫描所有的可达的子孙对象并转移</li>
+</ol>
+<p>整个 evacuation 都是 STW。</p>
+<h2><a class="header" href="#①-cset-选择" id="①-cset-选择">① CSet 选择</a></h2>
+<p>G1 是 Garbage First 简称，说的是 G1 会优先回收垃圾。另一方面 G1 需要尽可能满足用户设定的目标停顿时间，因此 G1 的做法是：</p>
+<ol>
+<li>记录每次回收的一些时间信息，在并发标记结束时会计算每个区域的<strong>转移效率</strong>（GC efficiency），并按转移效率从高到低排序</li>
+<li>CSet 选择时，会按排好的顺序依次计算回收该区域所需时间的预测值，直到 CSet 回收的总时间预测值快要超过用户设置的目标停顿时间为止</li>
+</ol>
+<p>第一步里换转移效率排序反映了“Garbage First”，而第二步里则是实现用户设定停顿时间的具体方法。</p>
+<p>转移效率的计算公式是 <code>可回收的字节数 / 转移所需时间</code>，代表“单位时间可回收的字节数”，通常一个区域存活数量越多，可回收字节数越少（容易理解），同时转移所需要的时间也越多，因为对象复制的时间越长。可以简单地理解成垃圾越多的区域，转移效率越高。</p>
+<h2><a class="header" href="#②-根转移" id="②-根转移">② 根转移</a></h2>
+<p>根转移的对象包括这么几类<sup class="footnote-reference"><a href="#comment-marking-root">3</a></sup>：</p>
+<ol>
+<li>由 GC Roots 直接引用的对象</li>
+<li>由非 CSet 区域中存活对象直接引用</li>
+</ol>
+<p>根转移的伪代码如下<sup class="footnote-reference"><a href="#ref-root-evacuation">4</a></sup>：</p>
+<pre><code>1.  def evacuate_roots():
+2.      for r in $roots:
+3.          if is_into_collection_set(*r):
+4.              *r = evacuate_obj(r)
+5.
+6.      force_update_rs()
+7.      for region in $collection_set:
+8.          for card in region.rs_cards:
+9.              scan_card(region, card)
+10.
+11. def scan_card(region, card):
+12.     for obj in objects_in_card(card):
+13.         if is_marked(obj) or obj &gt;= region.prevTAMS:
+14.             for child in children(obj):
+15.                 if is_into_collection_set(*child):
+16.                     *child = evacuate_obj(obj)
+</code></pre>
+<p>其中第 2 行到第 5 行是扫描 GC Roots，如果引用的对象在 CSet 中则做转移操作。容易理解。</p>
+<p>第 6 行 <code>force_update_rs</code> 是将 DirtyCardQueue（包括本地和全局队列）中还未处理的 Card 做扫描，当然还包括热卡片队列中的 Card。</p>
+<p>第 7 行到第 9 行是通过遍历 RSet 来扫描由非 CSet 区域中存活对象对本区域的引用。</p>
+<p>第 11 行开始是扫描 Card 里的对象。注意第 13 行，在具体扫描 Card 时，会判断一个对象是否有标记，这个好理解。另一个条件是它是否在<code>prevTAMS</code> 之后，这个条件就是
+SATB 的假设，如果地址在 <code>prevTAMS</code> 之后，则隐式认为该对象是存活的。</p>
+<h3><a class="header" href="#evacuate_obj" id="evacuate_obj">evacuate_obj</a></h3>
+<p>具体转移某个对象的逻辑会比较复杂，除了复制对象本身，还需要做比较多的信息维护，步骤如下：</p>
+<ol>
+<li>将对象 <code>a</code> 复制到空间区域，记为 <code>a'</code></li>
+<li>将对象 <code>a</code> 的对象头修改成 <code>a'</code> 的地址，这个指针也叫
+forwarding<sup class="footnote-reference"><a href="#comment-forwarding">5</a></sup> 指针</li>
+<li>遍历 <code>a'</code> 的所有字段，如果字段指向 CSet 内，则将字段的地址加入转移队列中</li>
+<li>针对 <code>a'</code> 字段的引用，如果不在 CSet 内，则需要更新对应区域的 RSet</li>
+<li>针对引用方（如 <code>d.field2</code>），需要更新 <code>a'</code> 所在区域的 RSet，增加 <code>d.field2</code>
+所在的Card</li>
+<li>更新引用方指针的值（<code>d.field2</code>），置为复制后的地址 <code>a'</code></li>
+</ol>
+<p>可能参考下图，可能更直观<sup class="footnote-reference"><a href="#ref-evacuation-overview">6</a></sup>：</p>
+<p><img src="evacuation/2023-01-jvm-g1-evacuate-obj.svg" alt="Evacuation Overview" /></p>
+<p>对应的伪代码如下<sup class="footnote-reference"><a href="#ref-evacuate-object-code">7</a></sup>：</p>
+<pre><code>1.  def evacuate_obj(ref):
+2.      from = *ref
+3.  
+4.      if from.forwarded:
+5.          to = copy_to_survivor_space(from)
+6.      else:
+7.          to = from.forwarded
+8.  
+9.      *ref = to // ⑥
+10. 
+11.     if !in_same_region(ref, to):
+12.         update_rs(ref, to) // ⑤
+13. 
+14. def copy_to_survivor_space(from):
+15.     to = allocate($free_region, from.size)
+16.     copy_data(from, to, from.size) // ①
+17.     from.forwarded = to  // ②
+18. 
+19.     for child in to.children:
+20.         if is_into_collection_set(*child):
+21.             enqueue($evacuate_queue, child) // ③
+22.         else:
+23.             update_rs(child, *child) // ④
+24. 
+25.     return to
+26. 
+27. def update_rs(from, to):
+28.     from_region = region_of(from)
+29.     to_region = region_of(to)
+30.     push(card(from), to_region.rs_cards)
+</code></pre>
+<p>参数 <code>ref</code> 是引用方，第 2 行得到的 <code>from</code> 是待转移对象。</p>
+<p>第 4 行到第 7 行会首先判断 <code>from</code> 对象是否已经转移过，如果转移过就读取
+forwarding 指针指向的对象，即目标区域的对象。forwarding 指针是指原对象 <code>a</code> 的对象头的内容改写成了 <code>a'</code> 的地址，而由于对象的地址会对齐到“字”，所以可以用其中的一个比特来标记它是 forwarding 指针，因此不需要额外空间。</p>
+<p>第 9 行是将转移后的对象地址赋给 <code>ref</code> 对应步骤 ⑥。</p>
+<p>第 11 行和第 12 行对应步骤 ⑤，维护转移后对象 <code>to</code> 所在区域的 RSet，由于 RSet
+记录的是跨区域的引用关系，所以有第 11 行的判断条件，如果在同一区域，可以跳过。</p>
+<p>第 15 行到第 17 行对应步骤 ①、②，真正执行对象的复制，并设置 forwarding 指针。</p>
+<p>第 19 到第 23 行是扫描对象的域，根据指向的对象是否在 CSet 里有不同处理，在
+CSet 的加入扫描队列，不在 CSet 的则对应步骤 ④，需要更新对象所在区域的 RSet。</p>
+<p>第 27 行的 <code>update_rs</code> 作用是更新 <code>to</code> 对象所在区域的 RSet，伪代码里写得比较直接，实际的实现视情况可能不会直接更新 RSet，而是都统一添加到 DirtyCardQueue 里，最后统一扫描。</p>
+<p>另外注意第 20 行如果 <code>child</code> 指向 CSet，则会执行第 21 行，跳过 23 行，这并不意味着它的 RSet 就不需要维护了，后续在步骤 ③ 消费队列时还是会通过执行<code>evacuate_obj</code>执行到第 11 行来做 RSet 的维护。</p>
+<h2><a class="header" href="#③-转移" id="③-转移">③ 转移</a></h2>
+<p>根转移的过程中会把引用的对象加入转移队列（上节代码中的第 21 行），这个步骤里会消费转移队列，递归地遍历所有引用对象并转移。伪代码如下：</p>
+<pre><code>def evacuate_follower():
+    while !$evacuate_queue.is_empty:
+        ref = dequeue($evacuate_queue)
+        evacuate_obj(ref)
+</code></pre>
+<p>核心逻辑和根转移里相同，只是套了层壳来遍历队列。这个步骤结束后，所有 CSet内的对象都转移完成。</p>
+<h2><a class="header" href="#与-cms-的区别" id="与-cms-的区别">与 CMS 的区别</a></h2>
+<p>如果之前了解过 CMS 收集器，那么在学习 G1 时要注意与 CMS 的一些区别：</p>
+<ol>
+<li>CMS 在回收时会直接看标记的结果，只复制带标记的对象，而 G1 在转移时会自己重新遍历引用，标记只在 scan_card 时使用。</li>
+<li>G1 在 evacuation 时需要 STW，因为要修复引用的指针，而 CMS 在 Sweep 时不会移动对象所以可以并发。但是 Sweep 过程中如果新增对象则可能会被误杀（新对象没有标记），所以 CMS 内部会给 free list 加锁。但这样的话，Sweep 过程中 mutator
+如果新建对象会卡住</li>
+<li>标记时，CMS 解决标记遗漏，使用的是 incremental update 的机制，而 G1 使用的是 SATB 机制。所以看 CMS 时接触 Card 概念，是用在标记时处理 incremental
+update 的，而G1 的 Card 主要是在 evacuation 时使用，虽然作用类似。</li>
+<li>CMS Full GC 只回收 Old Gen，加上它是 Incremental Update 机制，导致在 STW
+Remark 时需要扫描所有根集合，此时所有的 Young Gen 也都隐式做为存活对象进行扫描。相比之下，G1 在 Remark 时只需要额外标记 STAB 队列即可，当然 G1 在
+Evacuation 也需要扫描 Young Gen，但扫描的同时也会回收。</li>
+</ol>
+<h2><a class="header" href="#总结" id="总结">总结</a></h2>
+<p>G1 每次转移只会转移部分区域（称为 CSet），转移时会自己重新遍历引用而不是直接复用标记的结果。在判断 CSet 中的对象是否存活时，需要扫描“根集合”，根集合除了 GC
+Roots 外，也包含了不在 CSet 区域里的对象。为了减少需要扫描的对象，G1 通过 RSet
+来维护区域间的引用关系，于是只会搜索那些存在对当前区域引用的区域的 Card。在判断 Card 内的对象是否存活时，会利用并发标记的结果，以及 SATB 时做的 <code>prevTAMS</code>
+信息。</p>
+<p>转移的过程就是一个遍历“森林”的过程。在实际转移对象的过程中，除了对象的复制，
+forwarding 指针的维护外，还需要维护各种情况下 RSet 的正确性。</p>
+<hr />
+<div class="footnote-definition" id="ref-card-table-size"><sup class="footnote-definition-label">1</sup>
+<p>JDK 18 引入的 <a href="https://bugs.openjdk.org/browse/JDK-8272773">JDK-8272773</a> 允许用户自定义 Card 大小</p>
+</div>
+<div class="footnote-definition" id="ref-rset-write-barrier"><sup class="footnote-definition-label">2</sup>
+<p>摘自书《深入 Java 虚拟机》第 3.3 节</p>
+</div>
+<div class="footnote-definition" id="comment-marking"><sup class="footnote-definition-label">8</sup>
+<p>在《深入 Java 虚拟机》中还包含一类“并发标记中处理的对象”，实际包含了 SATB 本地队列和全局队列中的对象，也包含在 <code>$root</code> 里。因为如果其中的对象转移了，队列里的指针也需要更新。但实际在 JDK 11 的代码里，做法是把
+SATB 中任何指向 CSet 的指针都移除队列了。再配合标记中的根区域扫描，在 Young
+GC 的 Evacuation 阶段，也就不需要把 SATB 队列中的对象作为根了。</p>
+</div>
+<div class="footnote-definition" id="ref-root-evacuation"><sup class="footnote-definition-label">4</sup>
+<p>摘自书《深入 Java 虚拟机》第 3.8 节，并做少量修改</p>
+</div>
+<div class="footnote-definition" id="comment-forwarding"><sup class="footnote-definition-label">5</sup>
+<p>后续如果顺着其它引用要转移 <code>a</code> 时，如果通过 <code>a</code> 的对象头发现它是 forwarding 指针，则会跳过转移，直接返回 forwarding 指向的新地址。另一方面不用担心 forwarding 指针占用空间，它只会在转移时存在，转移结束就会被释放，而转移又是 STW 的。</p>
+</div>
+<div class="footnote-definition" id="ref-evacuation-overview"><sup class="footnote-definition-label">6</sup>
+<p>图摘自书《深入 Java 虚拟机》第 3.8.1 节，并做少量修改</p>
+</div>
+<div class="footnote-definition" id="ref-evacuate-object-code"><sup class="footnote-definition-label">7</sup>
+<p>这里的代码是参考源码写的，和书《深入 Java 虚拟机》第 3.8.1 节的代码不同</p>
+</div>
+
+
+                        <hr />
+                        <div id="disqus_thread"></div>
+                        <div class="giscus"></div>
+                    </main>
+
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../algo/concurrent-marking.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="../algo/soft-real-time.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../algo/concurrent-marking.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="../algo/soft-real-time.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+        <!-- Google Analytics Tag -->
+        <script>
+            var localAddrs = ["localhost", "127.0.0.1", ""];
+            // make sure we don't activate google analytics if the developer is
+            // inspecting the book locally...
+            if (localAddrs.indexOf(document.location.hostname) === -1) {
+                (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+                })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+                ga('create', 'UA-39956831-2', 'auto');
+                ga('send', 'pageview');
+            }
+        </script>
+        
+
+        
+
+        
+        <script>
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+
+        <script src="../clipboard.min.js"></script>
+        <script src="../highlight.js"></script>
+        <script src="../book.js"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+        <!-- giscus -->
+        <script src="https://giscus.app/client.js"
+                data-repo="lotabout/lotabout.github.io"
+                data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU1NTQ0Nw=="
+                data-category="Announcements"
+                data-category-id="DIC_kwDOATmmt84ClmcD"
+                data-mapping="pathname"
+                data-strict="0"
+                data-reactions-enabled="0"
+                data-emit-metadata="0"
+                data-input-position="bottom"
+                data-theme="light"
+                data-lang="zh-CN"
+                crossorigin="anonymous"
+                async>
+        </script>
+
+    </div>
+    </body>
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="在编写代码时，我们时常一不留神就在行末多打了几个空格。却又看不出来，即使用 vim-airline 之类的插件能知道有行末空格（trailing spaces），删除起来也特别麻烦。本文就介绍一个我就常用的 vim 快捷键：删除行末空格。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>Vim 小技巧－删除行末空格 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 7.1.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-noise-link" href="/tags/FAQ/" rel="tag">FAQ</a><a class="post-tag-noise-link" href="/tags/vim/" rel="tag">vim</a></div><div class="post-time">2015-12-14</div></div></div><div class="container post-header"><h1>Vim 小技巧－删除行末空格</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">1.</span> <span class="toc-text">功能实现</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">2.</span> <span class="toc-text">快捷键绑定</span></a></li><li class="toc-item toc-level-1"><a class="toc-link"><span class="toc-number">3.</span> <span class="toc-text">结语</span></a></li></ol></details></div><div class="container post-content"><p>在编写代码时，我们时常一不留神就在行末多打了几个空格。却又看不出来，即使用 vim-airline 之类的插件能知道有行末空格（trailing spaces），删除起来也特别麻烦。本文就介绍一个我就常用的 vim 快捷键：删除行末空格。</p>
+<h1>功能实现</h1>
+<p>Vim 并没有内置的支持，所以我们有正则表达式替换来实现这个功能：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">:%s/\s\+$//</span><br></pre></td></tr></table></figure></div>
+<ol>
+<li>开头的 <code>%</code> 代表匹配当前文件的所有行</li>
+<li><code>\s</code> 代表匹配空格字符，即空格符（Space）和制表符（Tab）</li>
+<li><code>\+</code> 用于匹配一个及多个。故 <code>\s\+</code> 代表匹配一个或多个空格字符。</li>
+<li><code>$</code> 代表匹配行末。</li>
+</ol>
+<p>综上，上述命令的作用是匹配行末的一个或多个空格字符并删除它们。</p>
+<h1>快捷键绑定</h1>
+<p>如果每次有行末空格，都要输入上节的命令，还是相当麻烦的。对于这种常用命令，最好还是给它绑定一个方便的快捷键。</p>
+<p>这里分享我的快捷键，绑定到三个空格：</p>
+<div class="noise-code-block" style="--code-block-max-height:inherit"><figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">nmap &lt;leader&gt;&lt;Space&gt;&lt;Space&gt; :%s/\s\+$//&lt;cr&gt;</span><br></pre></td></tr></table></figure></div>
+<p>这里的 <code>&lt;leader&gt;</code> 我事先设置成了空格（强烈推荐）。因为目的是删除空格，绑定成空格也更好记忆。</p>
+<p>另外，用这么多空格（3个）是因为在其它的快捷键中用了空格。</p>
+<h1>结语</h1>
+<p>本文中介绍的功能本身挺简单，但重要的是，如果一些命令你经常使用，那么为它设定一个快捷键能极大提升自己的效率。</p>
+<p>实际中，这个快捷键是我常使用的使用中的前 5 名。</p>
+</div></div><div class="post-main post-comment"><div id="giscus_thread"></div><script src="https://giscus.app/client.js" data-repo="lotabout/lotabout.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU1NTQ0Nw==" data-category="Announcements" data-category-id="DIC_kwDOATmmt84ClmcD" data-mapping="" data-strict="" data-reactions-enabled="0" data-emit-metadata="" data-input-position="" data-theme="" data-lang="zh-CN" data-loading="" crossorigin="" async>
+</script></div></article><link rel="stylesheet" type="text/css" href="/css/third-party/font-awesome/4.5.0/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/lato-font/3.0.0/css/lato-font.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/fancybox/2.1.5/jquery.fancybox.css"><script src="/js/third-party/jquery/2.0.3/jquery.min.js"></script><script src="/js/third-party/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script async src="https://www.googletagmanager.com/gtag/js?id=#{theme.google_analytics}"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-39956831-2');</script></body></html>

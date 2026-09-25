@@ -1,0 +1,136 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="自动微分（Automatic Differentiation，下面简称 AD）是用来计算偏导的一种手段，在深度学习框架中广泛使用（如 Pytorh, Tensorflow）。最近想学习这些框架的实现，先从 AD 入手，框架的具体实现比较复杂，我们主要是理解 AD 的思想并做个简单的实现。"><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><title>自动微分（Automatic Differentiation）：算法篇 | 三点水</title><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="alternate" type="application/atom+xml" href="/atom.xml"><meta name="generator" content="Hexo 7.1.1"></head><body><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a class="sidebar-nav-item active" href="/">Home</a><a class="sidebar-nav-item" href="/books">Books</a><a class="sidebar-nav-item" href="/about">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-noise-link" href="/tags/Automatic-Differentiation/" rel="tag">Automatic Differentiation</a><a class="post-tag-noise-link" href="/tags/Neural-Network/" rel="tag">Neural Network</a></div><div class="post-time">2023-04-09</div></div></div><div class="container post-header"><h1>自动微分（Automatic Differentiation）：算法篇</h1></div><div class="container post-toc"><details class="toc"><summary class="toc-accordion">Table of Contents</summary><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#ad-%E8%83%BD%E5%B9%B2%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number">1.</span> <span class="toc-text">AD 能干什么？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E7%94%A8-ad%EF%BC%9F"><span class="toc-number">2.</span> <span class="toc-text">为什么用 AD？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%93%BE%E5%BC%8F%E6%B3%95%E5%88%99%E5%9B%9E%E9%A1%BE"><span class="toc-number">3.</span> <span class="toc-text">链式法则回顾</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ad-%E5%85%B7%E4%BD%93%E6%98%AF%E6%80%8E%E4%B9%88%E5%81%9A%E7%9A%84%EF%BC%9F"><span class="toc-number">4.</span> <span class="toc-text">AD 具体是怎么做的？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E8%BE%93%E5%87%BA%E6%83%85%E5%BD%A2"><span class="toc-number">5.</span> <span class="toc-text">多输出情形</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">6.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">7.</span> <span class="toc-text">参考</span></a></li></ol></details></div><div class="container post-content"><p>自动微分（Automatic Differentiation，下面简称 AD）是用来计算偏导的一种手段，在深度学习框架中广泛使用（如 Pytorh, Tensorflow）。最近想学习这些框架的实现，先从 AD 入手，框架的具体实现比较复杂，我们主要是理解 AD 的思想并做个简单的实现。</p>
+<p>本篇只介绍算法的基础知识，实现部分请参考<a href="/2023/Auto-Differentiation-Part-2-Implementation/" title="自动微分（Automatic Differentiation）：实现篇">实现篇</a>。</p>
+<h2 id="ad-能干什么？"><a class="header-anchor" href="#ad-能干什么？"></a>AD 能干什么？</h2>
+<p>AD 能用来求偏导<strong>值</strong>的。</p>
+<p>例如有一个 $\mathbb{R}^2 \mapsto \mathbb{R}$ 的函数（函数有 <code>2</code> 个输入，<code>1</code> 个输出）：$f(x, y)$ ，对于 $x$、$y$ 的偏导分别计为
+$\frac{\partial f}{\partial x}$ 和 $\frac{\partial f}{\partial y}$。通常我们不关心偏导的解析式，只关心具体某个 $x_i$, $y_i$ 取值下偏导
+$\frac{\partial f}{\partial x} \vert_{x=x_i,y=y_i}$ 和
+$\frac{\partial f}{\partial y} \vert_{x=x_i,y=y_i}$ 的值。</p>
+<p>另外注意在神经网络在使用“梯度下降”学习时，我们关心的是“参数 $w$”的偏导。而不是“输入 $x$”的偏导。假设有 $f(x) = ax^2 + b$ 这样的神经网络，损失函数是 $l(f(x), y)$，现在给了一个样本标签对$(x_0, y_0)$，我们要计算的是
+$\frac{\partial l}{\partial a}\vert_{x=x_0,y=y_0,a=a_0,b=b_0}$ 和
+$\frac{\partial l}{\partial b}\vert_{x=x_0,y=y_0,a=a_0,b=b_0}$。在对号入座时要牢记这点。</p>
+<h2 id="为什么用-ad？"><a class="header-anchor" href="#为什么用-ad？"></a>为什么用 AD？</h2>
+<p>求偏导有很多做法，例如 <a href="https://en.wikipedia.org/wiki/Symbolic_differentiation">symbolic differentiation</a>
+使用“符号计算” 得到准确的偏导解析式，但对于复杂的函数，偏导解析式会特别复杂，占用大量内存且计算慢，并且通常应用也不需要解析式；再比如
+<a href="https://en.wikipedia.org/wiki/Numerical_differentiation">numerical differentiation</a>
+通过引入很小的位移 $h$，计算 $\frac{f(x+h) - f(h)}{h}$ 得到偏导，这种方法编码容易，但受 float 误差影响大，且计算慢（有几个输入就要算几次 $f$）。</p>
+<p>AD 认为所有的计算最终都可以拆解成基础操作（如加减乘除，<code>exp</code>, <code>log</code>, <code>sin</code>,
+<code>cos</code> 等基本函数）的组合。然后通过<a href="https://en.wikipedia.org/wiki/Chain_rule">链式法则</a>
+逐步计算偏导。这样使用方只需要正常组合基础操作，就能自动计算偏导，且不受 float
+误差的影响，还可以复用一些中间结果来减少计算量（等价于动态规划）。</p>
+<h2 id="链式法则回顾"><a class="header-anchor" href="#链式法则回顾"></a>链式法则回顾</h2>
+<p>AD 的数学基础就是<a href="https://en.wikipedia.org/wiki/Chain_rule">链式法则(chain rule)</a>：</p>
+<p>对于函数 $z = h(x)$，如果有子函数 $y = f(x)$，满足 $z = h(x) = g(y) = g(f(x))$，则求偏导有如下关系：</p>
+<p>$$
+h’(x) = g’(f(x))f’(x)
+\iff
+\frac{\partial z}{\partial x} \bigg\vert_{x_0} = \frac{\partial z}{\partial y}
+\bigg\vert_{y=f(x_0)} \frac{\partial y}{\partial x} \bigg\vert_{x_0}
+$$</p>
+<p>上述两种写法是一致的。另外如果涉及多个变量，例如 $z = f(x, y)$，而 $x = g(t),
+y = h(t)$，则有：</p>
+<p>$$
+\frac{\partial z}{\partial t} = \frac{\partial z}{\partial x}\frac{\partial x}{\partial t} +
+\frac{\partial z}{\partial y}\frac{\partial y}{\partial t}
+$$</p>
+<p>上面的式子叫 <a href="https://en.wikipedia.org/wiki/Chain_rule#Multivariable_case">multivariable case</a>
+：多变量的链式法则。也可以认为是
+<a href="https://en.wikipedia.org/wiki/Total_derivative#The_chain_rule_for_total_derivatives">Total Derivative</a>
+全微分的链式法则。</p>
+<h2 id="ad-具体是怎么做的？"><a class="header-anchor" href="#ad-具体是怎么做的？"></a>AD 具体是怎么做的？</h2>
+<p>AD 其实就是链式法则的具体实现。它有两种模式：前向模式(Forward accumulation)和反向模式(Reverse accumulation)，我们只考虑反向模式。那么具体是怎么工作的呢？考虑下面的复杂函数<sup class="footnote-ref"><a href="#fn1" id="fnref1">[1]</a></sup></p>
+<p>$$
+\begin{aligned}
+y &amp;= f(x_{1},x_{2})
+\\&amp;= \sin x_{1} + x_{1}x_{2}
+\\&amp;= \sin v_{1} + v_{1}v_{2}
+\\&amp;= v_{3}+v_{4}
+\\&amp;= v_{5}
+\end{aligned}
+$$</p>
+<p>上述公式中，我们用了一些子函数来简化整个函数，画成图如下左图：</p>
+<img src="/2023/Auto-Differentiation-Part-1-Algorithm/2023-04-AD-example-computation-graph.svg" class="">
+<p>于是为了求偏导 $\frac{\partial f}{\partial x_1}$ 与 $\frac{\partial f}{\partial x_2}$
+的值，我们可以先定义中间值 $\bar{v_i} = \frac{\partial f}{\partial v_i}$，根据链式法则，有</p>
+<p>$$
+\bar{v_i} = \frac{\partial f}{\partial v_i} = \frac{\partial f}{\partial v_{i+1}} \frac{\partial v_{i+1}}{\partial v_i} = \bar{v_{i+1}} \frac{\partial v_{i+1}}{\partial v_i}
+$$</p>
+<p>于是计算时需要先“前向”计算一次，得到 $v_1, v_2, \cdots, v_5$ 的值，之后再“后向”计算 $\bar{v_5}, \bar{v_4}, \cdots, \bar{v_1}$ 的值（参考上右图），最终得到的
+$\bar{v_1}, \bar{v_2}$ 就是我们要计算的结果。而需要先“前向”计算一次，是因为后向计算时会用到前向的值，例如 $\bar{v_2} = \bar{v_4} v_1$ 就需要用到前向的$v_1$。</p>
+<p>注意图里 $\bar{v_1}$ 的计算依赖了链式法则中多变量的情况，等于它所有后继节点偏导（即图中的 $\bar{v_1^a}, \bar{v_1^b}$）的和。当计算图中存在
+$v_i$ 指向 $v_j$ 的箭头时，我们记 $\overline{v_{i \to j}}$ 为 $f$ 从 $v_j$ 方向对 $v_i$ 的偏导，则公式可以扩充如下：</p>
+<p>$$
+\bar{v_i} = \frac{\partial f}{\partial v_i}
+= \sum_{j \in next(i)}{\overline{v_{i\to j}}}
+= \sum_{j \in next(i)}{\frac{\partial f}{\partial v_{j}} \frac{\partial v_{j}}{\partial v_i}
+= \sum_{j \in next(i)}{\overline{v_j} \frac{\partial v_{j}}{\partial v_i}}}
+$$</p>
+<h2 id="多输出情形"><a class="header-anchor" href="#多输出情形"></a>多输出情形</h2>
+<p>多输出的情况偏理论，跳过也影响不大。神经网络的输出，在训练时最终都会接入损失函数，得到 <code>loss</code> 值，一般都是一个标量，可以认为神经网络的学习总是单输出的。</p>
+<p>在多输出的情况下，链式法则依然生效。</p>
+<p>刚才都假设函数是 $\mathbb{R}^n \mapsto \mathbb{R}$，即 <code>n</code> 个输入，<code>1</code> 个输出。考虑 <code>m</code> 个输出，即 $\mathbb{R}^n \mapsto \mathbb{R}^m$ 的情况。假设输入是
+$x_1, x_2, \cdots, x_n$，而输出是
+$f_1(x_1, \cdots, x_n), f_2(x_1, \cdots, x_n), \cdots, f_m(x_1, \cdots, x_n)$。此时我们要计算的偏导就不是 <code>n</code> 个值了，而是一个 <code>m×n</code> 的矩阵<sup class="footnote-ref"><a href="#fn2" id="fnref2">[2]</a></sup>，每个元素 $J_{ij} = \frac{\partial f_i}{\partial x_j}$。这个矩阵一般称为
+<a href="https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant">Jacobian Matrix</a>：</p>
+<p>$$
+\mathbf {J_{m\times n}} =
+\begin{bmatrix}{\dfrac {\partial \mathbf {f} }{\partial x_{1}}}&amp;\cdots &amp;{\dfrac {\partial \mathbf {f} }{\partial x_{n}}}\end{bmatrix}
+=\begin{bmatrix}\nabla ^{\mathrm {T} }f_{1}\\\vdots \\\nabla ^{\mathrm {T} }f_{m}\end{bmatrix}
+=\begin{bmatrix}{\dfrac {\partial f_{1}}{\partial x_{1}}}&amp;\cdots &amp;{\dfrac {\partial f_{1}}{\partial x_{n}}}\\\vdots &amp;\ddots &amp;\vdots \\{\dfrac {\partial f_{m}}{\partial x_{1}}}&amp;\cdots &amp;{\dfrac {\partial f_{m}}{\partial x_{n}}}\end{bmatrix}
+$$</p>
+<p>其中 $\nabla^{\mathrm{T}}f_i$ 代表 $f_i$ 对于所有输入的偏导（行向量）的转置。</p>
+<p>考虑函数 $g: \mathbb{R}^n \mapsto
+\mathbb{R}^k$，$h: \mathbb{R}^k \mapsto \mathbb{R}^m$，而函数 $f$ 是二者的组合：
+$f(x) = h \circ g(x) = h(g(x))$，则有</p>
+<p>$$
+J = J_{h \circ g} = J_h(g(x)) \cdot J_g(x)
+$$</p>
+<p>此时 $\mathbf{J}$ 中的每个元素：</p>
+<p>$$
+J_{ij} = \frac{\partial f_i}{\partial x_j}
+= \sum_{l = 1}^{k}{\frac{\partial h_i}{\partial g_l} \frac{\partial g_l}{\partial x_j}}
+= \begin{bmatrix}{\dfrac {\partial h_i}{\partial g_{1}}}&amp;\cdots &amp;{\dfrac {\partial h_i }{\partial g_{k}}}\end{bmatrix}
+\begin{bmatrix}{\dfrac {\partial g_1}{\partial x_{j}}} \\ \vdots \\ {\dfrac {\partial g_k }{\partial x_{j}}}\end{bmatrix}
+$$</p>
+<p>可以看到和 $J_h \cdot J_g$ 的结果是一致的。不过这些性质其实都是链式法则的内容，这里也只是扩充视野。</p>
+<h2 id="小结"><a class="header-anchor" href="#小结"></a>小结</h2>
+<p>AD 把复杂的函数看成是许多小函数的组合，再利用链式法则来计算偏导。它有不同的模式，其中“后向模式”在计算偏导时先“前向”计算得到一些中间结果，之后再“反向”计算偏导。从工程的视角看，由于中间的偏导可以重复利用，能减少许多计算量。深度学习的反向传播算法（BP）是 AD 的一种特例。</p>
+<p>所以回过头来，什么是 AD？AD 就是利用链式法则算偏导的一种实现。</p>
+<h2 id="参考"><a class="header-anchor" href="#参考"></a>参考</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/1811.05031">A Review of automatic differentiation and its efficient implementation</a> 一篇综述，对 AD “是什么”、“为什么”的描述比较清晰</li>
+<li><a href="https://www.youtube.com/watch?v=wG_nF1awSSY">What is Automatic Differentiation?</a> Youtube 视频，回过头来看它介绍了 AD 的各个方面，但第一次直接看还是比较懵的，视频也有对应的综述论文，也是比较好的补充材料</li>
+<li><a href="https://www.youtube.com/watch?v=56WUlMEeAuA">Lecture 4 - Automatic Differentiation</a> 一个 DL 的课程，前面的内容和其它材料差不多，最后通过扩展计算图来计算 AD 的方式对理解一些框架的具体实现很有帮助</li>
+</ul>
+<hr class="footnotes-sep">
+<section class="footnotes">
+<ol class="footnotes-list">
+<li id="fn1" class="footnote-item"><p>例子取自<a href="https://en.wikipedia.org/wiki/Automatic_differentiation#Forward_accumulation">维基百科</a>，修改了其中的符号 <a href="#fnref1" class="footnote-backref">↩</a></p>
+</li>
+<li id="fn2" class="footnote-item"><p><code>m×n</code> 还是 <code>n×m</code> 取决于是行矩阵还是列矩阵，其实关系不大。 <a href="#fnref2" class="footnote-backref">↩</a></p>
+</li>
+</ol>
+</section>
+</div></div><script type="text/x-mathjax-config">
+   MathJax.Hub.Config({"HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"], linebreaks: { automatic:true }, EqnChunk: (MathJax.Hub.Browser.isMobile ? 10 : 50) },
+        tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno",skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']},
+        TeX: {  noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } }, Macros: { href: "{}" } },
+        messageStyle: "none"
+    }); 
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Queue(function() {
+        var all = MathJax.Hub.getAllJax(), i;
+        for(i=0; i < all.length; i += 1) {
+            all[i].SourceElement().parentNode.className += ' has-jax';
+        }
+    });
+</script>
+<script type="text/javascript" src="https://cdn.bootcdn.net/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><div class="post-main post-comment"><div id="giscus_thread"></div><script src="https://giscus.app/client.js" data-repo="lotabout/lotabout.github.io" data-repo-id="MDEwOlJlcG9zaXRvcnkyMDU1NTQ0Nw==" data-category="Announcements" data-category-id="DIC_kwDOATmmt84ClmcD" data-mapping="" data-strict="" data-reactions-enabled="0" data-emit-metadata="" data-input-position="" data-theme="" data-lang="zh-CN" data-loading="" crossorigin="" async>
+</script></div></article><link rel="stylesheet" type="text/css" href="/css/third-party/font-awesome/4.5.0/font-awesome.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/lato-font/3.0.0/css/lato-font.min.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcdn.net/ajax/libs/fancybox/2.1.5/jquery.fancybox.css"><script src="/js/third-party/jquery/2.0.3/jquery.min.js"></script><script src="/js/third-party/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+  $(".fancybox").fancybox();
+});
+</script><script async src="https://www.googletagmanager.com/gtag/js?id=#{theme.google_analytics}"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'UA-39956831-2');</script></body></html>
